@@ -18,8 +18,15 @@
         "name": "next"
       }
     ],
+    "baseUrl": "./src",
     "paths": {
-      "@/*": ["./*"]
+      "@components/*": ["components/*"],
+      "@components/client/*": ["components/client/*"],
+      "@components/admin/*": ["components/admin/*"],
+
+      "@lib/*": ["lib/*"],
+      "@services/*": ["services/*"],
+      "@types/*": ["types/*"]
     }
   },
   "include": [
