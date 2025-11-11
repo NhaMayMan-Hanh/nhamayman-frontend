@@ -1,53 +1,75 @@
-import { Metadata } from "next";
+// app/(client)/blog/page.tsx (Danh sách blogs - fetch /api/client/blogs)
+"use client";
 
-export const metadata: Metadata = {
-  title: "Blog - NhaMayMan-Hanh",
-  description: "Chia sẻ câu chuyện, mẹo handmade và cảm hứng yêu thương.",
-};
+import { useState, useEffect } from "react";
+import Link from "next/link";
 
-export default function BlogPage() {
-  const posts = [
-    {
-      id: 1,
-      title: "Cách làm quà handmade đơn giản tại nhà",
-      excerpt: "Hướng dẫn chi tiết để bạn tự tay tạo nên món quà ý nghĩa.",
-      date: "2025-10-15",
-    },
-    {
-      id: 2,
-      title: "Câu chuyện đằng sau mỗi sản phẩm của chúng tôi",
-      excerpt: "Những kỷ niệm và tình yêu thương trong từng chi tiết.",
-      date: "2025-09-20",
-    },
-    {
-      id: 3,
-      title: "Mẹo chọn quà tặng phù hợp cho mọi dịp",
-      excerpt: "Gợi ý từ đội ngũ NhaMayMan-Hanh để lan tỏa yêu thương.",
-      date: "2025-08-10",
-    },
-  ];
+interface Blog {
+  _id: string;
+  name: string;
+  img: string;
+  slug: string;
+  description: string;
+}
+
+interface BlogsData {
+  success: boolean;
+  data: Blog[];
+}
+
+export default function BlogListPage() {
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/client/blogs");
+        if (!res.ok) {
+          throw new Error("Lỗi khi fetch blogs");
+        }
+        const result: BlogsData = await res.json();
+        if (result.success) {
+          setBlogs(result.data);
+        } else {
+          setError(result.message || "Lỗi không xác định");
+        }
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBlogs();
+  }, []);
+
+  if (loading) {
+    return <div className="text-center py-8">Đang tải blogs...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-8 text-red-500">Lỗi: {error}</div>;
+  }
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4 lg:px-6">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">Blog</h1>
-        <p className="text-xl text-gray-600">Chia sẻ cảm hứng và câu chuyện yêu thương. 💛</p>
-      </div>
-
-      <div className="grid gap-8">
-        {posts.map((post) => (
-          <article key={post.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="p-6">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-2">{post.title}</h2>
-              <p className="text-gray-600 mb-4">{post.excerpt}</p>
-              <div className="flex justify-between items-center text-sm text-gray-500">
-                <span>{post.date}</span>
-                <a href={`/blog/${post.id}`} className="text-amber-500 hover:underline">
-                  Đọc thêm →
-                </a>
-              </div>
+    <div className="max-w-6xl mx-auto py-12 px-4">
+      <h1 className="text-3xl font-bold text-center mb-8">Blog - NhaMayMan-Hanh 💛</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {blogs.map((blog) => (
+          <Link
+            key={blog._id}
+            href={`/blog/${blog.slug}`}
+            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+          >
+            <img src={blog.img} alt={blog.name} className="w-full h-48 object-cover" />
+            <div className="p-4">
+              <h2 className="font-semibold text-gray-900 mb-2">{blog.name}</h2>
+              <p className="text-gray-600 mb-4">{blog.description}</p>
+              <span className="text-amber-500 font-medium">Đọc thêm →</span>
             </div>
-          </article>
+          </Link>
         ))}
       </div>
     </div>

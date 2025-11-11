@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react"; // Giả sử bạn cài đặt lucide-react cho icons
+import { Menu, X } from "lucide-react";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -22,12 +22,6 @@ export default function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-          <Link
-            href="/products"
-            className="text-gray-700 hover:text-amber-500 transition-colors px-2 py-1"
-          >
-            Sản phẩm
-          </Link>
           <Link
             href="/blog"
             className="text-gray-700 hover:text-amber-500 transition-colors px-2 py-1"
@@ -49,6 +43,12 @@ export default function Header() {
             <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center text-center">
               0
             </span>
+          </Link>
+          <Link
+            href="/login"
+            className="text-gray-700 hover:text-amber-500 transition-colors px-2 py-1"
+          >
+            Đăng nhập
           </Link>
         </nav>
 
@@ -91,6 +91,13 @@ export default function Header() {
                 onClick={toggleMenu}
               >
                 🛒 Giỏ hàng
+              </Link>
+              <Link
+                href="/login"
+                className="text-gray-700 hover:text-amber-500 transition-colors w-full py-2"
+                onClick={toggleMenu}
+              >
+                Đăng nhập
               </Link>
             </nav>
           </div>
