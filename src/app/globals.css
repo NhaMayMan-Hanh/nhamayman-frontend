@@ -24,3 +24,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+.header-client {
+  background-color: #f9f9f9;
+}
+.bg-button-g {
+  background-color: #44aadb;
+}
+.bg-button-g:hover {
+  background-color: #efb83f;
+}

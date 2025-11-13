@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 
 interface Blog {
   _id: string;
@@ -19,7 +20,7 @@ interface BlogData {
 }
 
 export default function BlogDetailPage() {
-  const params = useParams(); // ✅ Lấy slug đúng cách trong Client Component
+  const params = useParams();
   const slug = params.slug as string;
 
   const [blog, setBlog] = useState<Blog | null>(null);
@@ -34,7 +35,7 @@ export default function BlogDetailPage() {
 
         const result: BlogData = await res.json();
         if (result.success) setBlog(result.data);
-        else setError(result.message || "Lỗi không xác định");
+        else setError("Lỗi không xác định");
       } catch (err) {
         setError((err as Error).message);
       } finally {
@@ -46,13 +47,19 @@ export default function BlogDetailPage() {
   }, [slug]);
 
   if (loading) return <div className="text-center py-8">Đang tải bài viết...</div>;
-  if (error || !blog) return notFound(); // ✅ trả về 404 đúng chuẩn Next
+  if (error || !blog) return notFound();
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4">
-      <img src={blog.img} alt={blog.name} className="w-full h-64 object-cover rounded-lg mb-6" />
+      <Image
+        width={1280}
+        height={720}
+        src={blog.img}
+        alt={blog.name}
+        className="object-cover rounded-lg mb-6"
+      />
       <h1 className="text-3xl font-bold mb-4">{blog.name}</h1>
-      <p className="text-gray-600 mb-8">{blog.description}</p>
+      <p className="text-gray-600 mb-2">{blog.description}</p>
       <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: blog.content }} />
     </div>
   );

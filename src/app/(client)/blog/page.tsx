@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface Blog {
   _id: string;
@@ -33,7 +34,7 @@ export default function BlogListPage() {
         if (result.success) {
           setBlogs(result.data);
         } else {
-          setError(result.message || "Lỗi không xác định");
+          setError("Lỗi không xác định");
         }
       } catch (err) {
         setError((err as Error).message);
@@ -55,7 +56,7 @@ export default function BlogListPage() {
 
   return (
     <div className="max-w-6xl mx-auto py-12 px-4">
-      <h1 className="text-3xl font-bold text-center mb-8">Blog - NhaMayMan-Hanh 💛</h1>
+      <h1 className="text-3xl font-bold text-center mb-8">Blog - NhaMayMan-Hanh</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {blogs.map((blog) => (
           <Link
@@ -63,7 +64,13 @@ export default function BlogListPage() {
             href={`/blog/${blog.slug}`}
             className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
           >
-            <img src={blog.img} alt={blog.name} className="w-full h-48 object-cover" />
+            <Image
+              width={300}
+              height={300}
+              src={blog.img}
+              alt={blog.name}
+              className="w-full h-48 object-cover"
+            />
             <div className="p-4">
               <h2 className="font-semibold text-gray-900 mb-2">{blog.name}</h2>
               <p className="text-gray-600 mb-4">{blog.description}</p>

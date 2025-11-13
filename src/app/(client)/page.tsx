@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import CategoryGrid from "../../components/client/category/CategoryGrid";
 import CategorySection from "../../components/client/category/CategorySection";
+import AdImage from "../../components/common/AdImage";
 
 interface Category {
   _id: string;
@@ -56,12 +57,14 @@ export default function Home() {
     },
   ];
 
+  const adImages = ["/img/ad1.jpg", "/img/ad1.jpg", "/img/ad1.jpg"];
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [slides.length]);
 
   const goToSlide = (index: number) => {
     setCurrentSlide(index);
@@ -103,9 +106,7 @@ export default function Home() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4">
-      <h1 className="text-4xl font-bold text-center mb-12">Trang chính - NhaMayMan-Hanh 💛</h1>
-
+    <div>
       {/* Slider */}
       <section className="relative mb-12 overflow-hidden rounded-lg">
         <div
@@ -151,31 +152,92 @@ export default function Home() {
 
         <button
           onClick={() => goToSlide((currentSlide - 1 + slides.length) % slides.length)}
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-opacity"
+          className="absolute left-10 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-opacity"
         >
           ‹
         </button>
         <button
           onClick={() => goToSlide((currentSlide + 1) % slides.length)}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-opacity"
+          className="absolute right-10 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-opacity"
         >
           ›
         </button>
       </section>
+      <div className="max-w-6xl mx-auto py-12 px-4">
+        {/* Category Grid */}
+        <CategoryGrid categories={data.categories} />
 
-      {/* Category Grid */}
-      <CategoryGrid categories={data.categories} />
+        {/* Category Sections */}
+        <section className="space-y-12">
+          {data.categories.map((category: any, index: number) => (
+            <div key={category._id}>
+              <CategorySection
+                category={category}
+                products={data.productsByCategory[category.name] || []}
+              />
 
-      {/* Category Sections */}
-      <section className="space-y-12">
-        {data.categories.map((category) => (
-          <CategorySection
-            key={category._id}
-            category={category}
-            products={data.productsByCategory[category.name] || []}
-          />
-        ))}
-      </section>
+              {/* Hiển thị ảnh sau mỗi 2 category */}
+              {(index + 1) % 2 === 0 && adImages[(index / 2) | 0] && (
+                <AdImage src={adImages[(index / 2) | 0]} />
+              )}
+            </div>
+          ))}
+        </section>
+
+        {/* Form thu thập ý kiến - Đặt ở cuối trang */}
+        <section className="mt-16 bg-gray-50 rounded-lg p-8">
+          <h2 className="text-2xl font-semibold mb-6 text-center">Gửi ý kiến đóng góp của bạn</h2>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              // Xử lý submit: Có thể gửi API, email, hoặc console.log tạm thời
+              const formData = new FormData(e.currentTarget);
+              console.log("Ý kiến:", {
+                email: formData.get("email"),
+                message: formData.get("message"),
+              });
+              alert("Cảm ơn bạn đã gửi ý kiến! Chúng tôi sẽ phản hồi sớm.");
+              e.currentTarget.reset(); // Reset form sau submit
+            }}
+            className="max-w-md mx-auto space-y-4"
+          >
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email (tùy chọn)
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                placeholder="Nhập email của bạn"
+              />
+            </div>
+            <div>
+              <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                Ý kiến của bạn
+              </label>
+              <textarea
+                id="message"
+                name="message"
+                rows={4}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+                placeholder="Hãy chia sẻ suy nghĩ của bạn về sản phẩm hoặc trang web..."
+              ></textarea>
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-amber-500 text-white py-2 px-4 rounded-md hover:bg-amber-600 transition-colors font-medium"
+            >
+              Gửi ý kiến
+            </button>
+          </form>
+          <p className="text-center text-sm text-gray-500 mt-4">
+            Ý kiến của bạn giúp chúng tôi cải thiện tốt hơn!
+          </p>
+        </section>
+      </div>
     </div>
   );
 }

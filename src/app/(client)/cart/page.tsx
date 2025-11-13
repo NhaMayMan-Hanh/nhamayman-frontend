@@ -1,13 +1,37 @@
-// app/(client)/cart/page.tsx (Trang cart - hiển thị items từ context)
 "use client";
 
-import { useCart } from "../../../contexts/CartContext";
+import { useCart } from "@contexts/CartContext";
+import { useAuth } from "@contexts/AuthContext";
+import { useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import toast from "react-hot-toast";
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateQuantity } = useCart();
+  const { cart, removeFromCart, updateQuantity, loading } = useCart();
+  const { user } = useAuth();
+
+  // Fetch server cart nếu logged in (on mount)
+  useEffect(() => {
+    if (user && !loading) {
+      fetch("http://localhost:5000/api/client/cart", {
+        credentials: "include",
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            // Cart context đã update từ API calls, nhưng nếu cần refresh
+          }
+        })
+        .catch(() => toast.error("Lỗi tải giỏ hàng"));
+    }
+  }, [user, loading]);
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  if (loading) {
+    return <div className="text-center py-8">Đang tải giỏ hàng...</div>;
+  }
 
   if (cart.length === 0) {
     return (
@@ -32,7 +56,13 @@ export default function CartPage() {
             key={item._id}
             className="flex items-center justify-between p-4 bg-white rounded-lg shadow"
           >
-            <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded" />
+            <Image
+              width={100}
+              height={100}
+              src={item.image}
+              alt={item.name}
+              className="w-16 h-16 object-cover rounded"
+            />
             <div className="flex-1 ml-4">
               <h3 className="font-semibold">{item.name}</h3>
               <p>{item.price.toLocaleString()} VNĐ</p>
@@ -51,7 +81,7 @@ export default function CartPage() {
       <div className="text-right">
         <p className="text-xl font-bold">Tổng: {total.toLocaleString()} VNĐ</p>
         <Link
-          href="/checkout" // Page checkout sau
+          href="/checkout"
           className="block mt-4 bg-amber-500 text-white py-3 px-6 rounded-lg hover:bg-amber-600 transition-colors text-center"
         >
           Thanh toán
