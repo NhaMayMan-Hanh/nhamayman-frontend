@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation"; // Import useRouter
 import { useAuth } from "../../../../contexts/AuthContext";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
-  const router = useRouter();
   const { login } = useAuth();
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
@@ -46,7 +44,7 @@ export default function LoginPage() {
 
       toast.success("Đăng nhập thành công 🎉");
 
-      login(data.data.user);
+      await login(data.data);
 
       setFormData({ username: "", password: "" });
     } catch (error) {

@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import CategoryGrid from "../../components/client/category/CategoryGrid";
-import CategorySection from "../../components/client/category/CategorySection";
-import AdImage from "../../components/common/AdImage";
+import CategoryGrid from "@components/client/category/CategoryGrid";
+import CategorySection from "@components/client/category/CategorySection";
+import AdImage from "@components/common/AdImage";
 
 interface Category {
   _id: string;

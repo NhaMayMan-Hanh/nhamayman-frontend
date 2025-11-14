@@ -31,7 +31,7 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
   };
 
   return (
-    <section className="mb-12">
+    <section className="mb-12 relative">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold">Danh mục sản phẩm</h2>
         {/* Có thể thêm link "Xem tất cả" nếu cần, nhưng hiện tại không có */}
