@@ -10,10 +10,11 @@ import Image from "next/image";
 
 interface CartItem {
   _id: string;
-  name: string;
-  price: number;
-  image: string;
-  quantity: number;
+  ten_sp: string;
+  gia_mua: number;
+  hinh: string;
+  so_luong: number;
+  giam_gia_sp?: number;
 }
 
 interface CheckoutData {
@@ -24,65 +25,152 @@ interface CheckoutData {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cart, clearCart, removeMultipleItems } = useCart();
+  const { clearCart } = useCart();
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [checkoutItems, setCheckoutItems] = useState<CartItem[]>([]);
-  const [address, setAddress] = useState({
-    fullName: user?.name || "",
-    phone: "",
-    address: "",
-    city: "",
-    country: "Việt Nam",
-  });
-  const [paymentMethod, setPaymentMethod] = useState("cash");
 
-  // Load selected items from localStorage
+  const [checkoutItems, setCheckoutItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  const [donhang, setDonhang] = useState({
+    ho_ten: user?.name || "",
+    dien_thoai: "",
+    email: user?.email || "",
+    tinh_thanh: "",
+    quan_huyen: "",
+    phuong_xa: "",
+    dia_chi_chi_tiet: "",
+    ghi_chu: "",
+    phuong_thuc: "cod" as "cod" | "online" | "chuyen_khoan",
+  });
+
+  const [maGiamGia, setMaGiamGia] = useState("");
+  const [giamGia, setGiamGia] = useState(0);
+  const [phiVanChuyen] = useState(0);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // === LOAD GIỎ HÀNG ===
   useEffect(() => {
-    const savedItems = localStorage.getItem("checkout_items");
-    if (savedItems) {
-      try {
-        const items = JSON.parse(savedItems);
-        setCheckoutItems(items);
-      } catch (error) {
-        console.error("Error parsing checkout items:", error);
-        toast.error("Lỗi khi tải thông tin thanh toán");
-        router.push("/cart");
-      }
-    } else {
-      // If no items selected, redirect to cart
-      toast.error("Vui lòng chọn sản phẩm để thanh toán");
+    const saved = localStorage.getItem("checkout_items");
+    if (!saved) {
+      toast.error("Không có sản phẩm để thanh toán");
+      router.push("/cart");
+      return;
+    }
+
+    try {
+      const items: CartItem[] = JSON.parse(saved);
+      const validItems = items.filter(
+        (item) =>
+          item._id &&
+          item.ten_sp &&
+          typeof item.gia_mua === "number" &&
+          typeof item.so_luong === "number"
+      );
+      if (validItems.length === 0) throw new Error("Dữ liệu không hợp lệ");
+      setCheckoutItems(validItems);
+    } catch (err) {
+      toast.error("Lỗi tải giỏ hàng. Vui lòng thử lại.");
+      localStorage.removeItem("checkout_items");
       router.push("/cart");
     }
   }, [router]);
 
-  const total = checkoutItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  // === TÍNH TOÁN ===
+  const tongTien = checkoutItems.reduce((sum, sp) => {
+    const gia = Number(sp.gia_mua) || 0;
+    const sl = Number(sp.so_luong) || 0;
+    return sum + gia * sl;
+  }, 0);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (checkoutItems.length === 0) {
-      toast.error("Không có sản phẩm nào để thanh toán");
+  const tongTienFinal = Math.max(0, tongTien - giamGia + phiVanChuyen);
+
+  // === VALIDATION ===
+  const validateField = (field: keyof typeof donhang, value: string) => {
+    const err: Record<string, string> = {};
+    if (field === "ho_ten" && !value.trim()) err.ho_ten = "Vui lòng nhập họ tên";
+    if (field === "dien_thoai" && !/^\d{10,11}$/.test(value))
+      err.dien_thoai = "SĐT không hợp lệ (10-11 số)";
+    if (field === "email" && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+      err.email = "Email không hợp lệ";
+    if (field === "tinh_thanh" && !value.trim()) err.tinh_thanh = "Nhập tỉnh/thành phố";
+    if (field === "quan_huyen" && !value.trim()) err.quan_huyen = "Nhập quận/huyện";
+    if (field === "phuong_xa" && !value.trim()) err.phuong_xa = "Nhập phường/xã";
+    if (field === "dia_chi_chi_tiet" && !value.trim())
+      err.dia_chi_chi_tiet = "Nhập số nhà, đường...";
+    setErrors((prev) => ({ ...prev, ...err }));
+    return Object.keys(err).length === 0;
+  };
+
+  const validateAll = () => {
+    const required = [
+      "ho_ten",
+      "dien_thoai",
+      "tinh_thanh",
+      "quan_huyen",
+      "phuong_xa",
+      "dia_chi_chi_tiet",
+    ] as const;
+    let isValid = true;
+    required.forEach((f) => {
+      if (!validateField(f, donhang[f])) isValid = false;
+    });
+    return isValid;
+  };
+
+  // === MÃ GIẢM GIÁ ===
+  const apDungMaGiamGia = () => {
+    if (maGiamGia.trim().toUpperCase() === "GIAM10") {
+      const discount = Math.floor(tongTien * 0.1);
+      setGiamGia(discount);
+      toast.success(`Giảm ${discount.toLocaleString()}₫ thành công!`);
+    } else {
+      toast.error("Mã giảm giá không hợp lệ");
+    }
+  };
+
+  // === XÁC NHẬN ĐẶT HÀNG ===
+  const moModalXacNhan = () => {
+    if (!validateAll()) {
+      toast.error("Vui lòng điền đầy đủ và đúng thông tin");
       return;
     }
 
     if (!user) {
-      toast.error("Vui lòng đăng nhập trước khi đặt hàng");
-      router.push("/auth/login");
+      localStorage.setItem("checkout_pending", "true");
+      router.push("/auth/login?redirect=/checkout");
       return;
     }
 
-    setLoading(true);
+    setShowConfirmModal(true);
+  };
 
+  // === GỌI API THẬT: http://localhost:5000/api/client/orders ===
+  const xacNhanDatHang = async () => {
+    if (!user) return;
+
+    setLoading(true);
     try {
+      const diaChiFull = `${donhang.dia_chi_chi_tiet}, ${donhang.phuong_xa}, ${donhang.quan_huyen}, ${donhang.tinh_thanh}`;
+
       const orderData = {
-        items: checkoutItems.map((item) => ({
-          productId: item._id,
-          quantity: item.quantity,
-          price: item.price,
+        items: checkoutItems.map((sp) => ({
+          productId: sp._id,
+          quantity: sp.so_luong,
+          price: sp.gia_mua,
         })),
-        total,
-        shippingAddress: address,
-        paymentMethod,
+        total: tongTienFinal,
+        shippingAddress: {
+          fullName: donhang.ho_ten,
+          phone: donhang.dien_thoai,
+          address: diaChiFull,
+          city: donhang.tinh_thanh,
+          country: "Việt Nam",
+        },
+        paymentMethod: donhang.phuong_thuc,
+        note: donhang.ghi_chu?.trim() || undefined,
+        email: donhang.email?.trim() || undefined,
+        discount: giamGia,
       };
 
       const res = await fetch("http://localhost:5000/api/client/orders", {
@@ -99,221 +187,325 @@ export default function CheckoutPage() {
       }
 
       toast.success("Đặt hàng thành công! Đơn hàng sẽ được xử lý sớm.");
-
-      // Remove ordered items from cart
-      for (const item of checkoutItems) {
-        const cartItem = cart.find((c) => c._id === item._id);
-        if (cartItem) {
-          await clearCart(); // Or implement selective removal
-        }
-      }
-
-      // Clear checkout items from localStorage
-      localStorage.removeItem("cart");
-
+      localStorage.removeItem("checkout_items");
+      localStorage.removeItem("checkout_pending");
+      clearCart();
       router.push("/thanks");
-    } catch (error) {
-      toast.error((error as Error).message);
+    } catch (err: any) {
+      toast.error(err.message || "Lỗi hệ thống");
     } finally {
       setLoading(false);
+      setShowConfirmModal(false);
     }
   };
 
   if (checkoutItems.length === 0) {
     return (
-      <div className="max-w-6xl mx-auto text-center py-12 px-4">
-        <div className="py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Đang tải thông tin thanh toán...</p>
-        </div>
+      <div className="py-20 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Đang tải đơn hàng...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Thanh toán</h1>
-        <Link href="/cart" className="text-amber-600 hover:text-amber-700 font-medium">
-          ← Quay về giỏ hàng
-        </Link>
-      </div>
+    <>
+      <div className="px-[9%] max-w-[100%] mx-auto py-8">
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* === FORM === */}
+          <div className="lg:col-span-2">
+            <h3 className="text-2xl font-bold mb-6 text-orange-600">Hoàn tất đơn hàng</h3>
 
-      <div className="grid md:grid-cols-2 gap-8">
-        {/* Cart Summary */}
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">
-            Sản phẩm đã chọn ({checkoutItems.length})
-          </h2>
-          <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
-            {checkoutItems.map((item) => (
-              <div
-                key={item._id}
-                className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center space-x-3">
-                  <Image
-                    width={60}
-                    height={60}
-                    src={item.image}
-                    alt={item.name}
-                    className="w-15 h-15 object-cover rounded-lg"
+            {/* Thông tin khách hàng */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 mb-5">
+              <h5 className="text-lg font-bold text-gray-800 border-b-2 border-orange-600 pb-3 mb-5">
+                Thông tin khách hàng
+              </h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Họ và tên *</label>
+                  <input
+                    type="text"
+                    value={donhang.ho_ten}
+                    onChange={(e) => setDonhang({ ...donhang, ho_ten: e.target.value })}
+                    onBlur={() => validateField("ho_ten", donhang.ho_ten)}
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-orange-600 focus:outline-none transition"
+                    placeholder="Nguyễn Văn A"
                   />
-                  <div>
-                    <p className="font-medium text-gray-800">{item.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {item.quantity} x {item.price.toLocaleString()} VNĐ
-                    </p>
-                  </div>
+                  {errors.ho_ten && <p className="text-red-500 text-sm mt-1">{errors.ho_ten}</p>}
                 </div>
-                <span className="font-semibold text-amber-600">
-                  {(item.quantity * item.price).toLocaleString()} VNĐ
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Số điện thoại *</label>
+                  <input
+                    type="tel"
+                    value={donhang.dien_thoai}
+                    onChange={(e) => setDonhang({ ...donhang, dien_thoai: e.target.value })}
+                    onBlur={() => validateField("dien_thoai", donhang.dien_thoai)}
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-orange-600 focus:outline-none transition"
+                    placeholder="0901234567"
+                  />
+                  {errors.dien_thoai && <p className="text-red-500 text-sm mt-1">{errors.dien_thoai}</p>}
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block font-semibold text-gray-700 mb-2">
+                    Email <span className="text-gray-500 text-sm">(tùy chọn)</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={donhang.email}
+                    onChange={(e) => setDonhang({ ...donhang, email: e.target.value })}
+                    onBlur={() => validateField("email", donhang.email)}
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-orange-600 focus:outline-none transition"
+                    placeholder="email@example.com"
+                  />
+                  {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                </div>
+
+                {/* === ĐỊA CHỈ NHẬP TAY === */}
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Tỉnh/Thành phố *</label>
+                  <input
+                    type="text"
+                    value={donhang.tinh_thanh}
+                    onChange={(e) => setDonhang({ ...donhang, tinh_thanh: e.target.value })}
+                    onBlur={() => validateField("tinh_thanh", donhang.tinh_thanh)}
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-orange-600 focus:outline-none transition"
+                    placeholder="Hà Nội"
+                  />
+                  {errors.tinh_thanh && <p className="text-red-500 text-sm mt-1">{errors.tinh_thanh}</p>}
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Quận/Huyện *</label>
+                  <input
+                    type="text"
+                    value={donhang.quan_huyen}
+                    onChange={(e) => setDonhang({ ...donhang, quan_huyen: e.target.value })}
+                    onBlur={() => validateField("quan_huyen", donhang.quan_huyen)}
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-orange-600 focus:outline-none transition"
+                    placeholder="Hoàn Kiếm"
+                  />
+                  {errors.quan_huyen && <p className="text-red-500 text-sm mt-1">{errors.quan_huyen}</p>}
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Phường/Xã *</label>
+                  <input
+                    type="text"
+                    value={donhang.phuong_xa}
+                    onChange={(e) => setDonhang({ ...donhang, phuong_xa: e.target.value })}
+                    onBlur={() => validateField("phuong_xa", donhang.phuong_xa)}
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-orange-600 focus:outline-none transition"
+                    placeholder="Hàng Bạc"
+                  />
+                  {errors.phuong_xa && <p className="text-red-500 text-sm mt-1">{errors.phuong_xa}</p>}
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">Số nhà, đường... *</label>
+                  <input
+                    type="text"
+                    value={donhang.dia_chi_chi_tiet}
+                    onChange={(e) => setDonhang({ ...donhang, dia_chi_chi_tiet: e.target.value })}
+                    onBlur={() => validateField("dia_chi_chi_tiet", donhang.dia_chi_chi_tiet)}
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-orange-600 focus:outline-none transition"
+                    placeholder="123 Đường ABC"
+                  />
+                  {errors.dia_chi_chi_tiet && (
+                    <p className="text-red-500 text-sm mt-1">{errors.dia_chi_chi_tiet}</p>
+                  )}
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block font-semibold text-gray-700 mb-2">Ghi chú</label>
+                  <textarea
+                    value={donhang.ghi_chu}
+                    onChange={(e) => setDonhang({ ...donhang, ghi_chu: e.target.value })}
+                    rows={3}
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-orange-600 focus:outline-none transition"
+                    placeholder="Giao giờ hành chính..."
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            {/* Mã giảm giá */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 mb-5">
+              <h5 className="text-lg font-bold text-gray-800 border-b-2 border-orange-600 pb-3 mb-5">
+                Mã giảm giá
+              </h5>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={maGiamGia}
+                  onChange={(e) => setMaGiamGia(e.target.value)}
+                  placeholder="Nhập mã"
+                  className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-orange-600 focus:outline-none transition"
+                />
+                <button
+                  onClick={apDungMaGiamGia}
+                  className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-semibold transition"
+                >
+                  Áp dụng
+                </button>
+              </div>
+            </div>
+
+            {/* Phương thức thanh toán */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 mb-5">
+              <h5 className="text-lg font-bold text-gray-800 border-b-2 border-orange-600 pb-3 mb-5">
+                Phương thức thanh toán
+              </h5>
+              <div className="space-y-3">
+                {[
+                  { value: "cod", label: "Thanh toán khi nhận hàng (COD)" },
+                  { value: "online", label: "Momo" },
+                  { value: "chuyen_khoan", label: "Chuyển khoản ngân hàng" },
+                ].map((m) => (
+                  <label
+                    key={m.value}
+                    className={`flex items-center p-4 border-2 rounded-xl cursor-pointer transition ${
+                      donhang.phuong_thuc === m.value
+                        ? "border-orange-600 bg-orange-50"
+                        : "border-gray-200"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="phuong_thuc"
+                      value={m.value}
+                      checked={donhang.phuong_thuc === m.value}
+                      onChange={(e) =>
+                        setDonhang({ ...donhang, phuong_thuc: e.target.value as any })
+                      }
+                      className="w-5 h-5 text-orange-600"
+                    />
+                    <div className="ml-4">
+                      <strong>{m.label}</strong>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <Link href="/cart" className="text-orange-600 hover:underline font-semibold">
+              Quay lại giỏ hàng
+            </Link>
+          </div>
+
+          {/* === TÓM TẮT === */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-24">
+              <h5 className="font-bold text-lg mb-4">Tóm tắt đơn hàng</h5>
+              <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
+                {checkoutItems.map((sp) => (
+                  <div
+                    key={sp._id}
+                    className="flex justify-between text-sm pb-3 border-b border-dashed"
+                  >
+                    <span className="text-gray-700">
+                      {sp.ten_sp} x{sp.so_luong}
+                    </span>
+                    <span className="font-semibold">
+                      {(sp.gia_mua * sp.so_luong).toLocaleString()}₫
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <hr className="my-4" />
+              <div className="flex justify-between mb-3">
+                <span className="text-gray-600">Tạm tính:</span>
+                <span className="font-semibold">{tongTien.toLocaleString()}₫</span>
+              </div>
+              <div className="flex justify-between mb-3">
+                <span className="text-gray-600">Giảm giá:</span>
+                <span className="text-orange-600">-{giamGia.toLocaleString()}₫</span>
+              </div>
+              <div className="flex justify-between mb-4">
+                <span className="text-gray-600">Phí vận chuyển:</span>
+                <span className="text-orange-600">Miễn phí</span>
+              </div>
+              <div className="flex justify-between mb-6 text-lg font-bold">
+                <span>Tổng cộng:</span>
+                <span className="text-orange-600 text-xl">
+                  {tongTienFinal.toLocaleString()}₫
                 </span>
               </div>
-            ))}
-          </div>
-          <div className="border-t pt-4">
-            <div className="flex justify-between items-center mb-2 text-gray-600">
-              <span>Tạm tính:</span>
-              <span className="font-medium">{total.toLocaleString()} VNĐ</span>
-            </div>
-            <div className="flex justify-between items-center mb-2 text-gray-600">
-              <span>Phí vận chuyển:</span>
-              <span className="font-medium text-green-600">Miễn phí</span>
-            </div>
-            <div className="flex justify-between items-center pt-3 border-t">
-              <span className="text-lg font-bold text-gray-800">Tổng cộng:</span>
-              <span className="text-2xl font-bold text-amber-600">
-                {total.toLocaleString()} VNĐ
-              </span>
-            </div>
-          </div>
-        </div>
 
-        {/* Shipping Form */}
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Thông tin giao hàng</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Họ và tên <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Nhập họ và tên"
-                value={address.fullName}
-                onChange={(e) => setAddress({ ...address, fullName: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Số điện thoại <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="tel"
-                placeholder="Nhập số điện thoại"
-                value={address.phone}
-                onChange={(e) => setAddress({ ...address, phone: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Địa chỉ chi tiết <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Số nhà, tên đường"
-                value={address.address}
-                onChange={(e) => setAddress({ ...address, address: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Thành phố <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Nhập thành phố"
-                value={address.city}
-                onChange={(e) => setAddress({ ...address, city: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Phương thức thanh toán <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                required
-              >
-                <option value="cash">💵 Thanh toán khi nhận hàng (COD)</option>
-                <option value="card">💳 Thẻ tín dụng / Ghi nợ</option>
-                <option value="banking">🏦 Chuyển khoản ngân hàng</option>
-              </select>
-            </div>
-
-            <div className="pt-4">
               <button
-                type="submit"
+                onClick={moModalXacNhan}
                 disabled={loading}
-                className={`w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-4 px-6 rounded-lg transition-all shadow-md hover:shadow-lg ${
-                  loading ? "opacity-70 cursor-not-allowed" : ""
-                }`}
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-3 rounded-lg font-bold transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
               >
-                {loading ? (
-                  <span className="flex items-center justify-center">
-                    <svg
-                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Đang xử lý...
-                  </span>
-                ) : (
-                  `Xác nhận đặt hàng - ${total.toLocaleString()} VNĐ`
-                )}
+                {loading ? "Đang xử lý..." : "Hoàn tất thanh toán"}
               </button>
-
-              <p className="text-xs text-gray-500 text-center mt-3">
-                Bằng cách đặt hàng, bạn đồng ý với{" "}
-                <Link href="/terms" className="text-amber-600 hover:underline">
-                  Điều khoản dịch vụ
-                </Link>{" "}
-                của chúng tôi
-              </p>
             </div>
-          </form>
-        </div>
+          </div>
+        </section>
+
+        {/* === MODAL XÁC NHẬN === */}
+        {showConfirmModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fadeIn">
+              <h3 className="text-xl font-bold text-orange-600 mb-4">Xác nhận đặt hàng</h3>
+              <div className="space-y-2 text-sm">
+                <p>
+                  <strong>Họ tên:</strong> {donhang.ho_ten}
+                </p>
+                <p>
+                  <strong>SĐT:</strong> {donhang.dien_thoai}
+                </p>
+                <p>
+                  <strong>Email:</strong> {donhang.email || "(Không có)"}
+                </p>
+                <p>
+                  <strong>Địa chỉ:</strong> {donhang.dia_chi_chi_tiet}, {donhang.phuong_xa},{" "}
+                  {donhang.quan_huyen}, {donhang.tinh_thanh}
+                </p>
+                <p className="mt-3 pt-3 border-t">
+                  <strong>Tổng tiền: </strong>
+                  <span className="text-xl text-orange-600">
+                    {tongTienFinal.toLocaleString()}₫
+                  </span>
+                </p>
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="flex-1 py-3 border-2 border-gray-300 rounded-xl font-semibold hover:bg-gray-50 transition"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={xacNhanDatHang}
+                  disabled={loading}
+                  className="flex-1 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition disabled:opacity-50"
+                >
+                  {loading ? "Đang gửi..." : "Xác nhận"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `}</style>
+    </>
   );
 }
