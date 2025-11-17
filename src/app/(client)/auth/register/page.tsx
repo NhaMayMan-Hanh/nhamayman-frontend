@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
     username: "",
@@ -53,6 +55,7 @@ export default function RegisterPage() {
 
       toast.success(data.message || "Đăng ký thành công");
       setFormData({ name: "", username: "", email: "", password: "", confirmPassword: "" });
+      router.push("/auth/login");
     } catch (error) {
       toast.error((error as Error).message);
     } finally {
