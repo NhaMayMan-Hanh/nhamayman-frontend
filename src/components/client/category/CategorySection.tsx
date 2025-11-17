@@ -75,7 +75,7 @@ export default function CategorySection({ category, products }: CategorySectionP
       <div className="w-full max-w-[1072px] mx-auto relative">
         <div
           ref={sliderRef}
-          className="flex gap-4  md:gap-6 overflow-x-auto scroll-smooth scrollbar-hide cursor-grab active:cursor-grabbing md:[&::-webkit-scrollbar]:hidden"
+          className="flex gap-4 p-2 md:gap-6 overflow-x-auto scroll-smooth scrollbar-hide cursor-grab active:cursor-grabbing md:[&::-webkit-scrollbar]:hidden"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {products.length > 0 ? (

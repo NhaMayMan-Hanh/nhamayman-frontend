@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const checkAuth = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/client/auth/profile", {
+        const res = await fetch("http://localhost:5000/api/client/users/profile", {
           credentials: "include",
         });
         if (res.ok) {

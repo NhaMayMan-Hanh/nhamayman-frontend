@@ -71,6 +71,7 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
                     height={150}
                     src={category.img}
                     alt={category.name}
+                    unoptimized
                     className="w-full h-32 md:h-40 object-cover mb-3 rounded-lg"
                   />
                   <h3 className="font-bold text-sm md:text-base mb-1">{category.name}</h3>
