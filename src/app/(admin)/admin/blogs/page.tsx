@@ -6,6 +6,7 @@ import { filterBlogs, formatDate } from "./utils";
 import BlogFilter from "./BlogFilter";
 import Pagination from "./pagination";
 import DeleteModal from "./DeleteModal";
+import Link from "next/link";
 
 export default function Blogs() {
    const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -61,7 +62,7 @@ export default function Blogs() {
       try {
          const response = await fetch(
             `http://localhost:5000/api/admin/blogs/${selectedBlog._id}`,
-            { method: "DELETE" }
+            { method: "DELETE", credentials: "include" }
          );
          if (response.ok) fetchBlogs();
          setShowModal(false);
@@ -237,7 +238,7 @@ export default function Blogs() {
                                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-lg overflow-hidden shrink-0">
                                        {blog.img ? (
                                           <img
-                                             src={blog.img}
+                                             src={`http://localhost:3000${blog.img}`}
                                              alt={blog.name}
                                              className="w-full h-full object-cover"
                                           />
@@ -292,9 +293,9 @@ export default function Blogs() {
                                  </td>
                                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div className="flex items-center justify-end gap-1 sm:gap-2">
-                                       <button
-                                          disabled
-                                          className="p-1.5 sm:p-2 text-blue-600 rounded-lg transition-colors opacity-50 cursor-not-allowed"
+                                       <Link
+                                          href={`/admin/blogs/${blog._id}`}
+                                          className="p-1.5 sm:p-2 text-blue-600 rounded-lg transition-colors"
                                           title="Xem chi tiết (không khả dụng)"
                                        >
                                           <svg
@@ -316,10 +317,10 @@ export default function Blogs() {
                                                 d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                                              />
                                           </svg>
-                                       </button>
-                                       <button
-                                          disabled
-                                          className="p-1.5 sm:p-2 text-green-600 rounded-lg transition-colors opacity-50 cursor-not-allowed"
+                                       </Link>
+                                       <Link
+                                          href={`/admin/blogs/edit/${blog._id}`}
+                                          className="p-1.5 sm:p-2 text-green-600 rounded-lg transition-colors"
                                           title="Chỉnh sửa (không khả dụng)"
                                        >
                                           <svg
@@ -335,7 +336,7 @@ export default function Blogs() {
                                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                                              />
                                           </svg>
-                                       </button>
+                                       </Link>
                                        <button
                                           onClick={() => handleDelete(blog)}
                                           className="p-1.5 sm:p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
