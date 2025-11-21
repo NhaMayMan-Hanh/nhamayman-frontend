@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 interface Product {
   _id: string;
@@ -17,6 +18,7 @@ interface Product {
 
 interface ProductsData {
   success: boolean;
+  categoryName?: string;
   data: Product[];
 }
 
@@ -24,6 +26,7 @@ export default function ProductsPage() {
   const searchParams = useSearchParams();
   const categorySlug = searchParams.get("category") || "";
   const [products, setProducts] = useState<Product[]>([]);
+  const [categoryName, setCategoryName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,6 +48,7 @@ export default function ProductsPage() {
         const result: ProductsData = await res.json();
         if (result.success) {
           setProducts(result.data);
+          setCategoryName(result.categoryName || "");
         } else {
           setError(result.message || "Lỗi không xác định");
         }
@@ -69,7 +73,7 @@ export default function ProductsPage() {
   if (products.length === 0) {
     return (
       <div className="text-center py-8">
-        <h1 className="text-3xl font-bold mb-4">Sản phẩm theo danh mục: {categorySlug}</h1>
+        <h1 className="text-3xl font-bold mb-4">Sản phẩm theo danh mục: {categoryName}</h1>
         <p className="text-gray-600">Chưa có sản phẩm nào trong danh mục này.</p>
         <Link
           href="/"
@@ -84,7 +88,7 @@ export default function ProductsPage() {
   return (
     <div className="max-w-6xl mx-auto py-12 px-4">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2">Sản phẩm theo danh mục: {categorySlug}</h1>
+        <h1 className="text-3xl font-bold mb-2">Sản phẩm theo danh mục: {categoryName}</h1>
         <Link href="/" className="text-amber-500 hover:underline">
           ← Quay về trang chủ
         </Link>
@@ -97,10 +101,17 @@ export default function ProductsPage() {
             href={`/products/${product._id}`} // Route chi tiết sản phẩm (sẽ code sau)
             className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
           >
-            <img src={product.image} alt={product.name} className="w-full h-48 object-cover" />
+            <Image
+              width={300}
+              height={300}
+              src={product.image}
+              alt={product.name}
+              unoptimized
+              className="w-full h-48 object-cover"
+            />
             <div className="p-4">
               <h3 className="font-semibold text-gray-900 mb-2">{product.name}</h3>
-              <p className="text-gray-600 mb-2">{product.description.substring(0, 100)}...</p>
+              {/* <p className="text-gray-600 mb-2">{product.description.substring(0, 100)}...</p> */}
               <p className="text-amber-500 font-bold mb-2">{product.price.toLocaleString()} VNĐ</p>
               <p className="text-sm text-gray-500">Tồn kho: {product.stock}</p>
             </div>

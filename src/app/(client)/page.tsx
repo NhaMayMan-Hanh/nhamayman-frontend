@@ -6,6 +6,7 @@ import Image from "next/image";
 import CategoryGrid from "@components/client/category/CategoryGrid";
 import CategorySection from "@components/client/category/CategorySection";
 import AdImage from "@components/common/AdImage";
+import BlogSection from "@components/client/blog/BlogSection";
 
 interface Category {
   _id: string;
@@ -57,7 +58,7 @@ export default function Home() {
     },
   ];
 
-  const adImages = ["/img/ad1.jpg", "/img/ad1.jpg", "/img/ad1.jpg"];
+  const adImages = ["/img/ad1.jpg", "/img/ad2.jpg", "/img/ad1.jpg"];
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -114,7 +115,7 @@ export default function Home() {
           style={{ transform: `translateX(-${currentSlide * 100}%)` }}
         >
           {slides.map((slide, index) => (
-            <div key={index} className="w-full flex-shrink-0 relative">
+            <div key={index} className="w-full shrink-0 relative">
               <Image
                 width={1200}
                 height={400}
@@ -183,6 +184,9 @@ export default function Home() {
             </div>
           ))}
         </section>
+
+        {/* Blog Section - Thêm trước phần liên hệ */}
+        <BlogSection />
 
         {/* Form thu thập ý kiến - Đặt ở cuối trang */}
         <section className="mt-16 bg-gray-50 rounded-lg p-8">

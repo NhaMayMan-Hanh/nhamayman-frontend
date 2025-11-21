@@ -56,7 +56,7 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
       <div className="w-full max-w-[1072px] mx-auto relative">
         <div
           ref={sliderRef}
-          className="flex justify-center gap-4 md:gap-6 overflow-x-auto scroll-smooth scrollbar-hide cursor-grab active:cursor-grabbing md:[&::-webkit-scrollbar]:hidden"
+          className="flex justify-center gap-2 md:gap-3 overflow-x-auto scroll-smooth scrollbar-hide cursor-grab active:cursor-grabbing md:[&::-webkit-scrollbar]:hidden"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {categories.length > 0 ? (
@@ -71,6 +71,7 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
                     height={150}
                     src={category.img}
                     alt={category.name}
+                    unoptimized
                     className="w-full h-32 md:h-40 object-cover mb-3 rounded-lg"
                   />
                   <h3 className="font-bold text-sm md:text-base mb-1">{category.name}</h3>

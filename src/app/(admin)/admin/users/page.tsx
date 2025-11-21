@@ -1,4 +1,5 @@
 "use client";
+import { ToastContainer } from "@components/admin/ui/Toast";
 import { useState, useEffect } from "react";
 
 // Types
@@ -476,14 +477,45 @@ export default function Users() {
 
    const confirmDelete = async () => {
       if (!selectedUser) return;
+
+      // @ts-ignore - đã gắn vào window
+      const toastId = window.showToast("Đang xóa người dùng...", "loading");
+
       try {
-         const response = await fetch(
+         const res = await fetch(
             `http://localhost:5000/api/admin/users/${selectedUser._id}`,
-            { method: "DELETE" }
+            {
+               method: "DELETE",
+               credentials: "include",
+            }
          );
-         if (response.ok) fetchUsers();
-         setShowModal(false);
+
+         if (res.ok) {
+            // @ts-ignore
+            window.updateToast(
+               toastId,
+               `Đã xóa người dùng "${selectedUser.name}" thành công!`,
+               "success"
+            );
+
+            // Cập nhật lại danh sách user
+            fetchUsers();
+
+            // Đóng modal và reset state
+            setShowModal(false);
+            setSelectedUser(null);
+         } else {
+            const errorData = await res.json();
+            // @ts-ignore
+            window.updateToast(
+               toastId,
+               errorData.message || "Xóa thất bại",
+               "error"
+            );
+         }
       } catch (err) {
+         // @ts-ignore
+         window.updateToast(toastId, "Lỗi kết nối server", "error");
          console.error("Error deleting user:", err);
       }
    };
@@ -570,7 +602,12 @@ export default function Users() {
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                      />
                   </div>
-                  <button className="w-full md:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                  <button
+                     onClick={() =>
+                        (window.location.href = `/admin/users/create`)
+                     }
+                     className="w-full md:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
                      <svg
                         className="w-5 h-5"
                         fill="none"
@@ -785,12 +822,14 @@ export default function Users() {
                                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div className="flex items-center justify-end gap-1 sm:gap-2">
                                        <button
-                                          disabled
-                                          className="p-1.5 sm:p-2 text-blue-600 rounded-lg transition-colors opacity-50 cursor-not-allowed"
-                                          title="Xem chi tiết (không khả dụng)"
+                                          onClick={() =>
+                                             (window.location.href = `/admin/users/${user._id}`)
+                                          }
+                                          className="p-1.5 sm:p-2 text-blue-600 hover:bg-blue-50 rounded-lg group"
+                                          title="Xem chi tiết"
                                        >
                                           <svg
-                                             className="w-4 h-4 sm:w-5 sm:h-5"
+                                             className="w-4 h-4 sm:w-5 sm:h-5  transition-transform"
                                              fill="none"
                                              stroke="currentColor"
                                              viewBox="0 0 24 24"
@@ -810,12 +849,14 @@ export default function Users() {
                                           </svg>
                                        </button>
                                        <button
-                                          disabled
-                                          className="p-1.5 sm:p-2 text-green-600 rounded-lg transition-colors opacity-50 cursor-not-allowed"
-                                          title="Chỉnh sửa (không khả dụng)"
+                                          onClick={() =>
+                                             (window.location.href = `/admin/users/edit/${user._id}`)
+                                          }
+                                          className="p-1.5 sm:p-2 text-green-600 hover:bg-green-50 rounded-lg group"
+                                          title="Chỉnh sửa"
                                        >
                                           <svg
-                                             className="w-4 h-4 sm:w-5 sm:h-5"
+                                             className="w-4 h-4 sm:w-5 sm:h-5 transition-transform"
                                              fill="none"
                                              stroke="currentColor"
                                              viewBox="0 0 24 24"
@@ -870,6 +911,7 @@ export default function Users() {
                   onConfirm={confirmDelete}
                />
             )}
+            <ToastContainer />
          </div>
       </div>
    );

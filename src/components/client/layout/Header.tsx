@@ -88,7 +88,7 @@ export default function Header() {
             href="/blog"
             className="text-gray-700 hover:text-amber-500 transition-colors px-2 py-1"
           >
-            Blog
+            Tin tức
           </Link>
           <Link
             href="/about"
@@ -204,7 +204,7 @@ export default function Header() {
                 className="text-gray-700 hover:text-amber-500 transition-colors w-full py-2 px-2 rounded hover:bg-gray-50"
                 onClick={toggleMenu}
               >
-                Blog
+                Tin tức
               </Link>
               <Link
                 href="/about"

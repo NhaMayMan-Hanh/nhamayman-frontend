@@ -1,7 +1,7 @@
-// ======= CUSTOM TOAST CONTAINER (NextJS + TS + Tailwind) =======
+// components/ToastContainer.tsx
+"use client";
 import { useState, useEffect } from "react";
 
-// Mở rộng type cho window
 declare global {
    interface Window {
       showToast?: (
@@ -12,7 +12,7 @@ declare global {
       updateToast?: (
          id: string,
          message: string,
-         type: "success" | "error"
+         type: "success" | "error" | "loading"
       ) => void;
    }
 }
@@ -42,15 +42,18 @@ export function ToastContainer() {
       window.updateToast = (
          id: string,
          message: string,
-         type: "success" | "error"
+         type: "success" | "error" | "loading" // ✅ Thêm "loading"
       ) => {
          setToasts((prev) =>
             prev.map((t) => (t.id === id ? { ...t, message, type } : t))
          );
 
-         setTimeout(() => {
-            setToasts((prev) => prev.filter((t) => t.id !== id));
-         }, 3000);
+         // Chỉ tự động đóng nếu không phải loading
+         if (type !== "loading") {
+            setTimeout(() => {
+               setToasts((prev) => prev.filter((t) => t.id !== id));
+            }, 3000);
+         }
       };
    }, []);
 

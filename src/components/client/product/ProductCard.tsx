@@ -37,7 +37,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           className="w-full h-48 object-cover"
         />
         <div className="p-4">
-          <h3 className="font-semibold text-gray-900 mb-2">{product.name}</h3>
+          <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">{product.name}</h3>
           <p className="text-gray-600 mb-2 line-clamp-2">
             {product.description.substring(0, 80)}...
           </p>

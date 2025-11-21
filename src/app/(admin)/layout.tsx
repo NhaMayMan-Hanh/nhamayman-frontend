@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import AdminHeader from "@components/admin/layout/AdminHeader";
 import AdminSidebar from "@components/admin/layout/AdminSidebar";
-import { AuthProvider } from "../../contexts/AuthContext";
+import { AuthProvider } from "@contexts/AuthContext";
+import { ToastContainer } from "@components/admin/ui/Toast"; // ← Đảm bảo đường dẫn đúng
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
    return (
@@ -14,6 +15,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                   {children}
                </main>
             </div>
+            <ToastContainer />
          </div>
       </AuthProvider>
    );

@@ -31,7 +31,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/blog" className="hover:text-amber-400 transition-colors">
-                  Blog
+                  Tin tức
                 </Link>
               </li>
               <li>

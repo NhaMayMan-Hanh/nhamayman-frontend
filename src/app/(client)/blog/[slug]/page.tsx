@@ -50,14 +50,14 @@ export default function BlogDetailPage() {
   if (error || !blog) return notFound();
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4">
-      <Image
-        width={1280}
-        height={720}
+    <div className="max-w-6xl flex flex-col items-center mx-auto py-12 px-4 ">
+      {/* <Image
+        width={500}
+        height={300}
         src={blog.img}
         alt={blog.name}
         className="object-cover rounded-lg mb-6"
-      />
+      /> */}
       <h1 className="text-3xl font-bold mb-4">{blog.name}</h1>
       <p className="text-gray-600 mb-2">{blog.description}</p>
       <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: blog.content }} />

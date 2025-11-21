@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface Product {
    _id: string;
@@ -21,7 +22,6 @@ interface ApiResponse {
    success: boolean;
    data: {
       product: Product;
-      relatedProducts: Product[];
    };
 }
 
@@ -31,7 +31,6 @@ export default function AdminProductDetailPage() {
    const productId = params.id as string;
 
    const [product, setProduct] = useState<Product | null>(null);
-   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
    const [loading, setLoading] = useState<boolean>(true);
    const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +49,6 @@ export default function AdminProductDetailPage() {
          if (!response.ok) throw new Error("Không thể tải chi tiết sản phẩm");
          const result: ApiResponse = await response.json();
          setProduct(result.data.product);
-         setRelatedProducts(result.data.relatedProducts || []);
          setError(null);
       } catch (err) {
          setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra");
@@ -161,7 +159,10 @@ export default function AdminProductDetailPage() {
                         <p className="text-slate-600">{product.description}</p>
                      </div>
                      <div className="flex gap-2">
-                        <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition">
+                        <Link
+                           href={`/admin/products/edit/${product._id}`}
+                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                        >
                            <svg
                               className="w-6 h-6"
                               fill="none"
@@ -175,7 +176,7 @@ export default function AdminProductDetailPage() {
                                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
                               />
                            </svg>
-                        </button>
+                        </Link>
                         <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition">
                            <svg
                               className="w-6 h-6"
@@ -340,50 +341,6 @@ export default function AdminProductDetailPage() {
                </div>
             </div>
          </div>
-
-         {/* Related Products */}
-         {relatedProducts.length > 0 && (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-               <h2 className="text-2xl font-bold text-slate-800 mb-6">
-                  Sản phẩm liên quan
-               </h2>
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {relatedProducts.map((relatedProduct) => (
-                     <div
-                        key={relatedProduct._id}
-                        onClick={() =>
-                           router.push(`/admin/products/${relatedProduct._id}`)
-                        }
-                        className="group cursor-pointer bg-slate-50 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
-                     >
-                        <div className="aspect-square bg-slate-100 overflow-hidden">
-                           <img
-                              src={relatedProduct.image}
-                              alt={relatedProduct.name}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                           />
-                        </div>
-                        <div className="p-4">
-                           <h3 className="font-semibold text-slate-800 mb-2 line-clamp-2">
-                              {relatedProduct.name}
-                           </h3>
-                           <p className="text-sm text-slate-500 mb-3 line-clamp-1">
-                              {relatedProduct.description}
-                           </p>
-                           <div className="flex items-center justify-between">
-                              <span className="text-lg font-bold text-blue-600">
-                                 {relatedProduct.price.toLocaleString("vi-VN")}₫
-                              </span>
-                              <span className="text-xs text-slate-500">
-                                 Kho: {relatedProduct.stock}
-                              </span>
-                           </div>
-                        </div>
-                     </div>
-                  ))}
-               </div>
-            </div>
-         )}
       </div>
    );
 }

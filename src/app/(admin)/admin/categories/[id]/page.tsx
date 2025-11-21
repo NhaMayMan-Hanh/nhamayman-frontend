@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 
 interface Category {
@@ -56,7 +55,6 @@ export default function CategoryDetail() {
       fetchCategory();
    }, [id]);
 
-   // Hàm format ngày chuẩn Việt Nam (không cần date-fns)
    const formatDate = (dateString: string) => {
       const date = new Date(dateString);
       return `${date.toLocaleDateString("vi-VN")} lúc ${date.toLocaleTimeString(
@@ -126,7 +124,7 @@ export default function CategoryDetail() {
                <div className="flex gap-3">
                   <Link
                      href={`/admin/categories/edit/${category._id}`}
-                     className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                     className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                      <svg
                         className="w-5 h-5"
@@ -154,23 +152,13 @@ export default function CategoryDetail() {
 
             {/* Main Content */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-               {/* Hình ảnh + Thông tin cơ bản */}
                <div className="lg:col-span-1">
                   <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                      <div className="aspect-square relative bg-gray-100">
                         <img
-                           src={
-                              category.img.startsWith("http")
-                                 ? category.img
-                                 : category.img.includes("/uploads/")
-                                 ? `http://localhost:5000${category.img}`
-                                 : `http://localhost:3000${category.img}`
-                           }
+                           src={category.img}
                            alt={category.name}
                            className="object-cover w-full h-full"
-                           onError={(e) => {
-                              e.currentTarget.src = "/placeholder-image.png";
-                           }}
                         />
                      </div>
 
@@ -185,7 +173,6 @@ export default function CategoryDetail() {
                   </div>
                </div>
 
-               {/* Thông tin chi tiết */}
                <div className="lg:col-span-2 space-y-6">
                   {/* Mô tả */}
                   <div className="bg-white rounded-xl shadow-sm p-6">

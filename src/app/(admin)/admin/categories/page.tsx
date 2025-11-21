@@ -23,7 +23,6 @@ interface FilterOptions {
    searchTerm: string;
 }
 
-// Utility
 const filterCategories = (
    categories: Category[],
    searchTerm: string,
@@ -50,7 +49,6 @@ const filterCategories = (
    });
 };
 
-// Modal Xóa (giữ nguyên đẹp như cũ)
 function DeleteModal({
    category,
    onClose,

@@ -134,7 +134,6 @@ export default function EditCategory() {
       formData.append("description", description.trim());
 
       try {
-         // Trường hợp 1: KHÔNG upload ảnh mới → 100% thành công (backend không chạy fs)
          if (!newImage) {
             const res = await fetch(
                `http://localhost:5000/api/admin/categories/${id}`,

@@ -106,14 +106,14 @@ interface Stats {
 interface ChartData {
    name: string;
    value: number;
-   [key: string]: string | number; 
+   [key: string]: string | number;
 }
 
 interface ProductChartData {
    name: string;
    stock: number;
    price: number;
-   [key: string]: string | number; 
+   [key: string]: string | number;
 }
 
 interface StatCardProps {
@@ -193,7 +193,7 @@ export default function Dashboard() {
    };
 
    const calculateRevenue = (): number => {
-      return stats.orders.reduce((sum, order) => sum + (order.total || 0), 0);
+      return stats.orders?.reduce((sum, order) => sum + (order.total || 0), 0);
    };
 
    const getProductsByCategory = (): ChartData[] => {

@@ -4,12 +4,14 @@ import { useCart } from "@contexts/CartContext";
 import { useAuth } from "@contexts/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
+import toast from "react-hot-toast";
 import { useState } from "react";
-import router from "next/router";
+import { useRouter } from "next/navigation";
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, clearCart, loading } = useCart();
-  const { loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [selectedItems, setSelectedItems] = useState(cart.map((item) => item._id));
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<"single" | "selected" | "all">("all");
@@ -258,23 +260,26 @@ export default function CartPage() {
               </div>
             </div>
 
-            <Link
-              href="/checkout"
+            <button
               className={`block w-full py-3 px-6 rounded-lg text-center font-semibold transition-all ${
                 selectedItems.length > 0
                   ? "bg-amber-500 text-white hover:bg-amber-600 shadow-md hover:shadow-lg"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
-              onClick={(e) => {
-                if (selectedItems.length === 0) {
-                  e.preventDefault();
-                } else {
-                  handleCheckout();
+              onClick={() => {
+                if (selectedItems.length === 0) return;
+
+                if (!user) {
+                  router.push("/auth/login");
+                  toast.error("Vui lòng đăng nhập trước khi thanh toán");
+                  return;
                 }
+
+                handleCheckout();
               }}
             >
               Tiến hành thanh toán
-            </Link>
+            </button>
 
             <Link
               href="/"

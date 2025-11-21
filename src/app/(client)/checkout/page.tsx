@@ -24,7 +24,7 @@ interface CheckoutData {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cart, clearCart, removeMultipleItems } = useCart();
+  const { cart, clearCart } = useCart();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [checkoutItems, setCheckoutItems] = useState<CartItem[]>([]);
@@ -39,6 +39,12 @@ export default function CheckoutPage() {
 
   // Load selected items from localStorage
   useEffect(() => {
+    if (!user) {
+      toast.error("Vui lòng đăng nhập để tiếp tục thanh toán");
+      router.push("/auth/login");
+      return;
+    }
+
     const savedItems = localStorage.getItem("checkout_items");
     if (savedItems) {
       try {
@@ -62,12 +68,6 @@ export default function CheckoutPage() {
     e.preventDefault();
     if (checkoutItems.length === 0) {
       toast.error("Không có sản phẩm nào để thanh toán");
-      return;
-    }
-
-    if (!user) {
-      toast.error("Vui lòng đăng nhập trước khi đặt hàng");
-      router.push("/auth/login");
       return;
     }
 

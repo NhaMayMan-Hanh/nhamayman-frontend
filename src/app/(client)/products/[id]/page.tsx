@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, notFound } from "next/navigation";
+import { useParams, notFound, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingCart, Plus, Minus, Package, Tag } from "lucide-react";
@@ -38,7 +38,7 @@ interface ProductData {
 export default function ProductDetailPage() {
   const params = useParams();
   const id = params.id as string;
-
+  const router = useRouter();
   const [productData, setProductData] = useState<ProductData["data"] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,6 +96,31 @@ export default function ProductDetailPage() {
       setQuantity(1);
     } catch (error) {
       console.error("Add to cart error:", error);
+    }
+  };
+
+  const handleBuyNow = async () => {
+    if (!productData?.product) return;
+    const product = productData.product;
+
+    if (product.stock < 1) {
+      toast.error("Sản phẩm đã hết hàng");
+      return;
+    }
+
+    try {
+      // Add quantity lần
+      for (let i = 0; i < quantity; i++) {
+        await addToCart(product);
+      }
+
+      // Reset quantity sau khi thêm
+      setQuantity(1);
+
+      // Chuyển sang giỏ hàng
+      router.push("/cart");
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -259,12 +284,12 @@ export default function ProductDetailPage() {
 
           {/* Buy Now Button */}
           {!isOutOfStock && (
-            <Link
-              href="/cart"
+            <button
+              onClick={handleBuyNow}
               className="block w-full text-center border-2 border-amber-500 text-amber-500 py-3 px-6 rounded-lg font-semibold hover:bg-amber-50 transition-colors"
             >
               Mua ngay
-            </Link>
+            </button>
           )}
         </div>
       </div>

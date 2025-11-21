@@ -34,7 +34,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/client/auth/profile", {
+        const res = await fetch("http://localhost:5000/api/client/users/profile", {
           credentials: "include",
         });
         if (!res.ok) {
@@ -73,7 +73,7 @@ export default function ProfilePage() {
     setErrors({});
 
     try {
-      const res = await fetch("http://localhost:5000/api/client/auth/profile", {
+      const res = await fetch("http://localhost:5000/api/client/users/profile", {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
