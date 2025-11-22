@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "../../../../contexts/AuthContext";
+import { useAuth } from "@contexts/AuthContext";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
