@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌈 NhaMayMan-Hanh - E-commerce Gây Quỹ (Next.js & Node.js)
 
-## Getting Started
+[![GitHub Organization](https://img.shields.io/badge/Organization-NhaMayMan--Hanh-blue.svg)](https://github.com/NhaMayMan-Hanh)
+[![Frontend](https://img.shields.io/badge/Frontend-Next.js-black.svg)](https://github.com/NhaMayMan-Hanh/frontend-repo-name)
+[![Backend](https://img.shields.io/badge/Backend-Node.js%2FExpress-green.svg)](https://github.com/NhaMayMan-Hanh/backend-repo-name)
 
-First, run the development server:
+**NhaMayMan-Hanh** là một dự án thương mại điện tử chuyên bán đồ Handmade với mục tiêu gây quỹ. Dự án được xây dựng theo kiến trúc hiện đại, phân tách rõ ràng giữa Frontend (Next.js) và Backend (Node.js).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## ✨ Công nghệ Sử dụng
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Frontend:** Next.js, Tailwind CSS, HTML.
+- **Backend:** Node.js, ExpressJS, MongoDB, Zod (Data Validation), JWT (Authentication).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Hướng dẫn Cài đặt & Khởi chạy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Để chạy dự án, bạn cần phải clone và setup cả hai repositories (Frontend và Backend).
 
-## Learn More
+### 1. Chuẩn bị Môi trường
 
-To learn more about Next.js, take a look at the following resources:
+Đảm bảo bạn đã cài đặt: **Node.js** (bao gồm npm) và **MongoDB** (Server Local hoặc Cloud Atlas).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 2. Setup Backend (Repository: `backend-repo-name`)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1.  **Clone Repository:**
+    ```bash
+    git clone [https://github.com/NhaMayMan-Hanh/backend-repo-name.git](https://github.com/NhaMayMan-Hanh/backend-repo-name.git) # Thay bằng tên repo BE thực tế
+    cd backend-repo-name
+    ```
+2.  **Cài đặt Dependencies:**
+    ```bash
+    npm install
+    ```
+3.  **Tạo file `.env`:** Tạo file `.env` và điền cấu hình như sau:
+    ```dotenv
+    MONGODB_URI="mongodb://127.0.0.1:27017/nhamayman"
+    JWT_SECRET="something-very-secret"
+    CLIENT_URL="http://localhost:3000"
+    ASSET_BASE_URL="http://localhost:5000"
+    PORT=5000
+    ```
+4.  **Khởi tạo Database (Seeding):**
+    ```bash
+    npm run seed
+    ```
+5.  **Chạy Server Backend:**
+    ```bash
+    npm run dev
+    ```
 
-## Deploy on Vercel
+### 3. Setup Frontend (Repository: `frontend-repo-name`)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1.  **Clone Repository:**
+    ```bash
+    git clone [https://github.com/NhaMayMan-Hanh/frontend-repo-name.git](https://github.com/NhaMayMan-Hanh/frontend-repo-name.git) # Thay bằng tên repo FE thực tế
+    cd frontend-repo-name
+    ```
+2.  **Cài đặt Dependencies:**
+    ```bash
+    npm install
+    ```
+3.  **Tạo file `.env.local`:** Tạo file `.env.local` và điền cấu hình để kết nối với Backend:
+    ```dotenv
+    NEXT_PUBLIC_API_URL="http://localhost:5000/api" # Chú ý cổng 5000 của BE
+    NEXT_PUBLIC_IMAGE_URL="http://localhost:5000"
+    ```
+4.  **Chạy Server Frontend:**
+    ```bash
+    npm run dev
+    ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Truy cập: `http://localhost:3000` để xem ứng dụng. **Lưu ý:** Cần đảm bảo server Backend (cổng 5000) đã được khởi động trước.
