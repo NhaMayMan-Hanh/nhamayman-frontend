@@ -26,7 +26,7 @@ export default function ThanksPage() {
           Về trang chủ
         </Link>
         <Link
-          href="/auth/orders"
+          href="/orders"
           className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors text-center"
         >
           Xem đơn hàng

@@ -59,7 +59,7 @@ export function AuthProvider({
   }, []);
 
   const login = async (userData: User) => {
-    console.log("🔐 Login called with user:", userData);
+    console.log("🔐 [AuthContext] Login called with user:", userData);
     setUser(userData);
 
     // Check if there's a local cart to merge
@@ -70,52 +70,45 @@ export function AuthProvider({
       try {
         const localCart = JSON.parse(localCartStr);
         hasLocalCart = localCart && localCart.length > 0;
-        console.log("🛒 Local cart found:", localCart.length, "items");
+        console.log("🛒 [AuthContext] Local cart found:", localCart.length, "items");
       } catch (e) {
-        // Invalid cart data
         hasLocalCart = false;
-        console.log("❌ Invalid local cart data");
+        console.log("❌ [AuthContext] Invalid local cart data");
       }
     } else {
-      console.log("📭 No local cart found");
+      console.log("📭 [AuthContext] No local cart found");
     }
 
     if (hasLocalCart) {
-      console.log("⏳ Waiting for cart merge...");
-      // Wait for cart merge to complete
+      console.log("⏳ [AuthContext] Waiting for cart merge...");
       const mergeSuccess = await new Promise((resolve) => {
         const handleMerge = () => {
-          console.log("✅ Cart merge completed!");
+          console.log("✅ [AuthContext] Cart merge completed!");
           window.removeEventListener("cart-merged", handleMerge);
           resolve(true);
         };
         window.addEventListener("cart-merged", handleMerge);
 
-        // Timeout after 5 seconds in case merge fails
         setTimeout(() => {
-          console.log("⏰ Cart merge timeout (5s)");
+          console.log("⏰ [AuthContext] Cart merge timeout (5s)");
           window.removeEventListener("cart-merged", handleMerge);
           resolve(false);
         }, 5000);
       });
-      console.log("Cart merge result:", mergeSuccess);
+      console.log("[AuthContext] Cart merge result:", mergeSuccess);
     } else {
-      // No local cart, just wait a bit for server cart to load
-      console.log("⏳ Waiting 300ms for server cart to load...");
+      console.log("⏳ [AuthContext] Waiting 300ms for server cart to load...");
       await new Promise((resolve) => setTimeout(resolve, 300));
-      console.log("✅ Server cart load wait completed");
+      console.log("✅ [AuthContext] Server cart load wait completed");
     }
 
-    // Navigate based on role
-    console.log("🚀 Navigating to:", userData.role === "admin" ? "/admin/dashboard" : "/");
-    if (userData.role === "admin") {
-      router.push("/admin/dashboard");
-    } else {
-      router.push("/");
-    }
+    // Refresh page để AuthLayout tự động redirect dựa trên role
+    console.log("🔄 [AuthContext] Refreshing router to trigger AuthLayout redirect...");
+    router.refresh();
   };
 
   const logout = async () => {
+    console.log("🚪 [AuthContext] Logging out...");
     setUser(null);
     hasCheckedAuth.current = false;
 
@@ -125,16 +118,14 @@ export function AuthProvider({
         credentials: "include",
       });
     } catch (error) {
-      console.error("Logout API error:", error);
+      console.error("[AuthContext] Logout API error:", error);
     }
 
-    // Fallback clear cookie
+    // Clear cookie
     document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
-    // DON'T clear localStorage cart here - let CartContext handle it
-    // localStorage.removeItem("cart"); // ← Remove this line
-
-    router.push("/auth/login");
+    // Navigate to login
+    router.push("/login");
     toast.success("Đăng xuất thành công");
   };
 

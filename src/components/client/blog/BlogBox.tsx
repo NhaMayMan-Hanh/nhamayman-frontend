@@ -23,7 +23,7 @@ export default function BlogBox({ blog }: BlogBoxProps) {
         <h3 className="text-xl font-semibold mb-2 line-clamp-2">{blog.name}</h3>
         <p className="text-gray-600 text-sm mb-4 line-clamp-3">{blog.description}</p>
         <Link
-          href={`/blogs/${blog.slug}`}
+          href={`/blog/${blog.slug}`}
           className="text-amber-500 hover:underline text-sm font-medium"
         >
           Đọc thêm →

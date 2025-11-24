@@ -153,13 +153,13 @@ export default function Home() {
 
         <button
           onClick={() => goToSlide((currentSlide - 1 + slides.length) % slides.length)}
-          className="absolute left-10 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-opacity"
+          className="absolute left-10 top-1/2 transform -translate-y-1/2 bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-opacity"
         >
           ‹
         </button>
         <button
           onClick={() => goToSlide((currentSlide + 1) % slides.length)}
-          className="absolute right-10 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-opacity"
+          className="absolute right-10 top-1/2 transform -translate-y-1/2 bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-opacity"
         >
           ›
         </button>

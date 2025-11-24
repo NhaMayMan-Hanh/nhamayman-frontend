@@ -103,7 +103,7 @@ export default function OrdersPage() {
     return (
       <div className="text-center py-8">
         <p className="text-red-500 mb-4">{error}</p>
-        <Link href="/auth/login" className="text-amber-500 hover:underline">
+        <Link href="/login" className="text-amber-500 hover:underline">
           Đăng nhập để xem đơn hàng
         </Link>
       </div>

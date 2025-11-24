@@ -117,7 +117,7 @@ export default function CartPage() {
 
     // Bắt đăng nhập nếu chưa có
     if (!user) {
-      router.push("/auth/login?redirect=/checkout");
+      router.push("/login?redirect=/checkout");
     } else {
       router.push("/checkout");
     }

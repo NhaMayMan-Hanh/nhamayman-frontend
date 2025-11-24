@@ -63,6 +63,7 @@ export default function LoginPage() {
           <input
             type="text"
             placeholder="Tên đăng nhập"
+            autoComplete="username"
             value={formData.username}
             onChange={(e) => setFormData({ ...formData, username: e.target.value })}
             className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
@@ -76,6 +77,7 @@ export default function LoginPage() {
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Mật khẩu"
+              autoComplete="current-password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               className={`w-full pr-10 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
@@ -105,12 +107,12 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 text-center space-y-2">
-          <Link href="/auth/forgot" className="text-amber-500 hover:underline text-sm">
+          <Link href="/forgot" className="text-amber-500 hover:underline text-sm">
             Quên mật khẩu?
           </Link>
           <p className="text-sm text-gray-600">
             Chưa có tài khoản?{" "}
-            <Link href="/auth/register" className="text-amber-500 hover:underline">
+            <Link href="/register" className="text-amber-500 hover:underline">
               Đăng ký ngay
             </Link>
           </p>

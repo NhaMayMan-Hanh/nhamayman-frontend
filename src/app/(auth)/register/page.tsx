@@ -55,7 +55,7 @@ export default function RegisterPage() {
 
       toast.success(data.message || "Đăng ký thành công");
       setFormData({ name: "", username: "", email: "", password: "", confirmPassword: "" });
-      router.push("/auth/login");
+      router.push("/login");
     } catch (error) {
       toast.error((error as Error).message);
     } finally {
@@ -87,6 +87,7 @@ export default function RegisterPage() {
             <input
               type="text"
               placeholder="Tài khoản"
+              autoComplete="username"
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
               className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
@@ -101,6 +102,7 @@ export default function RegisterPage() {
             <input
               type="email"
               placeholder="Email"
+              autoComplete="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
@@ -115,6 +117,7 @@ export default function RegisterPage() {
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Mật khẩu"
+              autoComplete="new-password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               className={`w-full pr-10 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
@@ -136,6 +139,7 @@ export default function RegisterPage() {
             <input
               type={showConfirmPassword ? "text" : "password"}
               placeholder="Nhập lại mật khẩu"
+              autoComplete="new-password"
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               className={`w-full pr-10 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
@@ -168,7 +172,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-sm text-gray-600 mt-6">
           Đã có tài khoản?{" "}
-          <Link href="/auth/login" className="text-amber-500 hover:underline">
+          <Link href="/login" className="text-amber-500 hover:underline">
             Đăng nhập
           </Link>
         </p>

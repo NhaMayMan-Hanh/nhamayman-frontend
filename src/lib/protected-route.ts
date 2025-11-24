@@ -4,57 +4,64 @@ import { redirect } from "next/navigation";
 const PROFILE_ENDPOINT = "http://localhost:5000/api/client/users/profile";
 
 export async function requireAuth(options: { role?: "admin" | "user" | "any" } = {}) {
+  console.log("🔍 [requireAuth] Bắt đầu kiểm tra auth...");
+
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
 
-  // LOG 1: Xem có lấy được token không
-  console.log(
-    "🔑 [requireAuth] Token từ cookie:",
-    token ? "Có (dài " + token.length + " ký tự)" : "KHÔNG CÓ"
-  );
+  console.log("🔑 Token lấy từ cookie:", token);
 
   if (!token) {
-    console.log("❌ Không có token → redirect về /auth/login");
-    redirect("/auth/login");
+    console.log("❌ Không có token → redirect('/login')");
+    redirect("/login");
   }
 
   try {
-    console.log("🌐 Đang gọi API profile:", PROFILE_ENDPOINT);
+    console.log("🌐 Gửi request đến PROFILE_ENDPOINT...");
     const res = await fetch(PROFILE_ENDPOINT, {
-      headers: {
-        Cookie: `token=${token}`,
-      },
+      headers: { Cookie: `token=${token}` },
       cache: "no-store",
     });
 
-    console.log("📶 Response status:", res.status);
+    console.log("📡 Status API /profile:", res.status);
 
     if (!res.ok) {
-      console.log("❌ API trả về lỗi:", res.status, res.statusText);
-      throw new Error("Invalid token");
+      console.log("❌ API trả về status FAIL → redirect('/login')");
+      throw new Error("PROFILE_RESPONSE_NOT_OK");
     }
 
+    // Parse JSON trước khi làm gì khác
     const json = await res.json();
-    console.log("✅ Dữ liệu từ /profile:", json);
-
-    if (!json.success || !json.data) {
-      console.log("❌ Profile không success hoặc không có data");
-      throw new Error("No user data");
-    }
+    console.log("📦 JSON trả về:", json);
 
     const user = json.data;
-    console.log("👤 User hiện tại:", { id: user.id, username: user.username, role: user.role });
+    console.log("👤 User parse được:", user);
 
-    // Kiểm tra role
-    if (options.role === "admin" && user.role !== "admin") {
-      console.log("⛔ Không phải admin → redirect về /");
-      redirect("/");
+    if (!user) {
+      console.log("❌ Không có user trong API → redirect('/login')");
+      throw new Error("NO_USER_DATA");
     }
 
-    console.log("✅ requireAuth thành công → cho qua");
+    // Kiểm tra role
+    if (options.role === "admin") {
+      console.log(`🛡 Kiểm tra role admin: user.role = ${user.role}, yêu cầu = admin`);
+      if (user.role !== "admin") {
+        console.log("❌ User không phải admin → redirect('/')");
+        redirect("/");
+      }
+    }
+
+    console.log("✅ Auth hợp lệ → return user");
     return user;
-  } catch (error) {
-    console.log("💥 Lỗi trong requireAuth → redirect về /auth/login", error);
-    redirect("/auth/login"); // hoặc "/" tùy bạn
+  } catch (err) {
+    console.log("💥 Lỗi trong requireAuth:", err);
+
+    // Chỉ redirect khi KHÔNG phải lỗi redirect
+    if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) {
+      throw err; // Re-throw redirect errors
+    }
+
+    console.log("➡️ Redirect('/login')");
+    redirect("/login");
   }
 }
