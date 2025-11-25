@@ -145,10 +145,6 @@ export default function ProductDetailPage() {
           Trang chủ
         </Link>
         <span className="mx-2">/</span>
-        <Link href="/products" className="hover:text-amber-500">
-          Sản phẩm
-        </Link>
-        <span className="mx-2">/</span>
         <span className="text-gray-900">{product.name}</span>
       </nav>
 
@@ -158,10 +154,10 @@ export default function ProductDetailPage() {
         <div className="relative">
           <Image
             width={600}
-            height={600}
+            height={1000}
             src={product.image}
             alt={product.name}
-            className="w-full h-96 object-cover rounded-lg shadow-lg"
+            className="w-full h-full   object-cover rounded-lg shadow-lg"
             priority
           />
           {isOutOfStock && (

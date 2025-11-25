@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@contexts/AuthContext";
 import Image from "next/image";
@@ -24,13 +25,38 @@ interface UserProfile {
   createdAt: string;
 }
 
+interface Province {
+  code: number;
+  name: string;
+}
+
+interface District {
+  code: number;
+  name: string;
+}
+
+interface Ward {
+  code: number;
+  name: string;
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const { user } = useAuth();
+
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [apiLoading, setApiLoading] = useState(false); // Dùng chung cho load tỉnh/huyện
+
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [districts, setDistricts] = useState<District[]>([]);
+  const [wards, setWards] = useState<Ward[]>([]);
+
+  const [selectedProvince, setSelectedProvince] = useState<number | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<number | null>(null);
+  const [selectedWard, setSelectedWard] = useState<number | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -47,6 +73,7 @@ export default function ProfilePage() {
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
+  // === LẤY THÔNG TIN PROFILE ===
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -65,9 +92,9 @@ export default function ProfilePage() {
         if (data.success) {
           setProfile(data.data);
           setFormData({
-            name: data.data.name,
-            username: data.data.username,
-            email: data.data.email,
+            name: data.data.name || "",
+            username: data.data.username || "",
+            email: data.data.email || "",
             phone: data.data.phone || "",
             address: {
               tinh_thanh: data.data.address?.tinh_thanh || "",
@@ -76,11 +103,15 @@ export default function ProfilePage() {
               dia_chi_chi_tiet: data.data.address?.dia_chi_chi_tiet || "",
             },
           });
-        } else {
-          throw new Error(data.message || "Lỗi không xác định");
+
+          // Tự động chọn tỉnh/huyện/phường nếu đã có dữ liệu
+          if (data.data.address?.tinh_thanh) {
+            const province = provinces.find((p) => p.name === data.data.address.tinh_thanh);
+            if (province) setSelectedProvince(province.code);
+          }
         }
       } catch (error) {
-        toast.error((error as Error).message);
+        toast.error("Không thể tải thông tin cá nhân");
         router.push("/login");
       } finally {
         setLoading(false);
@@ -88,8 +119,144 @@ export default function ProfilePage() {
     };
 
     fetchProfile();
-  }, [router]);
+  }, [router, provinces]);
 
+  // === LOAD TỈNH/THÀNH ===
+  useEffect(() => {
+    const loadProvinces = async () => {
+      const cached = localStorage.getItem("vn_provinces");
+      if (cached) {
+        const data = JSON.parse(cached);
+        setProvinces(data);
+        return;
+      }
+
+      try {
+        setApiLoading(true);
+        const response = await fetch("https://provinces.open-api.vn/api/p/");
+        const data = await response.json();
+        setProvinces(data);
+        localStorage.setItem("vn_provinces", JSON.stringify(data));
+      } catch (error) {
+        console.error("Error loading provinces:", error);
+        toast.error("Không tải được danh sách tỉnh/thành");
+      } finally {
+        setApiLoading(false);
+      }
+    };
+
+    loadProvinces();
+  }, []);
+
+  // === LOAD QUẬN/HUYỆN ===
+  useEffect(() => {
+    if (!selectedProvince) {
+      setDistricts([]);
+      setSelectedDistrict(null);
+      return;
+    }
+
+    const loadDistricts = async () => {
+      try {
+        setApiLoading(true);
+        const response = await fetch(
+          `https://provinces.open-api.vn/api/p/${selectedProvince}?depth=2`
+        );
+        const data = await response.json();
+        setDistricts(data.districts || []);
+
+        // Nếu có địa chỉ cũ → tự động chọn quận
+        if (formData.address.quan_huyen) {
+          const district = data.districts?.find(
+            (d: District) => d.name === formData.address.quan_huyen
+          );
+          if (district) setSelectedDistrict(district.code);
+        }
+      } catch (error) {
+        console.error("Error loading districts:", error);
+      } finally {
+        setApiLoading(false);
+      }
+    };
+
+    loadDistricts();
+  }, [selectedProvince, formData.address.quan_huyen]);
+
+  // === LOAD PHƯỜNG/XÃ ===
+  useEffect(() => {
+    if (!selectedDistrict) {
+      setWards([]);
+      setSelectedWard(null);
+      return;
+    }
+
+    const loadWards = async () => {
+      try {
+        setApiLoading(true);
+        const response = await fetch(
+          `https://provinces.open-api.vn/api/d/${selectedDistrict}?depth=2`
+        );
+        const data = await response.json();
+        setWards(data.wards || []);
+
+        // Tự động chọn phường nếu có
+        if (formData.address.phuong_xa) {
+          const ward = data.wards?.find((w: Ward) => w.name === formData.address.phuong_xa);
+          if (ward) setSelectedWard(ward.code);
+        }
+      } catch (error) {
+        console.error("Error loading wards:", error);
+      } finally {
+        setApiLoading(false);
+      }
+    };
+
+    loadWards();
+  }, [selectedDistrict, formData.address.phuong_xa]);
+
+  // === XỬ LÝ THAY ĐỔI ĐỊA CHỈ ===
+  const handleProvinceChange = (code: number, name: string) => {
+    setSelectedProvince(code);
+    setSelectedDistrict(null);
+    setSelectedWard(null);
+    setDistricts([]);
+    setWards([]);
+
+    setFormData((prev) => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        tinh_thanh: name,
+        quan_huyen: "",
+        phuong_xa: "",
+      },
+    }));
+  };
+
+  const handleDistrictChange = (code: number, name: string) => {
+    setSelectedDistrict(code);
+    setSelectedWard(null);
+    setWards([]);
+
+    setFormData((prev) => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        quan_huyen: name,
+        phuong_xa: "",
+      },
+    }));
+  };
+
+  const handleWardChange = (code: number, name: string) => {
+    setSelectedWard(code);
+    setFormData((prev) => ({
+      ...prev,
+      address: { ...prev.address, phuong_xa: name },
+    }));
+  };
+
+  // === CẬP NHẬT PROFILE ===
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setUpdateLoading(true);
@@ -112,212 +279,236 @@ export default function ProfilePage() {
             fieldErrors[err.field] = err.message;
           });
           setErrors(fieldErrors);
-          toast.error(data.message || "Cập nhật thất bại");
-          return;
         }
-        throw new Error(data.message || "Cập nhật thất bại");
+        toast.error(data.message || "Cập nhật thất bại");
+        return;
       }
 
-      toast.success("Cập nhật thành công");
+      toast.success("Cập nhật thông tin thành công!");
       setProfile(data.data);
       setEditing(false);
     } catch (error) {
-      toast.error((error as Error).message);
+      toast.error("Có lỗi xảy ra. Vui lòng thử lại.");
     } finally {
       setUpdateLoading(false);
     }
   };
 
   if (loading) {
-    return <div className="text-center py-8">Đang tải...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-lg">Đang tải thông tin...</div>
+      </div>
+    );
   }
 
   if (!profile) {
-    return <div className="text-center py-8">Không tìm thấy thông tin</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-lg text-red-600">Không tìm thấy thông tin người dùng</div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar Menu */}
+          {/* Sidebar */}
           <ProfileSidebar activePath="/profile" />
 
           {/* Main Content */}
           <div className="lg:col-span-3">
             <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-2xl font-bold mb-4">Thông tin cơ bản</h2>
-              <Image
-                className="w-32 h-32 rounded-full mx-auto mb-4"
-                src={profile.avatar || "/img/default-avatar.jpg"}
-                alt={profile.name}
-                width={128}
-                height={128}
-              />
+              <h2 className="text-2xl font-bold mb-6">Thông tin cá nhân</h2>
+
+              <div className="flex justify-center mb-6">
+                <Image
+                  className="w-32 h-32 rounded-full object-cover border-4 border-amber-100"
+                  src={profile.avatar || "/img/default-avatar.jpg"}
+                  alt={profile.name}
+                  width={128}
+                  height={128}
+                />
+              </div>
+
               {editing ? (
-                <div onSubmit={handleUpdate}>
+                <form onSubmit={handleUpdate} className="space-y-6">
                   {/* Thông tin cơ bản */}
-                  <div className="space-y-4 mb-6">
+                  <div className="space-y-4">
                     <h3 className="text-lg font-semibold border-b pb-2">Thông tin cá nhân</h3>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Họ và tên</label>
-                      <input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                          errors.name ? "border-red-500" : "border-gray-300"
-                        }`}
-                        required
-                      />
-                      {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Tên đăng nhập</label>
-                      <input
-                        type="text"
-                        value={formData.username}
-                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                          errors.username ? "border-red-500" : "border-gray-300"
-                        }`}
-                        required
-                      />
-                      {errors.username && (
-                        <p className="text-red-500 text-sm mt-1">{errors.username}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Email</label>
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                          errors.email ? "border-red-500" : "border-gray-300"
-                        }`}
-                        required
-                      />
-                      {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Số điện thoại</label>
-                      <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                          errors.phone ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="0901234567"
-                      />
-                      {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-                    </div>
+                    {["name", "username", "email", "phone"].map((field) => (
+                      <div key={field}>
+                        <label className="block text-sm font-medium mb-1 capitalize">
+                          {field === "name"
+                            ? "Họ và tên"
+                            : field === "username"
+                            ? "Tên đăng nhập"
+                            : field === "email"
+                            ? "Email"
+                            : "Số điện thoại"}
+                        </label>
+                        <input
+                          type={field === "email" ? "email" : field === "phone" ? "tel" : "text"}
+                          value={(formData as any)[field]}
+                          onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
+                          className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+                            errors[field] ? "border-red-500" : "border-gray-300"
+                          }`}
+                          required={field !== "phone"}
+                        />
+                        {errors[field] && (
+                          <p className="text-red-500 text-sm mt-1">{errors[field]}</p>
+                        )}
+                      </div>
+                    ))}
                   </div>
 
                   {/* Địa chỉ */}
-                  <div className="space-y-4 mb-6">
-                    <h3 className="text-lg font-semibold border-b pb-2">Địa chỉ</h3>
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold border-b pb-2">Địa chỉ nhận hàng</h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Tỉnh/Thành phố</label>
-                        <input
-                          type="text"
-                          value={formData.address.tinh_thanh}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              address: { ...formData.address, tinh_thanh: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                          placeholder="Hồ Chí Minh"
-                        />
+                      {/* Tỉnh/Thành */}
+                      <div className="relative">
+                        <label className="block text-sm font-medium mb-2">Tỉnh/Thành phố *</label>
+                        <select
+                          value={selectedProvince || ""}
+                          onChange={(e) => {
+                            const code = Number(e.target.value);
+                            const province = provinces.find((p) => p.code === code);
+                            if (province) handleProvinceChange(code, province.name);
+                          }}
+                          className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-amber-500 bg-white"
+                          disabled={apiLoading}
+                        >
+                          <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                          {provinces.map((p) => (
+                            <option key={p.code} value={p.code}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-10 w-5 h-5 text-gray-400 pointer-events-none" />
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Quận/Huyện</label>
-                        <input
-                          type="text"
-                          value={formData.address.quan_huyen}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              address: { ...formData.address, quan_huyen: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                          placeholder="Quận 1"
-                        />
+                      {/* Quận/Huyện */}
+                      <div className="relative">
+                        <label className="block text-sm font-medium mb-2">Quận/Huyện *</label>
+                        <select
+                          value={selectedDistrict || ""}
+                          onChange={(e) => {
+                            const code = Number(e.target.value);
+                            const district = districts.find((d) => d.code === code);
+                            if (district) handleDistrictChange(code, district.name);
+                          }}
+                          className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-amber-500 bg-white"
+                          disabled={!selectedProvince || apiLoading}
+                        >
+                          <option value="">
+                            {selectedProvince ? "-- Chọn Quận/Huyện --" : "-- Chọn Tỉnh trước --"}
+                          </option>
+                          {districts.map((d) => (
+                            <option key={d.code} value={d.code}>
+                              {d.name}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-10 w-5 h-5 text-gray-400 pointer-events-none" />
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Phường/Xã</label>
-                        <input
-                          type="text"
-                          value={formData.address.phuong_xa}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              address: { ...formData.address, phuong_xa: e.target.value },
-                            })
-                          }
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                          placeholder="Phường Bến Nghé"
-                        />
+                      {/* Phường/Xã */}
+                      <div className="relative">
+                        <label className="block text-sm font-medium mb-2">Phường/Xã *</label>
+                        <select
+                          value={selectedWard || ""}
+                          onChange={(e) => {
+                            const code = Number(e.target.value);
+                            const ward = wards.find((w) => w.code === code);
+                            if (ward) handleWardChange(code, ward.name);
+                          }}
+                          className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-amber-500 bg-white"
+                          disabled={!selectedDistrict || apiLoading}
+                        >
+                          <option value="">
+                            {selectedDistrict ? "-- Chọn Phường/Xã --" : "-- Chọn Quận trước --"}
+                          </option>
+                          {wards.map((w) => (
+                            <option key={w.code} value={w.code}>
+                              {w.name}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-10 w-5 h-5 text-gray-400 pointer-events-none" />
                       </div>
 
+                      {/* Địa chỉ chi tiết */}
                       <div>
-                        <label className="block text-sm font-medium mb-1">Số nhà, đường</label>
+                        <label className="block text-sm font-medium mb-2">
+                          Số nhà, tên đường *
+                        </label>
                         <input
                           type="text"
                           value={formData.address.dia_chi_chi_tiet}
                           onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              address: { ...formData.address, dia_chi_chi_tiet: e.target.value },
-                            })
+                            setFormData((prev) => ({
+                              ...prev,
+                              address: { ...prev.address, dia_chi_chi_tiet: e.target.value },
+                            }))
                           }
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                          placeholder="123 Nguyễn Huệ"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                          placeholder="Ex: 123 Đường Láng"
                         />
                       </div>
                     </div>
+
+                    {/* Preview địa chỉ */}
+                    {(formData.address.dia_chi_chi_tiet ||
+                      formData.address.phuong_xa ||
+                      formData.address.quan_huyen ||
+                      formData.address.tinh_thanh) && (
+                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p className="text-sm font-medium text-amber-800 mb-1">Địa chỉ đầy đủ:</p>
+                        <p className="text-amber-900 font-medium">
+                          {[
+                            formData.address.dia_chi_chi_tiet,
+                            formData.address.phuong_xa,
+                            formData.address.quan_huyen,
+                            formData.address.tinh_thanh,
+                          ]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex justify-end space-x-4">
+                  {/* Nút hành động */}
+                  <div className="flex justify-end gap-4 pt-4">
                     <button
                       type="button"
                       onClick={() => setEditing(false)}
-                      className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                      className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
                     >
                       Hủy
                     </button>
                     <button
-                      type="button"
-                      onClick={handleUpdate}
-                      disabled={updateLoading}
-                      className={`px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors ${
-                        updateLoading ? "opacity-70 cursor-not-allowed" : ""
-                      }`}
+                      type="submit"
+                      disabled={updateLoading || apiLoading}
+                      className="px-8 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-70 disabled:cursor-not-allowed transition flex items-center gap-2"
                     >
-                      {updateLoading ? "Đang cập nhật..." : "Cập nhật"}
+                      {updateLoading ? "Đang lưu..." : "Lưu thay đổi"}
                     </button>
                   </div>
-                </div>
+                </form>
               ) : (
-                <div>
-                  {/* Thông tin cơ bản - View Mode */}
-                  <div className="mb-6">
+                /* View Mode */
+                <div className="space-y-8">
+                  <div>
                     <h3 className="text-lg font-semibold border-b pb-2 mb-4">Thông tin cá nhân</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700">
                       <p>
-                        <strong>Tên:</strong> {profile.name}
+                        <strong>Họ tên:</strong> {profile.name}
                       </p>
                       <p>
                         <strong>Tài khoản:</strong> {profile.username}
@@ -326,11 +517,10 @@ export default function ProfilePage() {
                         <strong>Email:</strong> {profile.email}
                       </p>
                       <p>
-                        <strong>Số điện thoại:</strong>{" "}
-                        {profile.phone || <span className="text-gray-400">Chưa cập nhật</span>}
+                        <strong>Số điện thoại:</strong> {profile.phone || "Chưa cập nhật"}
                       </p>
                       <p>
-                        <strong>Role:</strong>{" "}
+                        <strong>Vai trò:</strong>{" "}
                         {profile.role === "admin" ? "Quản trị viên" : "Khách hàng"}
                       </p>
                       <p>
@@ -340,9 +530,10 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  {/* Địa chỉ - View Mode */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold border-b pb-2 mb-4">Địa chỉ</h3>
+                  <div>
+                    <h3 className="text-lg font-semibold border-b pb-2 mb-4">
+                      Địa chỉ nhận hàng mặc định
+                    </h3>
                     {profile.address?.tinh_thanh ? (
                       <p className="text-gray-700">
                         {profile.address.dia_chi_chi_tiet &&
@@ -358,7 +549,7 @@ export default function ProfilePage() {
 
                   <button
                     onClick={() => setEditing(true)}
-                    className="bg-amber-500 text-white px-6 py-2 rounded-lg hover:bg-amber-600 transition-colors"
+                    className="px-8 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition"
                   >
                     Chỉnh sửa hồ sơ
                   </button>

@@ -1,9 +1,17 @@
 "use client";
 
+import { useEffect } from "react";
+import { useCart } from "@contexts/CartContext";
 import Link from "next/link";
 import Image from "next/image";
 
 export default function ThanksPage() {
+  const { refreshCart } = useCart();
+
+  useEffect(() => {
+    refreshCart(); // ⬅ reload cart khi vào trang thanks
+  }, []);
+
   return (
     <div className="max-w-md mx-auto py-12 px-4 text-center">
       <Image
@@ -18,6 +26,7 @@ export default function ThanksPage() {
         Đơn hàng của bạn đã được nhận. Chúng tôi sẽ xử lý và giao hàng sớm nhất.
       </p>
       <p className="text-sm text-gray-500 mb-8">Số đơn hàng sẽ được gửi qua email.</p>
+
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link
           href="/"

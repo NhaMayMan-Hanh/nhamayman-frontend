@@ -4,9 +4,9 @@ import { useCart } from "@contexts/CartContext";
 import { useAuth } from "@contexts/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useState, useEffect } from "react";
 
 export default function CartPage() {
   const router = useRouter();
@@ -17,10 +17,18 @@ export default function CartPage() {
   const [deleteTarget, setDeleteTarget] = useState<"single" | "selected" | "all">("all");
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (cart.length > 0 && selectedItems.length === 0) {
+      setTimeout(() => {
+        setSelectedItems(cart.map((item) => item._id));
+      }, 0);
+    }
+  }, [cart.length]);
+
   // === LOADING ===
   if (loading || authLoading) {
     return (
-      <div className="max-w-7xl mx-auto py-12 px-4">
+      <div className="max-w-6xl mx-auto py-12 px-4">
         <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
           <span className="ml-3 text-gray-600">Đang tải giỏ hàng...</span>
@@ -32,7 +40,7 @@ export default function CartPage() {
   // === GIỎ HÀNG TRỐNG ===
   if (cart.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto py-12 px-4 text-center">
+      <div className="max-w-6xl mx-auto py-12 px-4 text-center">
         <div className="py-20">
           <svg
             className="mx-auto h-24 w-24 text-gray-400 mb-4"
@@ -59,21 +67,25 @@ export default function CartPage() {
     );
   }
 
-  // === TÍNH TỔNG TIỀN ===
   const total = cart
     .filter((item) => selectedItems.includes(item._id))
     .reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  // === XỬ LÝ CHỌN ===
+  const isAllSelected = cart.length > 0 && selectedItems.length === cart.length;
+  const isIndeterminate = selectedItems.length > 0 && selectedItems.length < cart.length;
+
   const handleSelectAll = () => {
-    setSelectedItems(selectedItems.length === cart.length ? [] : cart.map((i) => i._id));
+    if (isAllSelected) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(cart.map((item) => item._id));
+    }
   };
 
   const handleSelectItem = (id: string) => {
     setSelectedItems((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
-  // === XÓA ===
   const handleDeleteClick = (type: "single" | "selected" | "all", itemId?: string) => {
     setDeleteTarget(type);
     setItemToDelete(itemId || null);
@@ -94,7 +106,6 @@ export default function CartPage() {
     setShowDeleteConfirm(false);
   };
 
-  // === THANH TOÁN – BẮT ĐĂNG NHẬP TẠI ĐÂY ===
   const handleCheckout = () => {
     if (selectedItems.length === 0) {
       toast.error("Vui lòng chọn ít nhất 1 sản phẩm!");
@@ -117,6 +128,7 @@ export default function CartPage() {
 
     // Bắt đăng nhập nếu chưa có
     if (!user) {
+      toast("Vui lòng đăng nhập để mua hàng.");
       router.push("/login?redirect=/checkout");
     } else {
       router.push("/checkout");
@@ -124,100 +136,120 @@ export default function CartPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-12 px-4">
-      <h1 className="text-3xl font-bold mb-8">Giỏ hàng của bạn</h1>
+    <div className="max-w-6xl mx-auto py-6 md:py-12 px-4">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">Giỏ hàng của bạn</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Danh sách sản phẩm */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow">
+        <div className="lg:col-span-2 space-y-3 md:space-y-4">
+          {/* Header checkbox và buttons */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 md:p-4 bg-white rounded-lg shadow">
             <div className="flex items-center space-x-3">
               <input
                 type="checkbox"
-                checked={selectedItems.length === cart.length}
+                checked={isAllSelected}
+                ref={(el) => {
+                  if (el) el.indeterminate = isIndeterminate;
+                }}
                 onChange={handleSelectAll}
-                className="w-5 h-5 text-orange-500 rounded focus:ring-orange-500"
+                className="w-5 h-5 text-orange-500 rounded focus:ring-orange-500 shrink-0"
               />
-              <span className="font-medium text-gray-700">
+              <span className="font-medium text-gray-700 text-sm md:text-base">
                 Chọn tất cả ({selectedItems.length}/{cart.length})
               </span>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 w-full sm:w-auto">
               {selectedItems.length > 0 && (
                 <button
                   onClick={() => handleDeleteClick("selected")}
                   disabled={loading}
-                  className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
+                  className="flex-1 sm:flex-none px-3 md:px-4 py-2 text-xs md:text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
                 >
                   Xóa đã chọn ({selectedItems.length})
                 </button>
               )}
-              <button
-                onClick={() => handleDeleteClick("all")}
-                disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
-              >
-                Xóa tất cả
-              </button>
             </div>
           </div>
 
+          {/* Cart Items */}
           {cart.map((item) => (
             <div
               key={item._id}
-              className={`flex items-center p-4 bg-white rounded-lg shadow transition-all ${
+              className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4 p-3 md:p-4 bg-white rounded-lg shadow transition-all ${
                 selectedItems.includes(item._id) ? "ring-2 ring-orange-500" : "hover:shadow-md"
               }`}
             >
-              <input
-                type="checkbox"
-                checked={selectedItems.includes(item._id)}
-                onChange={() => handleSelectItem(item._id)}
-                className="w-5 h-5 text-orange-500 rounded focus:ring-orange-500 mr-4"
-              />
-              <div className="relative w-24 h-24 flex-shrink-0">
-                <Image
-                  width={100}
-                  height={100}
-                  src={item.image}
-                  alt={item.name}
-                  className="object-cover rounded-lg"
+              {/* Checkbox và Image - Mobile layout */}
+              <div className="flex items-start w-full sm:w-auto gap-3">
+                <input
+                  type="checkbox"
+                  checked={selectedItems.includes(item._id)}
+                  onChange={() => handleSelectItem(item._id)}
+                  className="w-5 h-5 text-orange-500 rounded focus:ring-orange-500 flex-shrink-0 mt-1"
                 />
+                <div className="relative w-20 h-20 md:w-24 md:h-24 flex-shrink-0">
+                  <Image
+                    width={100}
+                    height={100}
+                    src={item.image}
+                    alt={item.name}
+                    className="object-cover rounded-lg w-full h-full"
+                  />
+                </div>
+
+                {/* Product Info - Mobile: bên cạnh image */}
+                <div className="flex-1 min-w-0 sm:hidden">
+                  <h3 className="font-semibold text-base text-gray-800 line-clamp-2">
+                    {item.name}
+                  </h3>
+                  <p className="text-orange-600 font-bold text-base mt-1">
+                    {item.price.toLocaleString()} VNĐ
+                  </p>
+                </div>
               </div>
-              <div className="ml-4 flex-1">
-                <h3 className="font-semibold text-lg text-gray-800">{item.name}</h3>
-                <p className="text-orange-600 font-bold text-lg mt-1">
+
+              {/* Product Info - Desktop: chiếm full space giữa */}
+              <div className="hidden sm:block flex-1 min-w-0 ml-0 sm:ml-4">
+                <h3 className="font-semibold text-base md:text-lg text-gray-800 line-clamp-2">
+                  {item.name}
+                </h3>
+                <p className="text-orange-600 font-bold text-base md:text-lg mt-1">
                   {item.price.toLocaleString()} VNĐ
                 </p>
               </div>
-              <div className="flex items-center space-x-4">
+
+              {/* Quantity Controls và Delete Button */}
+              <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2 md:gap-4 ml-0 sm:ml-auto">
+                {/* Quantity Controls */}
                 <div className="flex items-center border-2 border-gray-200 rounded-lg overflow-hidden">
                   <button
                     onClick={() => updateQuantity(item._id, item.quantity - 1)}
                     disabled={loading}
-                    className="px-4 py-2 bg-gray-50 hover:bg-gray-100 transition-colors disabled:opacity-50 font-medium text-gray-700"
+                    className="px-2 md:px-4 py-1.5 md:py-2 bg-gray-50 hover:bg-gray-100 transition-colors disabled:opacity-50 font-medium text-gray-700 text-sm md:text-base"
                   >
                     −
                   </button>
-                  <span className="px-6 py-2 font-semibold text-gray-800 bg-white min-w-[60px] text-center">
+                  <span className="px-3 md:px-6 py-1.5 md:py-2 font-semibold text-gray-800 bg-white min-w-[50px] md:min-w-[60px] text-center text-sm md:text-base">
                     {item.quantity}
                   </span>
                   <button
                     onClick={() => updateQuantity(item._id, item.quantity + 1)}
                     disabled={loading}
-                    className="px-4 py-2 bg-gray-50 hover:bg-gray-100 transition-colors disabled:opacity-50 font-medium text-gray-700"
+                    className="px-2 md:px-4 py-1.5 md:py-2 bg-gray-50 hover:bg-gray-100 transition-colors disabled:opacity-50 font-medium text-gray-700 text-sm md:text-base"
                   >
                     +
                   </button>
                 </div>
+
+                {/* Delete Button */}
                 <button
                   onClick={() => handleDeleteClick("single", item._id)}
                   disabled={loading}
-                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled-opacity-50 group"
+                  className="p-1.5 md:p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 group flex-shrink-0"
                   title="Xóa sản phẩm"
                 >
                   <svg
-                    className="w-6 h-6 group-hover:scale-110 transition-transform"
+                    className="w-5 h-5 md:w-6 md:h-6 group-hover:scale-110 transition-transform"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"

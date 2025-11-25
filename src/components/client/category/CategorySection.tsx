@@ -30,27 +30,28 @@ interface CategorySectionProps {
 export default function CategorySection({ category, products }: CategorySectionProps) {
   const sliderRef = useRef<HTMLDivElement>(null);
 
-  // Hàm scroll qua trái/phải khi click arrow
   const scroll = (direction: "left" | "right") => {
     if (!sliderRef.current) return;
-    const cardWidth = 250; // Chiều rộng mỗi card
-    const gap = 24; // gap-6 = 24px
-    const scrollAmount = cardWidth * 4 + gap * 3; // Scroll đúng 4 sản phẩm (1072px)
+    const scrollAmount = sliderRef.current.offsetWidth * 0.8;
     const delta = direction === "left" ? -scrollAmount : scrollAmount;
     sliderRef.current.scrollBy({ left: delta, behavior: "smooth" });
   };
 
   return (
-    <div className="bg-gray-50 rounded-lg p-6 relative overflow-hidden">
+    <div className="bg-gray-50 rounded-lg p-4 md:p-6 relative mb-8 md:mb-12">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-semibold">{category.name}</h2>
-          <p className="text-gray-600">{category.description}</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 md:mb-6">
+        <div className="flex-1">
+          <h2 className="text-xl md:text-2xl font-semibold mb-1">{category.name}</h2>
+          {category.description && (
+            <p className="text-sm md:text-base text-gray-600 line-clamp-2">
+              {category.description}
+            </p>
+          )}
         </div>
         <Link
           href={`/products?category=${category.slug}`}
-          className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors"
+          className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors text-sm md:text-base whitespace-nowrap flex-shrink-0"
         >
           Xem tất cả ({products.length})
         </Link>
@@ -59,38 +60,41 @@ export default function CategorySection({ category, products }: CategorySectionP
       {/* Arrow buttons - Chỉ hiện trên desktop */}
       <button
         onClick={() => scroll("left")}
-        className="absolute left-2 top-1/2 -translate-y-1/2 bg-white p-2 rounded-full shadow hover:bg-gray-100 z-10 hidden md:block"
+        className="absolute left-2 top-1/2 -translate-y-1/2 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 z-10 hidden lg:block"
+        aria-label="Scroll left"
       >
         <ChevronLeft className="w-6 h-6 text-gray-600" />
       </button>
 
       <button
         onClick={() => scroll("right")}
-        className="absolute right-2 top-1/2 -translate-y-1/2 bg-white p-2 rounded-full shadow hover:bg-gray-100 z-10 hidden md:block"
+        className="absolute right-2 top-1/2 -translate-y-1/2 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 z-10 hidden lg:block"
+        aria-label="Scroll right"
       >
         <ChevronRight className="w-6 h-6 text-gray-600" />
       </button>
 
-      {/* Product Slider Container - Giới hạn width để hiển thị đúng 4 sản phẩm trên desktop, responsive trên mobile */}
-      <div className="w-full max-w-[1072px] mx-auto relative">
+      {/* Product Slider Container */}
+      <div className="w-full relative">
         <div
           ref={sliderRef}
-          className="flex gap-4 p-2 md:gap-6 overflow-x-auto scroll-smooth scrollbar-hide cursor-grab active:cursor-grabbing md:[&::-webkit-scrollbar]:hidden"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          className="flex gap-3 md:gap-4 lg:gap-6 overflow-x-auto scroll-smooth scrollbar-hide snap-x snap-mandatory pb-2"
         >
           {products.length > 0 ? (
             products.slice(0, 8).map((product) => (
-              <div key={product._id} className="w-[220px] md:w-[250px] flex shrink-0">
+              <div
+                key={product._id}
+                className="flex-shrink-0 w-[calc(100%-1rem)] sm:w-[calc(50%-0.375rem)] md:w-[calc(33.333%-0.5rem)] lg:w-[250px] snap-start"
+              >
                 <ProductCard product={product} />
               </div>
             ))
           ) : (
-            <p className="text-center text-gray-500 w-full">Chưa có sản phẩm</p>
+            <p className="text-center text-gray-500 w-full py-8">Chưa có sản phẩm</p>
           )}
         </div>
       </div>
 
-      {/* Custom scrollbar ẩn - Tăng cường cho Webkit */}
       <style jsx>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;

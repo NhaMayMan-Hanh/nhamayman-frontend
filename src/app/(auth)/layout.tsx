@@ -81,20 +81,22 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   console.log("✅ [AuthLayout] Cho phép vào trang auth");
   return (
     <AuthProvider>
-      <div className="flex flex-col min-h-screen">
-        <ClientHeader />
-        <main>{children}</main>
-        <ClientFooter />
-        <Toaster
-          position="top-right"
-          reverseOrder={false}
-          toastOptions={{
-            style: {
-              marginTop: "80px",
-            },
-          }}
-        />
-      </div>
+      <CartProvider>
+        <div className="flex flex-col min-h-screen">
+          <ClientHeader />
+          <main>{children}</main>
+          <ClientFooter />
+          <Toaster
+            position="top-right"
+            reverseOrder={false}
+            toastOptions={{
+              style: {
+                marginTop: "80px",
+              },
+            }}
+          />
+        </div>
+      </CartProvider>
     </AuthProvider>
   );
 }

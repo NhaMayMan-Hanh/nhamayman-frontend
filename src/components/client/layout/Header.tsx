@@ -202,7 +202,7 @@ export default function Header() {
               </form>
 
               <Link
-                href="/products"
+                href="/productsAll"
                 className="text-gray-700 hover:text-amber-500 transition-colors w-full py-2 px-2 rounded hover:bg-gray-50"
                 onClick={toggleMenu}
               >

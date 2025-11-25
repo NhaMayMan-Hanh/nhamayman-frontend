@@ -106,7 +106,7 @@ export default function AboutPage() {
         <div className="w-full">
           {about.sections.map((section, index) => (
             <div key={index} className={`w-full ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
-              <div className="max-w-7xl mx-auto">
+              <div className="max-w-6xl mx-auto">
                 <div className="grid md:grid-cols-2 items-center">
                   {/* Image Column */}
                   <div

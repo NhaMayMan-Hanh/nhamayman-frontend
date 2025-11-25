@@ -112,7 +112,7 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar Menu */}
           <ProfileSidebar activePath="/orders" />
@@ -122,27 +122,33 @@ export default function OrdersPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-2xl font-bold mb-4">Đơn hàng của bạn</h2>
 
-              {/* Tabs */}
-              <div className="flex border-b mb-6">
-                {statusTabs.map((tab) => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    className={`px-4 py-2 -mb-px font-medium border-b-2 transition-colors ${
-                      activeTab === tab.key
-                        ? "border-amber-500 text-amber-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    {tab.label} ({orders.filter((o) => o.status === tab.key).length})
-                  </button>
-                ))}
+              <div className="flex border-b mb-6 overflow-x-auto">
+                {statusTabs.map((tab) => {
+                  const count =
+                    tab.key === "all"
+                      ? orders.length
+                      : orders.filter((o) => o.status === tab.key).length;
+
+                  return (
+                    <button
+                      key={tab.key}
+                      onClick={() => setActiveTab(tab.key)}
+                      className={`px-6 py-3 -mb-px font-medium border-b-2 transition-colors whitespace-nowrap ${
+                        activeTab === tab.key
+                          ? "border-amber-500 text-amber-600"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      {tab.label} ({count})
+                    </button>
+                  );
+                })}
               </div>
 
               {filteredOrders.length === 0 ? (
                 <p className="text-center text-gray-600 py-8">
                   Không có đơn hàng trong danh mục này.{" "}
-                  <Link href="/products" className="text-amber-500 hover:underline">
+                  <Link href="/productsAll" className="text-amber-500 hover:underline">
                     Mua sắm ngay
                   </Link>
                 </p>
