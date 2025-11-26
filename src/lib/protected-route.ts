@@ -1,49 +1,54 @@
+// src/lib/protected-route.ts
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { jwtVerify } from "jose";
 
-const PROFILE_ENDPOINT = `${process.env.NEXT_PUBLIC_API_URL}/client/users/profile`;
+const JWT_SECRET = process.env.JWT_SECRET!;
+
+interface JwtPayload {
+  id?: string | number;
+  _id?: string | number;
+  name?: string;
+  username?: string;
+  email?: string;
+  role?: string;
+  avatar?: string;
+  iat?: number;
+  exp?: number;
+}
 
 export async function requireAuth(options: { role?: "admin" | "user" | "any" } = {}) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
+  const cookieStore = cookies();
+  const token = (await cookieStore).get("token")?.value;
 
   if (!token) {
     redirect("/login");
   }
 
   try {
-    const res = await fetch(PROFILE_ENDPOINT, {
-      headers: {
-        Cookie: `token=${token}`,
-        "Content-Type": "application/json",
-      },
-      cache: "no-store",
-    });
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
 
-    if (!res.ok) {
-      redirect("/login");
-    }
+    // Ép kiểu an toàn + convert id
+    const rawPayload = payload as JwtPayload;
 
-    const json = await res.json();
-    const user = json.data;
+    const userId = String(rawPayload.id || rawPayload._id || "");
 
-    if (!user) {
-      redirect("/login");
-    }
+    const user = {
+      id: userId,
+      name: (rawPayload.name || "Unknown") as string,
+      username: (rawPayload.username || "user") as string,
+      email: (rawPayload.email || "") as string,
+      role: (rawPayload.role || "user") as string,
+      avatar: (rawPayload.avatar || "") as string,
+    };
 
-    // Check role
     if (options.role === "admin" && user.role !== "admin") {
-      redirect("/"); // Redirect về home nếu không phải admin
+      redirect("/");
     }
 
     return user;
   } catch (error) {
-    // Next.js redirect throws NEXT_REDIRECT error - cần re-throw
-    if (error && typeof error === "object" && "digest" in error) {
-      throw error;
-    }
-
-    // Các lỗi khác -> redirect login
+    console.log("Token không hợp lệ hoặc hết hạn:", error);
     redirect("/login");
   }
 }
