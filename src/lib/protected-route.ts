@@ -12,11 +12,8 @@ export async function requireAuth(options: { role?: "admin" | "user" | "any" } =
   }
 
   try {
-    const res = await fetch(PROFILE_ENDPOINT, {
-      headers: {
-        Cookie: `token=${token}`,
-        "Content-Type": "application/json",
-      },
+   const res = await fetch(PROFILE_ENDPOINT, {
+      credentials: "include",
       cache: "no-store",
     });
 
