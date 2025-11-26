@@ -47,7 +47,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   try {
     console.log("🔍 [AuthLayout] Có token, kiểm tra tính hợp lệ...");
     const res = await fetch(PROFILE_ENDPOINT, {
-      headers: { Cookie: `token=${token}` },
+      credentials: "include",
       cache: "no-store",
     });
 

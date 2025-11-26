@@ -4,64 +4,46 @@ import { redirect } from "next/navigation";
 const PROFILE_ENDPOINT = `${process.env.NEXT_PUBLIC_API_URL}/client/users/profile`;
 
 export async function requireAuth(options: { role?: "admin" | "user" | "any" } = {}) {
-  console.log("🔍 [requireAuth] Bắt đầu kiểm tra auth...");
-
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
 
-  console.log("🔑 Token lấy từ cookie:", token);
-
   if (!token) {
-    console.log("❌ Không có token → redirect('/login')");
     redirect("/login");
   }
 
   try {
-    console.log("🌐 Gửi request đến PROFILE_ENDPOINT...");
     const res = await fetch(PROFILE_ENDPOINT, {
-      headers: { Cookie: `token=${token}` },
+      headers: {
+        Cookie: `token=${token}`,
+        "Content-Type": "application/json",
+      },
       cache: "no-store",
     });
 
-    console.log("📡 Status API /profile:", res.status);
-
     if (!res.ok) {
-      console.log("❌ API trả về status FAIL → redirect('/login')");
-      throw new Error("PROFILE_RESPONSE_NOT_OK");
+      redirect("/login");
     }
 
-    // Parse JSON trước khi làm gì khác
     const json = await res.json();
-    console.log("📦 JSON trả về:", json);
-
     const user = json.data;
-    console.log("👤 User parse được:", user);
 
     if (!user) {
-      console.log("❌ Không có user trong API → redirect('/login')");
-      throw new Error("NO_USER_DATA");
+      redirect("/login");
     }
 
-    // Kiểm tra role
-    if (options.role === "admin") {
-      console.log(`🛡 Kiểm tra role admin: user.role = ${user.role}, yêu cầu = admin`);
-      if (user.role !== "admin") {
-        console.log("❌ User không phải admin → redirect('/')");
-        redirect("/");
-      }
+    // Check role
+    if (options.role === "admin" && user.role !== "admin") {
+      redirect("/"); // Redirect về home nếu không phải admin
     }
 
-    console.log("✅ Auth hợp lệ → return user");
     return user;
-  } catch (err) {
-    console.log("💥 Lỗi trong requireAuth:", err);
-
-    // Chỉ redirect khi KHÔNG phải lỗi redirect
-    if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) {
-      throw err; // Re-throw redirect errors
+  } catch (error) {
+    // Next.js redirect throws NEXT_REDIRECT error - cần re-throw
+    if (error && typeof error === "object" && "digest" in error) {
+      throw error;
     }
 
-    console.log("➡️ Redirect('/login')");
+    // Các lỗi khác -> redirect login
     redirect("/login");
   }
 }
