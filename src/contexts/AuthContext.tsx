@@ -104,7 +104,7 @@ export function AuthProvider({
 
     // Refresh page để AuthLayout tự động redirect dựa trên role
     console.log("🔄 [AuthContext] Refreshing router to trigger AuthLayout redirect...");
-    router.refresh();
+    window.location.href = userData.role === "admin" ? "/admin/dashboard" : "/";
   };
 
   const logout = async () => {
@@ -120,9 +120,6 @@ export function AuthProvider({
     } catch (error) {
       console.error("[AuthContext] Logout API error:", error);
     }
-
-    // Clear cookie
-    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
     // Navigate to login
     router.push("/login");
