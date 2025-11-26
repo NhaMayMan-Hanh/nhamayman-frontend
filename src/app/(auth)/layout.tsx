@@ -49,6 +49,9 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
     const res = await fetch(PROFILE_ENDPOINT, {
       credentials: "include",
       cache: "no-store",
+      headers: {
+        Cookie: `token=${token}`,
+      },
     });
 
     if (res.ok) {

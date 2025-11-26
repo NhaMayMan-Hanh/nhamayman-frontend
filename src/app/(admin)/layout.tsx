@@ -4,8 +4,14 @@ import AdminHeader from "@components/admin/layout/AdminHeader";
 import AdminSidebar from "@components/admin/layout/AdminSidebar";
 import { AuthProvider } from "@contexts/AuthContext";
 import { ToastContainer } from "@components/admin/ui/Toast";
+import { cookies } from "next/headers";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+
+  console.log("🍪 [AdminLayout] Token từ cookies:", token ? "CÓ" : "KHÔNG");
+  console.log("🍪 [AdminLayout] All cookies:", cookieStore.getAll());
   const user = await requireAuth({ role: "admin" });
   return (
     <AuthProvider initialUser={user}>
