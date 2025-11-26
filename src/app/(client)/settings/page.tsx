@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@contexts/AuthContext";
 import ProfileSidebar from "@components/client/profile/ProfileSidebar";
 import toast from "react-hot-toast";
+import router from "next/router";
 
 export default function SettingsPage() {
   const { user } = useAuth();

@@ -26,6 +26,7 @@ interface Order {
 }
 
 interface OrdersData {
+  message: string;
   success: boolean;
   data: Order[];
 }

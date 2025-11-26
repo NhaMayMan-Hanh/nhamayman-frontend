@@ -28,6 +28,7 @@ interface RelatedProduct {
 }
 
 interface ProductData {
+  message: string;
   success: boolean;
   data: {
     product: Product;
