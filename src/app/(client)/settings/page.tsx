@@ -28,7 +28,7 @@ export default function SettingsPage() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/client/auth/change-password", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/auth/change-password`, {
         // Placeholder endpoint
         method: "PUT",
         credentials: "include",

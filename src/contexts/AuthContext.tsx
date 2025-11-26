@@ -39,7 +39,7 @@ export function AuthProvider({
 
     const checkAuth = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/client/users/profile", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/users/profile`, {
           credentials: "include",
         });
         if (res.ok) {
@@ -113,7 +113,7 @@ export function AuthProvider({
     hasCheckedAuth.current = false;
 
     try {
-      await fetch("http://localhost:5000/api/client/auth/logout", {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/auth/logout`, {
         method: "POST",
         credentials: "include",
       });

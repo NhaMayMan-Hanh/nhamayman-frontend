@@ -74,7 +74,7 @@ export default function Home() {
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/client/home");
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/home`);
         if (!res.ok) {
           throw new Error("Lỗi khi fetch data");
         }

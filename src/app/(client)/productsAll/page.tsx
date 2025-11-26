@@ -39,7 +39,7 @@ const ProductsAll = () => {
 
   const fetchProducts = async (): Promise<void> => {
     try {
-      const response = await fetch("http://localhost:5000/api/client/products");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/products`);
       const result = await response.json();
       if (result.success) {
         setProducts(result.data);

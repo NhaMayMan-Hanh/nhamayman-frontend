@@ -47,7 +47,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/client/cart", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/cart`, {
         credentials: "include",
       });
       const data = await res.json();
@@ -124,7 +124,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const mergeLocalToServer = async (localItems: CartItem[]) => {
     setLoading(true);
     try {
-      const serverRes = await fetch("http://localhost:5000/api/client/cart", {
+      const serverRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/cart`, {
         credentials: "include",
       });
       const serverData = await serverRes.json();
@@ -160,7 +160,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const addToCartOnServer = async (product: any) => {
-    const res = await fetch("http://localhost:5000/api/client/cart", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/cart`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -178,7 +178,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const updateCartItemOnServer = async (productId: string, quantity: number) => {
-    const res = await fetch("http://localhost:5000/api/client/cart", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/cart`, {
       method: "PUT",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -240,7 +240,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       setLoading(true);
       try {
-        const res = await fetch(`http://localhost:5000/api/client/cart/${id}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/cart/${id}`, {
           method: "DELETE",
           credentials: "include",
         });
@@ -274,7 +274,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       try {
         // Remove items one by one from server
         const removePromises = ids.map((id) =>
-          fetch(`http://localhost:5000/api/client/cart/${id}`, {
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/cart/${id}`, {
             method: "DELETE",
             credentials: "include",
           })
@@ -333,7 +333,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       setLoading(true);
       try {
-        const res = await fetch("http://localhost:5000/api/client/cart", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/cart`, {
           method: "DELETE",
           credentials: "include",
         });

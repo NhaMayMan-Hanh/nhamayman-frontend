@@ -10,7 +10,7 @@ import { Toaster } from "react-hot-toast";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const PROFILE_ENDPOINT = "http://localhost:5000/api/client/users/profile";
+const PROFILE_ENDPOINT = `${process.env.NEXT_PUBLIC_API_URL}/client/users/profile`;
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
   console.log("🚪 [AuthLayout] Bắt đầu render...");

@@ -49,7 +49,7 @@ export default function ProductDetailPage() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/client/products/${id}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/products/${id}`);
         if (!res.ok) throw new Error("Lỗi khi fetch sản phẩm");
 
         const result: ProductData = await res.json();

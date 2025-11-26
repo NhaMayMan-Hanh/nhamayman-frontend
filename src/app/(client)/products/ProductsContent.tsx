@@ -41,7 +41,7 @@ export default function ProductsContent() {
     const fetchProducts = async () => {
       try {
         const res = await fetch(
-          `http://localhost:5000/api/client/products?category=${categorySlug}`
+          `${process.env.NEXT_PUBLIC_API_URL}/client/products?category=${categorySlug}`
         );
 
         if (!res.ok) throw new Error("Lỗi khi fetch products");

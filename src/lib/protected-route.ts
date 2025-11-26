@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-const PROFILE_ENDPOINT = "http://localhost:5000/api/client/users/profile";
+const PROFILE_ENDPOINT = `{process.env.NEXT_PUBLIC_API_URL}/client/users/profile`;
 
 export async function requireAuth(options: { role?: "admin" | "user" | "any" } = {}) {
   console.log("🔍 [requireAuth] Bắt đầu kiểm tra auth...");
