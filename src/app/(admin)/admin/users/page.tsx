@@ -478,8 +478,7 @@ export default function Users() {
    const confirmDelete = async () => {
       if (!selectedUser) return;
 
-      // @ts-ignore - đã gắn vào window
-      const toastId = window.showToast("Đang xóa người dùng...", "loading");
+      const toastId = window.showToast?.("Đang xóa người dùng...", "loading");
 
       try {
          const res = await fetch(
@@ -491,31 +490,36 @@ export default function Users() {
          );
 
          if (res.ok) {
-            // @ts-ignore
-            window.updateToast(
-               toastId,
-               `Đã xóa người dùng "${selectedUser.name}" thành công!`,
-               "success"
-            );
+            if (toastId) {
+               window.updateToast?.(
+                  toastId,
+                  `Đã xóa người dùng "${selectedUser.name}" thành công!`,
+                  "success"
+               );
+            }
 
-            // Cập nhật lại danh sách user
-            fetchUsers();
-
-            // Đóng modal và reset state
+            // Đóng modal và reset state trước
             setShowModal(false);
             setSelectedUser(null);
+
+            // Cập nhật lại danh sách user sau một chút
+            setTimeout(() => {
+               fetchUsers();
+            }, 500);
          } else {
             const errorData = await res.json();
-            // @ts-ignore
-            window.updateToast(
-               toastId,
-               errorData.message || "Xóa thất bại",
-               "error"
-            );
+            if (toastId) {
+               window.updateToast?.(
+                  toastId,
+                  errorData.message || "Xóa người dùng thất bại",
+                  "error"
+               );
+            }
          }
       } catch (err) {
-         // @ts-ignore
-         window.updateToast(toastId, "Lỗi kết nối server", "error");
+         if (toastId) {
+            window.updateToast?.(toastId, "Lỗi kết nối đến server", "error");
+         }
          console.error("Error deleting user:", err);
       }
    };

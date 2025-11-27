@@ -1,4 +1,4 @@
-// app/admin/users/[id]/edit/page.tsx   (hoặc edit/[id]/page.tsx)
+// app/admin/users/[id]/edit/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -39,7 +39,14 @@ interface UserEdit {
    name: string;
    username: string;
    email: string;
+   phone?: string;
    role: "user" | "admin";
+   address?: {
+      tinh_thanh?: string;
+      quan_huyen?: string;
+      phuong_xa?: string;
+      dia_chi_chi_tiet?: string;
+   };
 }
 
 export default function EditUserPage() {
@@ -52,7 +59,14 @@ export default function EditUserPage() {
    const [formData, setFormData] = useState({
       name: "",
       username: "",
+      phone: "",
       role: "user" as "user" | "admin",
+      address: {
+         tinh_thanh: "",
+         quan_huyen: "",
+         phuong_xa: "",
+         dia_chi_chi_tiet: "",
+      },
    });
    const [loading, setLoading] = useState(true);
    const [saving, setSaving] = useState(false);
@@ -77,7 +91,14 @@ export default function EditUserPage() {
                setFormData({
                   name: u.name || "",
                   username: u.username || "",
+                  phone: u.phone || "",
                   role: u.role || "user",
+                  address: {
+                     tinh_thanh: u.address?.tinh_thanh || "",
+                     quan_huyen: u.address?.quan_huyen || "",
+                     phuong_xa: u.address?.phuong_xa || "",
+                     dia_chi_chi_tiet: u.address?.dia_chi_chi_tiet || "",
+                  },
                });
             } else {
                showToast("Không tải được thông tin người dùng", "error");
@@ -124,7 +145,9 @@ export default function EditUserPage() {
                body: JSON.stringify({
                   name: formData.name,
                   username: formData.username,
+                  phone: formData.phone,
                   role: formData.role,
+                  address: formData.address,
                }),
             }
          );
@@ -316,6 +339,22 @@ export default function EditUserPage() {
 
                   <div>
                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Số điện thoại
+                     </label>
+                     <input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) =>
+                           setFormData({ ...formData, phone: e.target.value })
+                        }
+                        disabled={saving}
+                        placeholder="Nhập số điện thoại"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition disabled:bg-gray-50"
+                     />
+                  </div>
+
+                  <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         Vai trò
                      </label>
                      <select
@@ -340,8 +379,104 @@ export default function EditUserPage() {
                   </div>
                </div>
 
+               {/* Địa chỉ */}
+               <div className="pt-6 border-t border-gray-200 mt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                     Địa chỉ
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                           Tỉnh/Thành phố
+                        </label>
+                        <input
+                           type="text"
+                           value={formData.address.tinh_thanh}
+                           onChange={(e) =>
+                              setFormData({
+                                 ...formData,
+                                 address: {
+                                    ...formData.address,
+                                    tinh_thanh: e.target.value,
+                                 },
+                              })
+                           }
+                           disabled={saving}
+                           placeholder="VD: Thành phố Hà Nội"
+                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition disabled:bg-gray-50"
+                        />
+                     </div>
+
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                           Quận/Huyện
+                        </label>
+                        <input
+                           type="text"
+                           value={formData.address.quan_huyen}
+                           onChange={(e) =>
+                              setFormData({
+                                 ...formData,
+                                 address: {
+                                    ...formData.address,
+                                    quan_huyen: e.target.value,
+                                 },
+                              })
+                           }
+                           disabled={saving}
+                           placeholder="VD: Quận Ba Đình"
+                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition disabled:bg-gray-50"
+                        />
+                     </div>
+
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                           Phường/Xã
+                        </label>
+                        <input
+                           type="text"
+                           value={formData.address.phuong_xa}
+                           onChange={(e) =>
+                              setFormData({
+                                 ...formData,
+                                 address: {
+                                    ...formData.address,
+                                    phuong_xa: e.target.value,
+                                 },
+                              })
+                           }
+                           disabled={saving}
+                           placeholder="VD: Phường Điện Biên"
+                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition disabled:bg-gray-50"
+                        />
+                     </div>
+
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                           Địa chỉ chi tiết
+                        </label>
+                        <input
+                           type="text"
+                           value={formData.address.dia_chi_chi_tiet}
+                           onChange={(e) =>
+                              setFormData({
+                                 ...formData,
+                                 address: {
+                                    ...formData.address,
+                                    dia_chi_chi_tiet: e.target.value,
+                                 },
+                              })
+                           }
+                           disabled={saving}
+                           placeholder="VD: Số 123, Ngõ 456"
+                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition disabled:bg-gray-50"
+                        />
+                     </div>
+                  </div>
+               </div>
+
                {/* Gửi link đặt lại mật khẩu */}
-               <div className="pt-6 border-t border-gray-200">
+               <div className="pt-6 border-t border-gray-200 mt-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">
                      Đặt lại mật khẩu
                   </h3>
@@ -381,7 +516,7 @@ export default function EditUserPage() {
                </div>
 
                {/* Buttons */}
-               <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+               <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 mt-6">
                   <Link
                      href={`/admin/users/${userId}`}
                      className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"

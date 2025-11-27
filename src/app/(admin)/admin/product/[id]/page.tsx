@@ -81,7 +81,7 @@ export default function AdminProductDetailPage() {
    if (error || !product) {
       return (
          <div className="flex items-center justify-center h-screen bg-slate-50">
-            <div className="text-center bg-white p-8 rounded-xl shadow-lg">
+            <div className="text-center bg-white p-8 rounded-xl">
                <svg
                   className="w-16 h-16 text-red-500 mx-auto mb-4"
                   fill="none"
@@ -136,7 +136,7 @@ export default function AdminProductDetailPage() {
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             {/* Product Image */}
             <div className="lg:col-span-1">
-               <div className="bg-white rounded-xl shadow-lg overflow-hidden sticky top-6">
+               <div className="bg-white rounded-xl overflow-hidden sticky top-6">
                   <div className="aspect-square bg-slate-100">
                      <img
                         src={product.image}
@@ -150,7 +150,7 @@ export default function AdminProductDetailPage() {
             {/* Product Info */}
             <div className="lg:col-span-2 space-y-6">
                {/* Basic Info Card */}
-               <div className="bg-white rounded-xl shadow-lg p-6">
+               <div className="bg-white rounded-xl p-6">
                   <div className="flex items-start justify-between mb-4">
                      <div className="flex-1">
                         <h1 className="text-3xl font-bold text-slate-800 mb-2">
@@ -235,7 +235,7 @@ export default function AdminProductDetailPage() {
 
                {/* Detailed Description */}
                {product.detailedDescription && (
-                  <div className="bg-white rounded-xl shadow-lg p-6">
+                  <div className="bg-white rounded-xl p-6">
                      <h2 className="text-xl font-bold text-slate-800 mb-4">
                         Mô tả chi tiết
                      </h2>
@@ -246,7 +246,7 @@ export default function AdminProductDetailPage() {
                )}
 
                {/* Meta Info */}
-               <div className="bg-white rounded-xl shadow-lg p-6">
+               <div className="bg-white rounded-xl p-6">
                   <h2 className="text-xl font-bold text-slate-800 mb-4">
                      Thông tin hệ thống
                   </h2>

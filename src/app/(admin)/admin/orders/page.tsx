@@ -21,7 +21,12 @@ interface ShippingAddress {
 }
 
 interface OrderItem {
-   productId: string | null;
+   productId: {
+      _id: string;
+      name: string;
+      price: number;
+      image: string;
+   } | null;
    quantity: number;
    price: number;
    _id: string;
@@ -32,8 +37,8 @@ interface Order {
    userId: string;
    items: OrderItem[];
    total: number;
-   status: "pending" | "confirmed" | "shipping" | "delivered" | "cancelled";
-   paymentMethod: "cash" | "bank_transfer" | "momo" | "vnpay";
+   status: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+   paymentMethod: "cod" | "online" | "chuyen_khoan";
    shippingAddress: ShippingAddress;
    createdAt: string;
    updatedAt: string;
@@ -51,16 +56,41 @@ const statusDisplay: Record<Order["status"], { label: string; color: string }> =
          color: "bg-yellow-100 text-yellow-800",
       },
       confirmed: { label: "Đã xác nhận", color: "bg-blue-100 text-blue-800" },
-      shipping: { label: "Đang giao", color: "bg-purple-100 text-purple-800" },
+      shipped: { label: "Đang giao", color: "bg-purple-100 text-purple-800" },
       delivered: { label: "Đã giao", color: "bg-green-100 text-green-800" },
       cancelled: { label: "Đã hủy", color: "bg-red-100 text-red-800" },
    };
 
 const paymentMethodDisplay: Record<Order["paymentMethod"], string> = {
-   cash: "Tiền mặt (COD)",
-   bank_transfer: "Chuyển khoản ngân hàng",
-   momo: "MoMo",
-   vnpay: "VNPay",
+   cod: "Tiền mặt (COD)",
+   online: "Thanh toán online",
+   chuyen_khoan: "Chuyển khoản ngân hàng",
+};
+
+const actionMessages: Record<
+   string,
+   { loading: string; success: string; error: string }
+> = {
+   confirm: {
+      loading: "Đang xác nhận đơn hàng...",
+      success: "Xác nhận đơn hàng thành công!",
+      error: "Xác nhận đơn hàng thất bại",
+   },
+   ship: {
+      loading: "Đang cập nhật trạng thái giao hàng...",
+      success: "Đã chuyển sang trạng thái đang giao!",
+      error: "Cập nhật trạng thái thất bại",
+   },
+   deliver: {
+      loading: "Đang cập nhật trạng thái giao hàng...",
+      success: "Đơn hàng đã được giao thành công!",
+      error: "Cập nhật trạng thái thất bại",
+   },
+   cancel: {
+      loading: "Đang hủy đơn hàng...",
+      success: "Đã hủy đơn hàng",
+      error: "Hủy đơn hàng thất bại",
+   },
 };
 
 export default function Orders() {
@@ -72,6 +102,12 @@ export default function Orders() {
       "all"
    );
    const [currentPage, setCurrentPage] = useState(1);
+   const [actionLoading, setActionLoading] = useState<string | null>(null);
+   const [showConfirmModal, setShowConfirmModal] = useState<{
+      orderId: string;
+      action: "confirm" | "ship" | "deliver" | "cancel";
+      currentStatus: Order["status"];
+   } | null>(null);
    const router = useRouter();
    const itemsPerPage = 10;
 
@@ -99,7 +135,85 @@ export default function Orders() {
       }
    };
 
-   // Lọc và tìm kiếm
+   const updateOrderStatus = async (
+      orderId: string,
+      newStatus: Order["status"]
+   ) => {
+      const action = showConfirmModal?.action;
+      if (!action) return;
+
+      const toastId = window.showToast?.(
+         actionMessages[action].loading,
+         "loading"
+      );
+
+      try {
+         setActionLoading(orderId);
+         const res = await fetch(
+            `http://localhost:5000/api/admin/orders/${orderId}`,
+            {
+               method: "PUT",
+               headers: { "Content-Type": "application/json" },
+               credentials: "include",
+               body: JSON.stringify({ status: newStatus }),
+            }
+         );
+
+         const result = await res.json();
+
+         if (result.success) {
+            await fetchOrders();
+            setShowConfirmModal(null);
+
+            if (toastId) {
+               window.updateToast?.(
+                  toastId,
+                  actionMessages[action].success,
+                  "success"
+               );
+            }
+         } else {
+            if (toastId) {
+               window.updateToast?.(
+                  toastId,
+                  result.message || actionMessages[action].error,
+                  "error"
+               );
+            }
+         }
+      } catch (err: any) {
+         if (toastId) {
+            window.updateToast?.(toastId, "Lỗi: " + err.message, "error");
+         }
+      } finally {
+         setActionLoading(null);
+      }
+   };
+
+   const handleAction = (
+      orderId: string,
+      action: "confirm" | "ship" | "deliver" | "cancel",
+      currentStatus: Order["status"]
+   ) => {
+      setShowConfirmModal({ orderId, action, currentStatus });
+   };
+
+   const confirmAction = () => {
+      if (!showConfirmModal) return;
+
+      const statusMap: Record<string, Order["status"]> = {
+         confirm: "confirmed",
+         ship: "shipped",
+         deliver: "delivered",
+         cancel: "cancelled",
+      };
+
+      updateOrderStatus(
+         showConfirmModal.orderId,
+         statusMap[showConfirmModal.action]
+      );
+   };
+
    const filteredOrders = orders
       .filter((order) => {
          if (statusFilter !== "all" && order.status !== statusFilter)
@@ -164,7 +278,6 @@ export default function Orders() {
                </p>
             </div>
 
-            {/* Toolbar */}
             <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="relative">
@@ -204,7 +317,7 @@ export default function Orders() {
                      <option value="all">Tất cả trạng thái</option>
                      <option value="pending">Chờ xác nhận</option>
                      <option value="confirmed">Đã xác nhận</option>
-                     <option value="shipping">Đang giao</option>
+                     <option value="shipped">Đang giao</option>
                      <option value="delivered">Đã giao</option>
                      <option value="cancelled">Đã hủy</option>
                   </select>
@@ -231,7 +344,6 @@ export default function Orders() {
                </div>
             </div>
 
-            {/* Table */}
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                <div className="overflow-x-auto">
                   <table className="w-full table-auto">
@@ -258,7 +370,7 @@ export default function Orders() {
                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Ngày đặt
                            </th>
-                           <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                           <th className="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Hành động
                            </th>
                         </tr>
@@ -332,36 +444,191 @@ export default function Orders() {
                                  <td className="px-6 py-4 text-sm text-gray-600">
                                     {formatDate(order.createdAt)}
                                  </td>
-                                 <td className="px-6 py-4 text-right">
-                                    <button
-                                       onClick={() =>
-                                          router.push(
-                                             `/admin/orders/${order._id}`
-                                          )
-                                       }
-                                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all group"
-                                       title="Xem chi tiết"
-                                    >
-                                       <svg
-                                          className="w-5 h-5 group-hover:scale-110 transition-transform"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
+                                 <td className="px-6 py-4">
+                                    <div className="flex items-center justify-center gap-2">
+                                       <button
+                                          onClick={() =>
+                                             router.push(
+                                                `/admin/orders/${order._id}`
+                                             )
+                                          }
+                                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                          title="Xem chi tiết"
                                        >
-                                          <path
-                                             strokeLinecap="round"
-                                             strokeLinejoin="round"
-                                             strokeWidth={2}
-                                             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                          />
-                                          <path
-                                             strokeLinecap="round"
-                                             strokeLinejoin="round"
-                                             strokeWidth={2}
-                                             d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                          />
-                                       </svg>
-                                    </button>
+                                          <svg
+                                             className="w-5 h-5"
+                                             fill="none"
+                                             stroke="currentColor"
+                                             viewBox="0 0 24 24"
+                                          >
+                                             <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                             />
+                                             <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                             />
+                                          </svg>
+                                       </button>
+
+                                       {order.status === "pending" && (
+                                          <>
+                                             <button
+                                                onClick={() =>
+                                                   handleAction(
+                                                      order._id,
+                                                      "confirm",
+                                                      order.status
+                                                   )
+                                                }
+                                                disabled={
+                                                   actionLoading === order._id
+                                                }
+                                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-all disabled:opacity-50"
+                                                title="Xác nhận đơn"
+                                             >
+                                                <svg
+                                                   className="w-5 h-5"
+                                                   fill="none"
+                                                   stroke="currentColor"
+                                                   viewBox="0 0 24 24"
+                                                >
+                                                   <path
+                                                      strokeLinecap="round"
+                                                      strokeLinejoin="round"
+                                                      strokeWidth={2}
+                                                      d="M5 13l4 4L19 7"
+                                                   />
+                                                </svg>
+                                             </button>
+                                             <button
+                                                onClick={() =>
+                                                   handleAction(
+                                                      order._id,
+                                                      "cancel",
+                                                      order.status
+                                                   )
+                                                }
+                                                disabled={
+                                                   actionLoading === order._id
+                                                }
+                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
+                                                title="Hủy đơn"
+                                             >
+                                                <svg
+                                                   className="w-5 h-5"
+                                                   fill="none"
+                                                   stroke="currentColor"
+                                                   viewBox="0 0 24 24"
+                                                >
+                                                   <path
+                                                      strokeLinecap="round"
+                                                      strokeLinejoin="round"
+                                                      strokeWidth={2}
+                                                      d="M6 18L18 6M6 6l12 12"
+                                                   />
+                                                </svg>
+                                             </button>
+                                          </>
+                                       )}
+
+                                       {order.status === "confirmed" && (
+                                          <>
+                                             <button
+                                                onClick={() =>
+                                                   handleAction(
+                                                      order._id,
+                                                      "ship",
+                                                      order.status
+                                                   )
+                                                }
+                                                disabled={
+                                                   actionLoading === order._id
+                                                }
+                                                className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-all disabled:opacity-50"
+                                                title="Chuyển sang đang giao"
+                                             >
+                                                <svg
+                                                   className="w-5 h-5"
+                                                   fill="none"
+                                                   stroke="currentColor"
+                                                   viewBox="0 0 24 24"
+                                                >
+                                                   <path
+                                                      strokeLinecap="round"
+                                                      strokeLinejoin="round"
+                                                      strokeWidth={2}
+                                                      d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"
+                                                   />
+                                                </svg>
+                                             </button>
+                                             <button
+                                                onClick={() =>
+                                                   handleAction(
+                                                      order._id,
+                                                      "cancel",
+                                                      order.status
+                                                   )
+                                                }
+                                                disabled={
+                                                   actionLoading === order._id
+                                                }
+                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
+                                                title="Hủy đơn"
+                                             >
+                                                <svg
+                                                   className="w-5 h-5"
+                                                   fill="none"
+                                                   stroke="currentColor"
+                                                   viewBox="0 0 24 24"
+                                                >
+                                                   <path
+                                                      strokeLinecap="round"
+                                                      strokeLinejoin="round"
+                                                      strokeWidth={2}
+                                                      d="M6 18L18 6M6 6l12 12"
+                                                   />
+                                                </svg>
+                                             </button>
+                                          </>
+                                       )}
+
+                                       {order.status === "shipped" && (
+                                          <button
+                                             onClick={() =>
+                                                handleAction(
+                                                   order._id,
+                                                   "deliver",
+                                                   order.status
+                                                )
+                                             }
+                                             disabled={
+                                                actionLoading === order._id
+                                             }
+                                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-all disabled:opacity-50"
+                                             title="Đánh dấu đã giao"
+                                          >
+                                             <svg
+                                                className="w-5 h-5"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                             >
+                                                <path
+                                                   strokeLinecap="round"
+                                                   strokeLinejoin="round"
+                                                   strokeWidth={2}
+                                                   d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                />
+                                             </svg>
+                                          </button>
+                                       )}
+                                    </div>
                                  </td>
                               </tr>
                            ))
@@ -370,7 +637,6 @@ export default function Orders() {
                   </table>
                </div>
 
-               {/* Pagination */}
                {totalPages > 1 && (
                   <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -406,6 +672,44 @@ export default function Orders() {
                )}
             </div>
          </div>
+         {showConfirmModal && (
+            <div className="fixed inset-0 bg-black/30 bg-opacity-50 flex items-center justify-center z-50 p-4">
+               <div className="bg-white rounded-lg p-6 max-w-md w-full">
+                  <h3 className="text-lg font-semibold mb-4">
+                     {showConfirmModal.action === "confirm" &&
+                        "Xác nhận đơn hàng"}
+                     {showConfirmModal.action === "ship" &&
+                        "Chuyển sang đang giao"}
+                     {showConfirmModal.action === "deliver" &&
+                        "Đánh dấu đã giao"}
+                     {showConfirmModal.action === "cancel" && "Hủy đơn hàng"}
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                     Bạn có chắc chắn muốn thực hiện hành động này?
+                  </p>
+                  <div className="flex gap-3 justify-end">
+                     <button
+                        onClick={() => setShowConfirmModal(null)}
+                        className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                        disabled={actionLoading !== null}
+                     >
+                        Hủy
+                     </button>
+                     <button
+                        onClick={confirmAction}
+                        disabled={actionLoading !== null}
+                        className={`px-4 py-2 rounded-lg text-white disabled:opacity-50 ${
+                           showConfirmModal.action === "cancel"
+                              ? "bg-red-600 hover:bg-red-700"
+                              : "bg-blue-600 hover:bg-blue-700"
+                        }`}
+                     >
+                        {actionLoading ? "Đang xử lý..." : "Xác nhận"}
+                     </button>
+                  </div>
+               </div>
+            </div>
+         )}
       </div>
    );
 }

@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { MapPin, Phone } from "lucide-react";
 
 interface UserDetail {
    _id: string;
@@ -12,7 +13,14 @@ interface UserDetail {
    email: string;
    avatar?: string;
    role: string;
+   phone?: string;
    isVerified: boolean;
+   address?: {
+      tinh_thanh?: string;
+      quan_huyen?: string;
+      phuong_xa?: string;
+      dia_chi_chi_tiet?: string;
+   };
    createdAt: string;
    updatedAt: string;
 }
@@ -284,25 +292,67 @@ export default function UserDetailPage() {
                      Thông tin đầy đủ về tài khoản
                   </p>
                </div>
-               <Link
-                  href="/admin/users"
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-               >
-                  <svg
-                     className="w-5 h-5"
-                     fill="none"
-                     stroke="currentColor"
-                     viewBox="0 0 24 24"
+               <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-3">
+                     <Link
+                        href={`/admin/users/edit/${user._id}`}
+                        className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                     >
+                        <svg
+                           className="w-5 h-5"
+                           fill="none"
+                           stroke="currentColor"
+                           viewBox="0 0 24 24"
+                        >
+                           <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                           />
+                        </svg>
+                        Chỉnh sửa người dùng
+                     </Link>
+                     <button
+                        onClick={() => setShowDeleteModal(true)}
+                        className="flex items-center gap-2 px-5 py-3 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition"
+                     >
+                        <svg
+                           className="w-5 h-5"
+                           fill="none"
+                           stroke="currentColor"
+                           viewBox="0 0 24 24"
+                        >
+                           <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                           />
+                        </svg>
+                        Xóa người dùng
+                     </button>
+                  </div>
+                  <Link
+                     href="/admin/users"
+                     className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
                   >
-                     <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                     />
-                  </svg>
-                  Quay lại
-               </Link>
+                     <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                     >
+                        <path
+                           strokeLinecap="round"
+                           strokeLinejoin="round"
+                           strokeWidth={2}
+                           d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                        />
+                     </svg>
+                     Quay lại
+                  </Link>
+               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -404,6 +454,17 @@ export default function UserDetailPage() {
                               {user.email}
                            </span>
                         </div>
+                        {user.phone && (
+                           <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                              <span className="text-gray-600 flex items-center gap-2">
+                                 <Phone className="w-4 h-4" />
+                                 Số điện thoại
+                              </span>
+                              <span className="font-medium text-gray-900">
+                                 {user.phone}
+                              </span>
+                           </div>
+                        )}
                         <div className="flex items-center justify-between py-3 border-b border-gray-100">
                            <span className="text-gray-600">ID người dùng</span>
                            <code className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
@@ -429,17 +490,80 @@ export default function UserDetailPage() {
                      </div>
                   </div>
 
+                  {/* Địa chỉ */}
                   <div className="bg-white rounded-xl shadow-sm p-6">
-                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        Hành động
+                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <MapPin className="w-5 h-5" />
+                        Địa chỉ
                      </h3>
-                     <div className="flex flex-wrap gap-3">
-                        <Link
-                           href={`/admin/users/edit/${user._id}`}
-                           className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                        >
+                     {user.address &&
+                     (user.address.tinh_thanh ||
+                        user.address.quan_huyen ||
+                        user.address.phuong_xa ||
+                        user.address.dia_chi_chi_tiet) ? (
+                        <div className="space-y-3">
+                           {user.address.dia_chi_chi_tiet && (
+                              <div className="flex items-start gap-3">
+                                 <span className="text-gray-600 min-w-[140px]">
+                                    Địa chỉ chi tiết:
+                                 </span>
+                                 <span className="font-medium text-gray-900">
+                                    {user.address.dia_chi_chi_tiet}
+                                 </span>
+                              </div>
+                           )}
+                           {user.address.phuong_xa && (
+                              <div className="flex items-start gap-3">
+                                 <span className="text-gray-600 min-w-[140px]">
+                                    Phường/Xã:
+                                 </span>
+                                 <span className="font-medium text-gray-900">
+                                    {user.address.phuong_xa}
+                                 </span>
+                              </div>
+                           )}
+                           {user.address.quan_huyen && (
+                              <div className="flex items-start gap-3">
+                                 <span className="text-gray-600 min-w-[140px]">
+                                    Quận/Huyện:
+                                 </span>
+                                 <span className="font-medium text-gray-900">
+                                    {user.address.quan_huyen}
+                                 </span>
+                              </div>
+                           )}
+                           {user.address.tinh_thanh && (
+                              <div className="flex items-start gap-3">
+                                 <span className="text-gray-600 min-w-[140px]">
+                                    Tỉnh/Thành phố:
+                                 </span>
+                                 <span className="font-medium text-gray-900">
+                                    {user.address.tinh_thanh}
+                                 </span>
+                              </div>
+                           )}
+                           <div className="mt-4 pt-4 border-t border-gray-200">
+                              <p className="text-sm text-gray-600">
+                                 <span className="font-semibold">
+                                    Địa chỉ đầy đủ:
+                                 </span>
+                              </p>
+                              <p className="text-gray-900 mt-1">
+                                 {[
+                                    user.address.dia_chi_chi_tiet,
+                                    user.address.phuong_xa,
+                                    user.address.quan_huyen,
+                                    user.address.tinh_thanh,
+                                 ]
+                                    .filter(Boolean)
+                                    .join(", ")}
+                              </p>
+                           </div>
+                        </div>
+                     ) : (
+                        <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
                            <svg
-                              className="w-5 h-5"
+                              className="w-10 h-10 text-gray-400"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -448,32 +572,25 @@ export default function UserDetailPage() {
                                  strokeLinecap="round"
                                  strokeLinejoin="round"
                                  strokeWidth={2}
-                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
                               />
-                           </svg>
-                           Chỉnh sửa người dùng
-                        </Link>
-
-                        <button
-                           onClick={() => setShowDeleteModal(true)}
-                           className="flex items-center gap-2 px-5 py-3 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition"
-                        >
-                           <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                           >
                               <path
                                  strokeLinecap="round"
                                  strokeLinejoin="round"
                                  strokeWidth={2}
-                                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                 d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                               />
                            </svg>
-                           Xóa người dùng
-                        </button>
-                     </div>
+                           <div>
+                              <p className="font-medium text-gray-900">
+                                 Chưa cập nhật địa chỉ
+                              </p>
+                              <p className="text-sm text-gray-500 mt-1">
+                                 Người dùng chưa cung cấp thông tin địa chỉ
+                              </p>
+                           </div>
+                        </div>
+                     )}
                   </div>
                </div>
             </div>

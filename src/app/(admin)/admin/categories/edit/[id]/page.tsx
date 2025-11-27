@@ -85,7 +85,6 @@ export default function EditCategory() {
       reader.readAsDataURL(file);
    };
 
-   // Fetch dữ liệu cũ
    useEffect(() => {
       if (!id) return;
 
@@ -99,7 +98,6 @@ export default function EditCategory() {
                }
             );
             const result = await res.json();
-
             if (result.success && result.data) {
                const cat = result.data;
                setCategory(cat);
@@ -120,6 +118,7 @@ export default function EditCategory() {
    }, [id]);
    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
+
       if (!name.trim() || !slug.trim()) {
          setError("Tên và Slug là bắt buộc");
          return;
@@ -128,35 +127,29 @@ export default function EditCategory() {
       setSaving(true);
       setError(null);
 
-      const formData = new FormData();
-      formData.append("name", name.trim());
-      formData.append("slug", slug.trim());
-      formData.append("description", description.trim());
-
       try {
-         if (!newImage) {
-            const res = await fetch(
-               `http://localhost:5000/api/admin/categories/${id}`,
-               {
-                  method: "PUT",
-                  credentials: "include",
-                  body: formData,
-               }
-            );
-            const result = await res.json();
+         const formData = new FormData();
+         formData.append("name", name.trim());
+         formData.append("slug", slug.trim());
+         formData.append("description", description.trim());
 
-            if (result.success) {
-               setSuccess(true);
-               setTimeout(() => router.push("/admin/categories"), 1200);
-            } else {
-               setError(result.message || "Cập nhật thất bại");
-            }
-            setSaving(false);
-            return;
+         // Chỉ append ảnh nếu có
+         if (newImage) {
+            formData.append("img", newImage);
+            console.log("📤 Uploading new image:", newImage.name);
          }
 
-         // Trường hợp 2: CÓ upload ảnh mới → thử gửi, nếu backend crash thì fallback gửi không có ảnh
-         formData.append("img", newImage);
+         console.log(
+            "📤 Sending request to:",
+            `http://localhost:5000/api/admin/categories/${id}`
+         );
+         console.log("📦 FormData contents:");
+         for (let [key, value] of formData.entries()) {
+            console.log(
+               `  ${key}:`,
+               value instanceof File ? `File(${value.name})` : value
+            );
+         }
 
          const res = await fetch(
             `http://localhost:5000/api/admin/categories/${id}`,
@@ -164,47 +157,24 @@ export default function EditCategory() {
                method: "PUT",
                credentials: "include",
                body: formData,
+               // KHÔNG set Content-Type header - để browser tự động set với boundary
             }
          );
 
-         // Nếu server trả 500 → vẫn cố gửi lần 2 KHÔNG có ảnh (đảm bảo dữ liệu text được lưu)
-         if (!res.ok) {
-            console.log("Backend lỗi khi upload ảnh → thử lưu không có ảnh...");
-            const formDataNoImage = new FormData();
-            formDataNoImage.append("name", name.trim());
-            formDataNoImage.append("slug", slug.trim());
-            formDataNoImage.append("description", description.trim());
+         console.log("📥 Response status:", res.status);
 
-            const res2 = await fetch(
-               `http://localhost:5000/api/admin/categories/${id}`,
-               {
-                  method: "PUT",
-                  credentials: "include",
-                  body: formDataNoImage,
-               }
-            );
+         const result = await res.json();
+         console.log("📥 Response data:", result);
 
-            const result2 = await res2.json();
-            if (result2.success) {
-               setSuccess(true);
-               setError(
-                  "Đã lưu thông tin (ảnh chưa upload được do lỗi server)"
-               );
-               setTimeout(() => router.push("/admin/categories"), 2000);
-            } else {
-               setError("Không thể lưu (server đang lỗi nặng)");
-            }
+         if (result.success) {
+            setSuccess(true);
+            setTimeout(() => router.push("/admin/categories"), 1200);
          } else {
-            const result = await res.json();
-            if (result.success) {
-               setSuccess(true);
-               setTimeout(() => router.push("/admin/categories"), 1200);
-            } else {
-               setError(result.message || "Cập nhật thất bại");
-            }
+            setError(result.message || "Cập nhật thất bại");
          }
       } catch (err) {
-         setError("Lỗi kết nối, nhưng dữ liệu có thể đã được lưu");
+         console.error("❌ Error:", err);
+         setError("Lỗi kết nối server");
       } finally {
          setSaving(false);
       }

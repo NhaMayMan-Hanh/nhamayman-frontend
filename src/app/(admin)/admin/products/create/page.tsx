@@ -48,7 +48,7 @@ export default function CreateProductPage() {
       description: "",
       detailedDescription: "",
       price: "",
-      category: "",
+      category: "", // ← Lưu _id tạm để select hoạt động
       stock: "",
    });
 
@@ -69,13 +69,11 @@ export default function CreateProductPage() {
       const file = e.target.files?.[0];
       if (!file) return;
 
-      // Kiểm tra định dạng
       if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
          showToast("Chỉ chấp nhận file JPG hoặc PNG", "error");
          return;
       }
 
-      // Kiểm tra dung lượng (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
          showToast("Ảnh không được quá 10MB", "error");
          return;
@@ -83,7 +81,6 @@ export default function CreateProductPage() {
 
       setImageFile(file);
 
-      // Tạo preview
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result as string);
       reader.readAsDataURL(file);
@@ -109,10 +106,18 @@ export default function CreateProductPage() {
          return;
       }
 
+      // ⭐ Tìm category name từ _id
+      const selectedCategory = categories.find(
+         (c) => c._id === formData.category
+      );
+      if (!selectedCategory) {
+         showToast("Danh mục không hợp lệ", "error");
+         return;
+      }
+
       const toastId = showToast("Đang tạo sản phẩm...", "loading");
       setSaving(true);
 
-      // Tạo FormData - GỬI HẾT TRONG 1 REQUEST (giống Categories)
       const formDataToSend = new FormData();
       formDataToSend.append("name", formData.name.trim());
       formDataToSend.append("description", formData.description.trim());
@@ -122,14 +127,16 @@ export default function CreateProductPage() {
       );
       formDataToSend.append("price", formData.price);
       formDataToSend.append("stock", formData.stock);
-      formDataToSend.append("category", formData.category);
-      formDataToSend.append("image", imageFile); // ✅ File ảnh đính kèm luôn
+      formDataToSend.append("category", selectedCategory.name); // ⭐ GỬI NAME thay vì _id
+      formDataToSend.append("image", imageFile);
+
+      console.log("📤 Gửi category name:", selectedCategory.name); // Debug
 
       try {
          const res = await fetch("http://localhost:5000/api/admin/products", {
             method: "POST",
             credentials: "include",
-            body: formDataToSend, // ✅ Gửi FormData, KHÔNG có Content-Type header
+            body: formDataToSend,
          });
 
          const result = await res.json();

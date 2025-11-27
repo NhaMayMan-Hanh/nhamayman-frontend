@@ -384,13 +384,7 @@ export default function Categories() {
                               >
                                  <td className="px-6 py-4 whitespace-nowrap">
                                     <img
-                                       src={
-                                          cat.img.startsWith("http")
-                                             ? cat.img
-                                             : cat.img.includes("/uploads/")
-                                             ? `http://localhost:5000${cat.img}`
-                                             : `http://localhost:3000${cat.img}`
-                                       }
+                                       src={cat.img}
                                        alt={cat.name}
                                        className="w-16 h-16 object-cover rounded-lg border border-gray-200"
                                     />

@@ -4,362 +4,452 @@ import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Filter, X } from "lucide-react";
 
 interface Product {
-  _id: string;
-  name: string;
-  price: number;
-  category: string;
-  image: string;
-  stock: number;
-  __v: number;
+   _id: string;
+   name: string;
+   description?: string;
+   price: number;
+   category: string;
+   image: string;
+   stock: number;
+   __v: number;
 }
 
 type CategoryType = string | "all";
-type PriceRangeType = "all" | "under-200k" | "200k-500k" | "500k-1m" | "over-1m";
+type PriceRangeType =
+   | "all"
+   | "under-200k"
+   | "200k-500k"
+   | "500k-1m"
+   | "over-1m";
 type SortByType = "default" | "name" | "price-asc" | "price-desc";
 
-const ProductsAll = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [selectedCategory, setSelectedCategory] = useState<CategoryType>("all");
-  const [priceRange, setPriceRange] = useState<PriceRangeType>("all");
-  const [sortBy, setSortBy] = useState<SortByType>("default");
-  const [showMobileFilter, setShowMobileFilter] = useState<boolean>(false);
+// Product Card Component
+const ProductCard = ({ product }: { product: Product }) => {
+   const handleAddToCart = (e: React.MouseEvent) => {
+      e.preventDefault();
+      // TODO: Implement add to cart logic
+      console.log("Add to cart:", product);
+   };
 
-  const productsPerPage = 8;
+   return (
+      <a href={`/products/${product._id}`} className="block">
+         <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            <img
+               src={product.image}
+               alt={product.name}
+               className="w-full h-48 object-cover"
+               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src =
+                     "https://via.placeholder.com/300x300?text=No+Image";
+               }}
+            />
+            <div className="p-4">
+               <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">
+                  {product.name}
+               </h3>
+               <p className="text-gray-600 mb-2 line-clamp-2">
+                  {product.description
+                     ? `${product.description.substring(0, 80)}...`
+                     : "Sản phẩm chất lượng cao, giá cả hợp lý..."}
+               </p>
+               <p className="text-amber-500 font-bold mb-2">
+                  {product.price.toLocaleString()} VNĐ
+               </p>
+               <button
+                  onClick={handleAddToCart}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-2 px-4 rounded-lg transition-all"
+               >
+                  Thêm vào giỏ hàng
+               </button>
+            </div>
+         </div>
+      </a>
+   );
+};
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  useEffect(() => {
-    filterAndSortProducts();
-  }, [products, selectedCategory, priceRange, sortBy]);
-
-  const fetchProducts = async (): Promise<void> => {
-    try {
-      const response = await fetch("http://localhost:5000/api/client/products");
-      const result = await response.json();
-      if (result.success) {
-        setProducts(result.data);
-        setFilteredProducts(result.data);
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filterAndSortProducts = (): void => {
-    let filtered: Product[] = [...products];
-
-    // Lọc theo danh mục
-    if (selectedCategory !== "all") {
-      filtered = filtered.filter((product) => product.category === selectedCategory);
-    }
-
-    // Lọc theo giá
-    if (priceRange !== "all") {
-      filtered = filtered.filter((product) => {
-        if (priceRange === "under-200k") return product.price < 200000;
-        if (priceRange === "200k-500k") return product.price >= 200000 && product.price < 500000;
-        if (priceRange === "500k-1m") return product.price >= 500000 && product.price < 1000000;
-        if (priceRange === "over-1m") return product.price >= 1000000;
-        return true;
-      });
-    }
-
-    // Sắp xếp
-    if (sortBy === "price-asc") {
-      filtered.sort((a, b) => a.price - b.price);
-    } else if (sortBy === "price-desc") {
-      filtered.sort((a, b) => b.price - a.price);
-    } else if (sortBy === "name") {
-      filtered.sort((a, b) => a.name.localeCompare(b.name));
-    }
-
-    setFilteredProducts(filtered);
-    setCurrentPage(1);
-  };
-
-  const categories: string[] = [...new Set(products.map((p) => p.category))];
-
-  // Phân trang
-  const indexOfLastProduct: number = currentPage * productsPerPage;
-  const indexOfFirstProduct: number = indexOfLastProduct - productsPerPage;
-  const currentProducts: Product[] = filteredProducts.slice(
-    indexOfFirstProduct,
-    indexOfLastProduct
-  );
-  const totalPages: number = Math.ceil(filteredProducts.length / productsPerPage);
-
-  const formatPrice = (price: number): string => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(price);
-  };
-
-  const FilterSidebar = () => (
-    <div className="bg-white rounded-lg shadow-sm p-6">
+// Filter Sidebar Component
+const FilterSidebar = ({
+   categories,
+   selectedCategory,
+   setSelectedCategory,
+   priceRange,
+   setPriceRange,
+   sortBy,
+   setSortBy,
+   showMobileFilter,
+   setShowMobileFilter,
+}: {
+   categories: string[];
+   selectedCategory: CategoryType;
+   setSelectedCategory: (cat: CategoryType) => void;
+   priceRange: PriceRangeType;
+   setPriceRange: (range: PriceRangeType) => void;
+   sortBy: SortByType;
+   setSortBy: (sort: SortByType) => void;
+   showMobileFilter: boolean;
+   setShowMobileFilter: (show: boolean) => void;
+}) => (
+   <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-800">Bộ lọc</h2>
-        {showMobileFilter && (
-          <button onClick={() => setShowMobileFilter(false)} className="lg:hidden">
-            <X className="w-6 h-6" />
-          </button>
-        )}
+         <h2 className="text-xl font-bold text-gray-800">Bộ lọc</h2>
+         {showMobileFilter && (
+            <button
+               onClick={() => setShowMobileFilter(false)}
+               className="lg:hidden"
+            >
+               <X className="w-6 h-6" />
+            </button>
+         )}
       </div>
 
       {/* Danh mục */}
       <div className="mb-6">
-        <h3 className="font-semibold text-gray-700 mb-3">Danh mục</h3>
-        <div className="space-y-2">
-          <label className="flex items-center cursor-pointer">
-            <input
-              type="radio"
-              name="category"
-              checked={selectedCategory === "all"}
-              onChange={() => setSelectedCategory("all")}
-              className="w-4 h-4 text-blue-600"
-            />
-            <span className="ml-2 text-gray-700">Tất cả</span>
-          </label>
-          {categories.map((category) => (
-            <label key={category} className="flex items-center cursor-pointer">
-              <input
-                type="radio"
-                name="category"
-                checked={selectedCategory === category}
-                onChange={() => setSelectedCategory(category)}
-                className="w-4 h-4 text-blue-600"
-              />
-              <span className="ml-2 text-gray-700">{category}</span>
+         <h3 className="font-semibold text-gray-700 mb-3">Danh mục</h3>
+         <div className="space-y-2">
+            <label className="flex items-center cursor-pointer">
+               <input
+                  type="radio"
+                  name="category"
+                  checked={selectedCategory === "all"}
+                  onChange={() => setSelectedCategory("all")}
+                  className="w-4 h-4 text-blue-600"
+               />
+               <span className="ml-2 text-gray-700">Tất cả</span>
             </label>
-          ))}
-        </div>
+            {categories.map((category) => (
+               <label
+                  key={category}
+                  className="flex items-center cursor-pointer"
+               >
+                  <input
+                     type="radio"
+                     name="category"
+                     checked={selectedCategory === category}
+                     onChange={() => setSelectedCategory(category)}
+                     className="w-4 h-4 text-blue-600"
+                  />
+                  <span className="ml-2 text-gray-700">{category}</span>
+               </label>
+            ))}
+         </div>
       </div>
 
       {/* Khoảng giá */}
       <div className="mb-6">
-        <h3 className="font-semibold text-gray-700 mb-3">Khoảng giá</h3>
-        <div className="space-y-2">
-          <label className="flex items-center cursor-pointer">
-            <input
-              type="radio"
-              name="price"
-              checked={priceRange === "all"}
-              onChange={() => setPriceRange("all")}
-              className="w-4 h-4 text-blue-600"
-            />
-            <span className="ml-2 text-gray-700">Tất cả</span>
-          </label>
-          <label className="flex items-center cursor-pointer">
-            <input
-              type="radio"
-              name="price"
-              checked={priceRange === "under-200k"}
-              onChange={() => setPriceRange("under-200k")}
-              className="w-4 h-4 text-blue-600"
-            />
-            <span className="ml-2 text-gray-700">Dưới 200.000đ</span>
-          </label>
-          <label className="flex items-center cursor-pointer">
-            <input
-              type="radio"
-              name="price"
-              checked={priceRange === "200k-500k"}
-              onChange={() => setPriceRange("200k-500k")}
-              className="w-4 h-4 text-blue-600"
-            />
-            <span className="ml-2 text-gray-700">200.000đ - 500.000đ</span>
-          </label>
-          <label className="flex items-center cursor-pointer">
-            <input
-              type="radio"
-              name="price"
-              checked={priceRange === "500k-1m"}
-              onChange={() => setPriceRange("500k-1m")}
-              className="w-4 h-4 text-blue-600"
-            />
-            <span className="ml-2 text-gray-700">500.000đ - 1.000.000đ</span>
-          </label>
-          <label className="flex items-center cursor-pointer">
-            <input
-              type="radio"
-              name="price"
-              checked={priceRange === "over-1m"}
-              onChange={() => setPriceRange("over-1m")}
-              className="w-4 h-4 text-blue-600"
-            />
-            <span className="ml-2 text-gray-700">Trên 1.000.000đ</span>
-          </label>
-        </div>
+         <h3 className="font-semibold text-gray-700 mb-3">Khoảng giá</h3>
+         <div className="space-y-2">
+            <label className="flex items-center cursor-pointer">
+               <input
+                  type="radio"
+                  name="price"
+                  checked={priceRange === "all"}
+                  onChange={() => setPriceRange("all")}
+                  className="w-4 h-4 text-blue-600"
+               />
+               <span className="ml-2 text-gray-700">Tất cả</span>
+            </label>
+            <label className="flex items-center cursor-pointer">
+               <input
+                  type="radio"
+                  name="price"
+                  checked={priceRange === "under-200k"}
+                  onChange={() => setPriceRange("under-200k")}
+                  className="w-4 h-4 text-blue-600"
+               />
+               <span className="ml-2 text-gray-700">Dưới 200.000đ</span>
+            </label>
+            <label className="flex items-center cursor-pointer">
+               <input
+                  type="radio"
+                  name="price"
+                  checked={priceRange === "200k-500k"}
+                  onChange={() => setPriceRange("200k-500k")}
+                  className="w-4 h-4 text-blue-600"
+               />
+               <span className="ml-2 text-gray-700">200.000đ - 500.000đ</span>
+            </label>
+            <label className="flex items-center cursor-pointer">
+               <input
+                  type="radio"
+                  name="price"
+                  checked={priceRange === "500k-1m"}
+                  onChange={() => setPriceRange("500k-1m")}
+                  className="w-4 h-4 text-blue-600"
+               />
+               <span className="ml-2 text-gray-700">500.000đ - 1.000.000đ</span>
+            </label>
+            <label className="flex items-center cursor-pointer">
+               <input
+                  type="radio"
+                  name="price"
+                  checked={priceRange === "over-1m"}
+                  onChange={() => setPriceRange("over-1m")}
+                  className="w-4 h-4 text-blue-600"
+               />
+               <span className="ml-2 text-gray-700">Trên 1.000.000đ</span>
+            </label>
+         </div>
       </div>
 
       {/* Sắp xếp */}
       <div>
-        <h3 className="font-semibold text-gray-700 mb-3">Sắp xếp theo</h3>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as SortByType)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="default">Mặc định</option>
-          <option value="name">Tên A-Z</option>
-          <option value="price-asc">Giá tăng dần</option>
-          <option value="price-desc">Giá giảm dần</option>
-        </select>
+         <h3 className="font-semibold text-gray-700 mb-3">Sắp xếp theo</h3>
+         <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortByType)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+         >
+            <option value="default">Mặc định</option>
+            <option value="name">Tên A-Z</option>
+            <option value="price-asc">Giá tăng dần</option>
+            <option value="price-desc">Giá giảm dần</option>
+         </select>
       </div>
-    </div>
-  );
+   </div>
+);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+// Main Component
+const ProductsAll = () => {
+   const [products, setProducts] = useState<Product[]>([]);
+   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+   const [loading, setLoading] = useState<boolean>(true);
+   const [currentPage, setCurrentPage] = useState<number>(1);
+   const [selectedCategory, setSelectedCategory] =
+      useState<CategoryType>("all");
+   const [priceRange, setPriceRange] = useState<PriceRangeType>("all");
+   const [sortBy, setSortBy] = useState<SortByType>("default");
+   const [showMobileFilter, setShowMobileFilter] = useState<boolean>(false);
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Tất cả sản phẩm</h1>
-          <p className="text-gray-600">Tìm thấy {filteredProducts.length} sản phẩm</p>
-        </div>
+   const productsPerPage = 8;
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Mobile Filter Button */}
-          <button
-            onClick={() => setShowMobileFilter(true)}
-            className="lg:hidden flex items-center justify-center gap-2 bg-white px-4 py-3 rounded-lg shadow-sm"
-          >
-            <Filter className="w-5 h-5" />
-            <span>Bộ lọc</span>
-          </button>
+   useEffect(() => {
+      fetchProducts();
+   }, []);
 
-          {/* Filter Sidebar - Desktop */}
-          <div className="hidden lg:block w-64 flex-shrink-0">
-            <FilterSidebar />
-          </div>
+   useEffect(() => {
+      filterAndSortProducts();
+   }, [products, selectedCategory, priceRange, sortBy]);
 
-          {/* Filter Sidebar - Mobile */}
-          {showMobileFilter && (
-            <div className="fixed inset-0 bg-opacity-50 z-50 lg:hidden">
-              <div className="absolute right-0 top-0 h-full w-80 bg-gray-50 overflow-y-auto">
-                <div className="p-4">
-                  <FilterSidebar />
-                </div>
-              </div>
+   const fetchProducts = async (): Promise<void> => {
+      try {
+         const response = await fetch(
+            "http://localhost:5000/api/client/products"
+         );
+         const result = await response.json();
+         if (result.success) {
+            setProducts(result.data);
+            setFilteredProducts(result.data);
+         }
+      } catch (error) {
+         console.error("Error fetching products:", error);
+      } finally {
+         setLoading(false);
+      }
+   };
+
+   const filterAndSortProducts = (): void => {
+      let filtered: Product[] = [...products];
+
+      // Lọc theo danh mục
+      if (selectedCategory !== "all") {
+         filtered = filtered.filter(
+            (product) => product.category === selectedCategory
+         );
+      }
+
+      // Lọc theo giá
+      if (priceRange !== "all") {
+         filtered = filtered.filter((product) => {
+            if (priceRange === "under-200k") return product.price < 200000;
+            if (priceRange === "200k-500k")
+               return product.price >= 200000 && product.price < 500000;
+            if (priceRange === "500k-1m")
+               return product.price >= 500000 && product.price < 1000000;
+            if (priceRange === "over-1m") return product.price >= 1000000;
+            return true;
+         });
+      }
+
+      // Sắp xếp
+      if (sortBy === "price-asc") {
+         filtered.sort((a, b) => a.price - b.price);
+      } else if (sortBy === "price-desc") {
+         filtered.sort((a, b) => b.price - a.price);
+      } else if (sortBy === "name") {
+         filtered.sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      setFilteredProducts(filtered);
+      setCurrentPage(1);
+   };
+
+   const categories: string[] = [...new Set(products.map((p) => p.category))];
+
+   // Phân trang
+   const indexOfLastProduct: number = currentPage * productsPerPage;
+   const indexOfFirstProduct: number = indexOfLastProduct - productsPerPage;
+   const currentProducts: Product[] = filteredProducts.slice(
+      indexOfFirstProduct,
+      indexOfLastProduct
+   );
+   const totalPages: number = Math.ceil(
+      filteredProducts.length / productsPerPage
+   );
+
+   if (loading) {
+      return (
+         <div className="flex justify-center items-center min-h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+         </div>
+      );
+   }
+
+   return (
+      <div className="min-h-screen bg-gray-50 py-8">
+         <div className="max-w-6xl mx-auto px-4">
+            {/* Header */}
+            <div className="mb-8">
+               <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                  Tất cả sản phẩm
+               </h1>
+               <p className="text-gray-600">
+                  Tìm thấy {filteredProducts.length} sản phẩm
+               </p>
             </div>
-          )}
 
-          {/* Products Grid */}
-          <div className="flex-1">
-            {currentProducts.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">Không tìm thấy sản phẩm nào</p>
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {currentProducts.map((product) => (
-                    <div
-                      key={product._id}
-                      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden group"
-                    >
-                      <div className="relative overflow-hidden bg-gray-100 aspect-square">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = "https://via.placeholder.com/300x300?text=No+Image";
-                          }}
-                        />
-                        {product.stock < 5 && (
-                          <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold">
-                            Còn {product.stock}
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <p className="text-xs text-blue-600 mb-1">{product.category}</p>
-                        <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2 h-12">
-                          {product.name}
-                        </h3>
-                        <div className="flex items-center justify-between">
-                          <p className="text-lg font-bold text-blue-600">
-                            {formatPrice(product.price)}
-                          </p>
-                          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                            Mua
-                          </button>
+            <div className="flex flex-col lg:flex-row gap-8">
+               {/* Mobile Filter Button */}
+               <button
+                  onClick={() => setShowMobileFilter(true)}
+                  className="lg:hidden flex items-center justify-center gap-2 bg-white px-4 py-3 rounded-lg shadow-sm"
+               >
+                  <Filter className="w-5 h-5" />
+                  <span>Bộ lọc</span>
+               </button>
+
+               {/* Filter Sidebar - Desktop */}
+               <div className="hidden lg:block w-64 flex-shrink-0">
+                  <FilterSidebar
+                     categories={categories}
+                     selectedCategory={selectedCategory}
+                     setSelectedCategory={setSelectedCategory}
+                     priceRange={priceRange}
+                     setPriceRange={setPriceRange}
+                     sortBy={sortBy}
+                     setSortBy={setSortBy}
+                     showMobileFilter={showMobileFilter}
+                     setShowMobileFilter={setShowMobileFilter}
+                  />
+               </div>
+
+               {/* Filter Sidebar - Mobile */}
+               {showMobileFilter && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 z-50 lg:hidden">
+                     <div className="absolute right-0 top-0 h-full w-80 bg-gray-50 overflow-y-auto">
+                        <div className="p-4">
+                           <FilterSidebar
+                              categories={categories}
+                              selectedCategory={selectedCategory}
+                              setSelectedCategory={setSelectedCategory}
+                              priceRange={priceRange}
+                              setPriceRange={setPriceRange}
+                              sortBy={sortBy}
+                              setSortBy={setSortBy}
+                              showMobileFilter={showMobileFilter}
+                              setShowMobileFilter={setShowMobileFilter}
+                           />
                         </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex justify-center items-center gap-2 mt-8">
-                    <button
-                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1}
-                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-
-                    {[...Array(totalPages)].map((_, index) => {
-                      const pageNumber = index + 1;
-                      if (
-                        pageNumber === 1 ||
-                        pageNumber === totalPages ||
-                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-                      ) {
-                        return (
-                          <button
-                            key={pageNumber}
-                            onClick={() => setCurrentPage(pageNumber)}
-                            className={`px-4 py-2 rounded-lg font-medium ${
-                              currentPage === pageNumber
-                                ? "bg-blue-600 text-white"
-                                : "border border-gray-300 hover:bg-gray-100"
-                            }`}
-                          >
-                            {pageNumber}
-                          </button>
-                        );
-                      } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
-                        return <span key={pageNumber}>...</span>;
-                      }
-                      return null;
-                    })}
-
-                    <button
-                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages}
-                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
+                     </div>
                   </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
+               )}
+
+               {/* Products Grid */}
+               <div className="flex-1">
+                  {currentProducts.length === 0 ? (
+                     <div className="text-center py-12">
+                        <p className="text-gray-500 text-lg">
+                           Không tìm thấy sản phẩm nào
+                        </p>
+                     </div>
+                  ) : (
+                     <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                           {currentProducts.map((product) => (
+                              <ProductCard
+                                 key={product._id}
+                                 product={product}
+                              />
+                           ))}
+                        </div>
+
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                           <div className="flex justify-center items-center gap-2 mt-8">
+                              <button
+                                 onClick={() =>
+                                    setCurrentPage((prev) =>
+                                       Math.max(prev - 1, 1)
+                                    )
+                                 }
+                                 disabled={currentPage === 1}
+                                 className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                 <ChevronLeft className="w-5 h-5" />
+                              </button>
+
+                              {[...Array(totalPages)].map((_, index) => {
+                                 const pageNumber = index + 1;
+                                 if (
+                                    pageNumber === 1 ||
+                                    pageNumber === totalPages ||
+                                    (pageNumber >= currentPage - 1 &&
+                                       pageNumber <= currentPage + 1)
+                                 ) {
+                                    return (
+                                       <button
+                                          key={pageNumber}
+                                          onClick={() =>
+                                             setCurrentPage(pageNumber)
+                                          }
+                                          className={`px-4 py-2 rounded-lg font-medium ${
+                                             currentPage === pageNumber
+                                                ? "bg-blue-600 text-white"
+                                                : "border border-gray-300 hover:bg-gray-100"
+                                          }`}
+                                       >
+                                          {pageNumber}
+                                       </button>
+                                    );
+                                 } else if (
+                                    pageNumber === currentPage - 2 ||
+                                    pageNumber === currentPage + 2
+                                 ) {
+                                    return <span key={pageNumber}>...</span>;
+                                 }
+                                 return null;
+                              })}
+
+                              <button
+                                 onClick={() =>
+                                    setCurrentPage((prev) =>
+                                       Math.min(prev + 1, totalPages)
+                                    )
+                                 }
+                                 disabled={currentPage === totalPages}
+                                 className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                 <ChevronRight className="w-5 h-5" />
+                              </button>
+                           </div>
+                        )}
+                     </>
+                  )}
+               </div>
+            </div>
+         </div>
       </div>
-    </div>
-  );
+   );
 };
 
 export default ProductsAll;
