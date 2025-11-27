@@ -102,14 +102,10 @@ export function AuthProvider({
       console.log("✅ [AuthContext] Server cart load wait completed");
     }
 
-    // // Refresh page để AuthLayout tự động redirect dựa trên role
-    // console.log("🔄 [AuthContext] Refreshing router to trigger AuthLayout redirect...");
-    // window.location.href = userData.role === "admin" ? "/admin/dashboard" : "/";
     const redirectPath = userData.role === "admin" ? "/admin/dashboard" : "/";
     console.log("🔄 [AuthContext] Redirecting to:", redirectPath);
 
-    router.push(redirectPath);
-    router.refresh(); // ✅ Refresh để trigger server components
+    window.location.href = redirectPath;
   };
 
   const logout = async () => {
