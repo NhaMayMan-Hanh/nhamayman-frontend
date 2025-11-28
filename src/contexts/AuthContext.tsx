@@ -3,19 +3,13 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useRef } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-
-interface User {
-  id: string;
-  name: string;
-  username: string;
-  email: string;
-  avatar: string;
-  role: string;
-}
+import { ApiResponse, Me } from "@app/(client)/types";
+import apiRequest from "@lib/api/index";
+import getErrorMessage from "@utils/getErrorMessage";
 
 interface AuthContextType {
-  user: User | null;
-  login: (userData: User) => Promise<void>;
+  user: Me | null;
+  login: (userData: Me) => Promise<void>;
   logout: () => void;
   loading: boolean;
 }
@@ -25,41 +19,45 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({
   children,
   initialUser,
+  skipFetch,
 }: {
   children: ReactNode;
-  initialUser?: User | null;
+  initialUser?: Me | null;
+  skipFetch?: boolean;
 }) {
-  const [user, setUser] = useState<User | null>(initialUser || null);
-  const [loading, setLoading] = useState(!initialUser);
+  const [user, setUser] = useState<Me | null>(initialUser || null);
+  const [loading, setLoading] = useState(!skipFetch);
   const router = useRouter();
   const hasCheckedAuth = useRef(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (initialUser || hasCheckedAuth.current) return;
+    if (hasCheckedAuth.current || skipFetch) return;
 
-    const checkAuth = async () => {
+    const fetchUser = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/users/profile`, {
-          credentials: "include",
+        const result = await apiRequest.get<ApiResponse<Me>>("/client/users/me", {
+          noRedirectOn401: true,
         });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success) {
-            setUser(data.data);
-          }
+        if (result.success) {
+          setUser(result.data);
+        } else {
+          setUser(null);
         }
-      } catch (error) {
-        document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      } catch (err: unknown) {
+        setUser(null);
+        setError(getErrorMessage(err));
       } finally {
-        hasCheckedAuth.current = true;
         setLoading(false);
+        hasCheckedAuth.current = true;
       }
     };
-    checkAuth();
-  }, []);
 
-  const login = async (userData: User) => {
-    console.log("🔐 [AuthContext] Login called with user:", userData);
+    fetchUser();
+  }, [skipFetch]);
+
+  const login = async (userData: Me) => {
     setUser(userData);
 
     // Check if there's a local cart to merge
@@ -70,20 +68,16 @@ export function AuthProvider({
       try {
         const localCart = JSON.parse(localCartStr);
         hasLocalCart = localCart && localCart.length > 0;
-        console.log("🛒 [AuthContext] Local cart found:", localCart.length, "items");
       } catch (e) {
         hasLocalCart = false;
-        console.log("❌ [AuthContext] Invalid local cart data");
       }
     } else {
       console.log("📭 [AuthContext] No local cart found");
     }
 
     if (hasLocalCart) {
-      console.log("⏳ [AuthContext] Waiting for cart merge...");
       const mergeSuccess = await new Promise((resolve) => {
         const handleMerge = () => {
-          console.log("✅ [AuthContext] Cart merge completed!");
           window.removeEventListener("cart-merged", handleMerge);
           resolve(true);
         };
@@ -97,32 +91,24 @@ export function AuthProvider({
       });
       console.log("[AuthContext] Cart merge result:", mergeSuccess);
     } else {
-      console.log("⏳ [AuthContext] Waiting 300ms for server cart to load...");
       await new Promise((resolve) => setTimeout(resolve, 300));
-      console.log("✅ [AuthContext] Server cart load wait completed");
     }
 
     const redirectPath = userData.role === "admin" ? "/admin/dashboard" : "/";
-    console.log("🔄 [AuthContext] Redirecting to:", redirectPath);
 
-    window.location.href = redirectPath;
+    router.push(redirectPath);
   };
 
   const logout = async () => {
-    console.log("🚪 [AuthContext] Logging out...");
     setUser(null);
     hasCheckedAuth.current = false;
 
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
+      await apiRequest.post("/client/auth/logout");
     } catch (error) {
       console.error("[AuthContext] Logout API error:", error);
     }
 
-    // Navigate to login
     router.push("/login");
     toast.success("Đăng xuất thành công");
   };

@@ -25,10 +25,9 @@ export default function CartPage() {
     }
   }, [cart.length]);
 
-  // === LOADING ===
   if (loading || authLoading) {
     return (
-      <div className="max-w-6xl mx-auto py-12 px-4">
+      <div className="max-w-6xl min-h-screen mx-auto py-12 px-4">
         <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
           <span className="ml-3 text-gray-600">Đang tải giỏ hàng...</span>

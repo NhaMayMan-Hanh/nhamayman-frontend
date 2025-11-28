@@ -1,17 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@contexts/AuthContext";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, user } = useAuth();
+  const router = useRouter();
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [showPassword, setShowPassword] = useState(false);
+
+  // ✅ Check nếu đã login rồi thì redirect về trang chủ
+  useEffect(() => {
+    if (!loading && user) {
+      console.log("✅ User đã login, redirect về /");
+      router.replace("/");
+    }
+  }, [user, loading, router]);
+
+  // ✅ Show loading khi đang check auth
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-600">Đang kiểm tra...</div>
+      </div>
+    );
+  }
+
+  // ✅ Nếu đã có user thì không render form
+  if (user) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +68,7 @@ export default function LoginPage() {
 
       toast.success("Đăng nhập thành công 🎉");
 
-      await login(data.data);
+      await login(data.data.user);
 
       setFormData({ username: "", password: "" });
     } catch (error) {

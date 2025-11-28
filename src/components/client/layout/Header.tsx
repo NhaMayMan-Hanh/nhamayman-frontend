@@ -15,7 +15,6 @@ export default function Header() {
   const { cart } = useCart();
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -48,102 +47,117 @@ export default function Header() {
     setIsMenuOpen(false);
   };
 
-  // Calculate total cart items
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const truncatedName =
     user?.name && user.name.length > 12 ? user.name.slice(0, 12) + "..." : user?.name;
 
   return (
-    <header className="w-full border-b border-gray-200 header-client shadow-sm sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto flex items-center justify-between py-4 px-4 lg:px-6">
-        {/* Logo */}
+    <header className="w-full border-b border-gray-200 header-client shadow-sm sticky top-0 z-50 bg-white">
+      {/* Fixed height container to prevent layout shift */}
+      <div className="max-w-6xl mx-auto h-[90px] flex items-center justify-between py-4 px-4 lg:px-6">
+        {/* Logo - Fixed dimensions */}
         <Link
           href="/"
-          className="text-2xl font-bold text-amber-500 hover:text-amber-600 transition-colors"
+          className="text-2xl font-bold text-amber-500 hover:text-amber-600 transition-colors shrink-0"
         >
-          <Image src="/img/logo-hanh.jpg" alt="Logo" width={70} height={70} />
+          <Image
+            src="/img/logo-hanh.jpg"
+            alt="Logo"
+            width={70}
+            height={70}
+            className="w-[70px] h-[70px] object-cover"
+            priority
+          />
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-3 text-sm font-medium">
-          {/* Search Input */}
-          <form onSubmit={handleSearch} className="relative flex items-center gap-2">
+        {/* Desktop Navigation - Fixed height and minimum width */}
+        <nav className="hidden md:flex items-center gap-3 text-sm font-medium h-14 shrink-0">
+          {/* Search Input - Fixed width */}
+          <form onSubmit={handleSearch} className="relative flex items-center gap-2 shrink-0">
             <input
               type="text"
               placeholder="Tìm kiếm sản phẩm..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 w-48"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 w-48 h-10"
             />
             <button
               type="submit"
-              className="p-2 text-gray-500 hover:text-amber-500 transition-colors"
+              className="p-2 text-gray-500 hover:text-amber-500 transition-colors h-10 w-10 flex items-center justify-center shrink-0"
             >
               <Search size={20} />
             </button>
           </form>
 
-          <div className="flex items-center gap-2">
+          {/* Navigation Links - Fixed spacing */}
+          <div className="flex items-center gap-2 shrink-0">
             <Link
               href="/blog"
-              className="text-gray-700 hover:text-amber-500 transition-colors px-2 py-1"
+              className="text-gray-700 hover:text-amber-500 transition-colors px-2 py-1 whitespace-nowrap"
             >
               Tin tức
             </Link>
             <Link
               href="/about"
-              className="text-gray-700 hover:text-amber-500 transition-colors px-2 py-1"
+              className="text-gray-700 hover:text-amber-500 transition-colors px-2 py-1 whitespace-nowrap"
             >
               Giới thiệu
             </Link>
             <Link
               href="/productsAll"
-              className="text-gray-700 hover:text-amber-500 transition-colors"
+              className="text-gray-700 hover:text-amber-500 transition-colors px-2 py-1 whitespace-nowrap"
               onClick={toggleMenu}
             >
               Sản phẩm
             </Link>
           </div>
 
-          {/* Cart with Badge */}
+          {/* Cart with Badge - Fixed dimensions */}
           <Link
             href="/cart"
-            className="relative text-gray-700 hover:text-amber-500 transition-colors flex items-center gap-2 px-2 py-1"
+            className="relative text-gray-700 hover:text-amber-500 transition-colors flex items-center gap-2 px-2 py-1 shrink-0 whitespace-nowrap"
           >
             <ShoppingCart size={20} />
             <span>Giỏ hàng</span>
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
-                {cartCount > 99 ? "99+" : cartCount}
-              </span>
-            )}
+            {/* Reserve space for badge to prevent shift */}
+            <span className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center">
+              {cartCount > 0 && (
+                <span className="bg-amber-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+            </span>
           </Link>
 
-          {/* User Profile or Login */}
+          {/* User Profile or Login - Fixed minimum width */}
           {user ? (
-            <div className="relative" ref={profileRef}>
+            <div className="relative shrink-0" ref={profileRef}>
               <button
                 onClick={toggleProfile}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors h-10 min-w-[120px]"
               >
                 <Image
                   src={user.avatar || "/img/default-avatar.jpg"}
                   alt={user.name || "User avatar"}
                   width={32}
                   height={32}
-                  className="rounded-full ring-2 ring-amber-500"
+                  className="rounded-full ring-2 ring-amber-500 shrink-0"
+                  priority
                 />
-                <span className="text-sm font-medium">{truncatedName}</span>
+                <span className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-20">
+                  {truncatedName}
+                </span>
                 <ChevronDown
                   size={16}
-                  className={`transition-transform ${isProfileOpen ? "rotate-180" : ""}`}
+                  className={`transition-transform w-4 h-4 shrink-0 ${
+                    isProfileOpen ? "rotate-180" : ""
+                  }`}
                 />
               </button>
 
-              {/* Dropdown Menu */}
               {isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-2">
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50">
                   <Link
                     href="/profile"
                     onClick={() => setIsProfileOpen(false)}
@@ -165,7 +179,7 @@ export default function Header() {
           ) : (
             <Link
               href="/login"
-              className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors h-10 shrink-0 whitespace-nowrap"
             >
               <User size={18} />
               <span>Đăng nhập</span>
@@ -173,17 +187,17 @@ export default function Header() {
           )}
         </nav>
 
-        {/* Mobile Menu Button */}
+        {/* Mobile Menu Button - Fixed size */}
         <button
           onClick={toggleMenu}
-          className="md:hidden text-gray-700 hover:text-amber-500 transition-colors p-2"
+          className="md:hidden text-gray-700 hover:text-amber-500 transition-colors p-2 w-10 h-10 flex items-center justify-center shrink-0"
         >
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="absolute top-full left-0 w-full bg-white border-t border-gray-200 shadow-lg md:hidden">
+          <div className="absolute top-full left-0 w-full bg-white border-t border-gray-200 shadow-lg md:hidden z-40">
             <nav className="flex flex-col items-start gap-2 py-4 px-4 text-sm font-medium">
               <form onSubmit={handleSearch} className="w-full relative mb-4">
                 <input
@@ -237,7 +251,6 @@ export default function Header() {
                 )}
               </Link>
 
-              {/* Mobile User Section */}
               {user ? (
                 <div className="w-full border-t pt-4 mt-2">
                   <div className="flex items-center gap-3 mb-3 px-2">

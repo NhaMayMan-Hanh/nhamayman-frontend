@@ -7,38 +7,7 @@ import { useAuth } from "@contexts/AuthContext";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import ProfileSidebar from "@components/client/profile/ProfileSidebar";
-
-interface UserProfile {
-  id: string;
-  name: string;
-  avatar: string;
-  username: string;
-  email: string;
-  role: string;
-  phone: string;
-  address: {
-    tinh_thanh: string;
-    quan_huyen: string;
-    phuong_xa: string;
-    dia_chi_chi_tiet: string;
-  };
-  createdAt: string;
-}
-
-interface Province {
-  code: number;
-  name: string;
-}
-
-interface District {
-  code: number;
-  name: string;
-}
-
-interface Ward {
-  code: number;
-  name: string;
-}
+import type { UserProfile, Province, District, Ward } from "./type";
 
 export default function ProfilePage() {
   const router = useRouter();

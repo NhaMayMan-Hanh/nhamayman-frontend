@@ -7,12 +7,32 @@ import { Toaster } from "react-hot-toast";
 
 export default function ClientLayout({ children }: { children: ReactNode }) {
   return (
-    <AuthProvider>
+    <AuthProvider skipFetch={false}>
       <CartProvider>
-        <div className="flex flex-col min-h-screen">
+        {/* Main container - NO wrapper divs */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            minHeight: "100vh",
+          }}
+        >
+          {/* Header - Direct render, no wrapper */}
           <ClientHeader />
-          <main>{children}</main>
+
+          {/* Main content - Flexible */}
+          <main
+            style={{
+              flex: "1 0 auto",
+              width: "100%",
+            }}
+          >
+            {children}
+          </main>
+
+          {/* Footer - Direct render, no wrapper */}
           <ClientFooter />
+
           <Toaster
             position="top-right"
             reverseOrder={false}

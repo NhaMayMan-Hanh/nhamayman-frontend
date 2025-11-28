@@ -572,8 +572,8 @@ export default function CheckoutPage() {
             <div className="space-y-3">
               {[
                 { value: "cod", label: "Thanh toán khi nhận hàng (COD)" },
-                { value: "online", label: "Momo" },
-                { value: "chuyen_khoan", label: "Chuyển khoản ngân hàng" },
+                { value: "online", label: "Momo", disabled: true },
+                { value: "chuyen_khoan", label: "Chuyển khoản ngân hàng", disabled: true },
               ].map((m) => (
                 <label
                   key={m.value}
@@ -589,9 +589,12 @@ export default function CheckoutPage() {
                     value={m.value}
                     checked={donhang.phuong_thuc === m.value}
                     onChange={(e) => setDonhang({ ...donhang, phuong_thuc: e.target.value as any })}
+                    disabled={m.disabled}
                     className="w-5 h-5 text-orange-600"
                   />
-                  <span className="ml-4 font-semibold">{m.label}</span>
+                  <span className="ml-4 font-semibold">
+                    {m.label} {m.disabled ? "(đang phát triển)" : ""}
+                  </span>
                 </label>
               ))}
             </div>

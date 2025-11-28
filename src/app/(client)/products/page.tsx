@@ -3,7 +3,7 @@ import ProductsContent from "./ProductsContent";
 
 export default function ProductsPage() {
   return (
-    <Suspense fallback={<div className="text-center py-8">Đang tải...</div>}>
+    <Suspense fallback={<div>Loading...</div>}>
       <ProductsContent />
     </Suspense>
   );
