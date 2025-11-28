@@ -55,7 +55,7 @@ export default function Header() {
   return (
     <header className="w-full border-b border-gray-200 header-client shadow-sm sticky top-0 z-50 bg-white">
       {/* Fixed height container to prevent layout shift */}
-      <div className="max-w-6xl mx-auto h-[90px] flex items-center justify-between py-4 px-4 lg:px-6">
+      <div className="max-w-6xl mx-auto h-[90px] flex items-center justify-between py-4 px-4 md:px-2">
         {/* Logo - Fixed dimensions */}
         <Link
           href="/"
@@ -73,18 +73,18 @@ export default function Header() {
 
         {/* Desktop Navigation - Fixed height and minimum width */}
         <nav className="hidden md:flex items-center gap-3 text-sm font-medium h-14 shrink-0">
-          {/* Search Input - Fixed width */}
-          <form onSubmit={handleSearch} className="relative flex items-center gap-2 shrink-0">
+          {/* Search Input - Fixed width with icon inside */}
+          <form onSubmit={handleSearch} className="relative shrink-0">
             <input
               type="text"
               placeholder="Tìm kiếm sản phẩm..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 w-48 h-10"
+              className="pl-4 pr-12 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 w-72 h-10"
             />
             <button
               type="submit"
-              className="p-2 text-gray-500 hover:text-amber-500 transition-colors h-10 w-10 flex items-center justify-center shrink-0"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-amber-500 transition-colors h-8 w-8 flex items-center justify-center"
             >
               <Search size={20} />
             </button>

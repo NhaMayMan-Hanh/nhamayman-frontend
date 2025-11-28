@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-
-
 :root {
    --background: #ffffff;
    --foreground: #171717;
@@ -40,5 +38,9 @@ input[type="number"]::-webkit-inner-spin-button {
 
 input[type="number"] {
   -moz-appearance: textfield; 
+}
+
+.img-blog {
+   width: 80%;
 }
 

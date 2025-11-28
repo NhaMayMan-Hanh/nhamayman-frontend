@@ -38,7 +38,7 @@ export default function BlogDetailPage() {
   }, [slug]);
 
   return (
-    <div className="max-w-6xl flex flex-col items-center mx-auto py-12">
+    <div className="max-w-6xl flex flex-col items-center mx-auto px-4 py-12">
       {loading && (
         <div className="py-12">
           <Loading message="Chờ chút xíu..." size="md" />

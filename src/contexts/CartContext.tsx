@@ -41,6 +41,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const hasMergedRef = useRef(false);
   const hasInitializedRef = useRef(false);
 
+  // Toast batching refs
+  const addToCartCountRef = useRef(0);
+  const addToCartTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const activeToastRef = useRef<string | null>(null);
+  const clearCartInProgressRef = useRef(false);
+
+  // Remove from cart toast batching
+  const removeFromCartCountRef = useRef(0);
+  const removeFromCartTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const activeRemoveToastRef = useRef<string | null>(null);
+
   // Memoize refreshCart to prevent unnecessary re-renders
   const refreshCart = useCallback(async () => {
     if (!user) return;
@@ -65,6 +76,84 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }
   }, [user]);
+
+  // Batched toast notification for adding to cart
+  const showAddToCartToast = useCallback(() => {
+    // Clear existing timer
+    if (addToCartTimerRef.current) {
+      clearTimeout(addToCartTimerRef.current);
+    }
+
+    // Increment count
+    addToCartCountRef.current += 1;
+
+    // Dismiss previous toast if exists
+    if (activeToastRef.current) {
+      toast.dismiss(activeToastRef.current);
+    }
+
+    // Set timer to show toast after 500ms of no new additions
+    addToCartTimerRef.current = setTimeout(() => {
+      const count = addToCartCountRef.current;
+
+      if (count === 1) {
+        activeToastRef.current = toast.success("Đã thêm vào giỏ hàng");
+      } else {
+        activeToastRef.current = toast.success(`Đã thêm ${count} sản phẩm vào giỏ hàng`, {
+          icon: "🛒",
+        });
+      }
+
+      // Reset counter
+      addToCartCountRef.current = 0;
+      addToCartTimerRef.current = null;
+    }, 500);
+  }, []);
+
+  // Batched toast notification for removing from cart
+  const showRemoveFromCartToast = useCallback(() => {
+    // Clear existing timer
+    if (removeFromCartTimerRef.current) {
+      clearTimeout(removeFromCartTimerRef.current);
+    }
+
+    // Increment count
+    removeFromCartCountRef.current += 1;
+
+    // Dismiss previous toast if exists
+    if (activeRemoveToastRef.current) {
+      toast.dismiss(activeRemoveToastRef.current);
+    }
+
+    // Set timer to show toast after 500ms of no new removals
+    removeFromCartTimerRef.current = setTimeout(() => {
+      const count = removeFromCartCountRef.current;
+
+      if (count === 1) {
+        activeRemoveToastRef.current = toast.success("Đã xóa khỏi giỏ hàng");
+      } else {
+        activeRemoveToastRef.current = toast.success(`Đã xóa ${count} sản phẩm khỏi giỏ hàng`, {
+          icon: "🗑️",
+        });
+      }
+
+      // Reset counter
+      removeFromCartCountRef.current = 0;
+      removeFromCartTimerRef.current = null;
+    }, 500);
+  }, []);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (addToCartTimerRef.current) {
+        clearTimeout(addToCartTimerRef.current);
+      }
+      if (removeFromCartTimerRef.current) {
+        clearTimeout(removeFromCartTimerRef.current);
+      }
+    };
+  }, []);
 
   // Initialize cart based on auth state
   useEffect(() => {
@@ -207,11 +296,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCart((prev) => [...prev, { ...product, quantity: 1 }]);
       }
 
+      // Show batched toast
+      showAddToCartToast();
+
       setLoading(true);
       try {
         await addToCartOnServer({ ...product, quantity: 1 });
         await refreshCart();
-        toast.success("Đã thêm vào giỏ hàng");
       } catch (error: any) {
         setCart(optimisticCart);
         console.error("Add to cart error:", error);
@@ -229,7 +320,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
         return [...prev, { ...product, quantity: 1 }];
       });
-      toast.success("Đã thêm vào giỏ hàng");
+
+      // Show batched toast
+      showAddToCartToast();
     }
   };
 
@@ -237,6 +330,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (user) {
       const optimisticCart = [...cart];
       setCart((prev) => prev.filter((item) => item._id !== id));
+
+      // Show batched toast
+      showRemoveFromCartToast();
 
       setLoading(true);
       try {
@@ -246,9 +342,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         });
         const data = await res.json();
 
-        if (data.success) {
-          toast.success("Đã xóa khỏi giỏ hàng");
-        } else {
+        if (!data.success) {
           throw new Error(data.message || "Failed to remove from cart");
         }
       } catch (error: any) {
@@ -260,7 +354,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     } else {
       setCart((prev) => prev.filter((item) => item._id !== id));
-      toast.success("Đã xóa khỏi giỏ hàng");
+
+      // Show batched toast
+      showRemoveFromCartToast();
     }
   };
 
@@ -327,6 +423,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const clearCart = async () => {
+    // Prevent multiple simultaneous clear operations
+    if (clearCartInProgressRef.current) {
+      console.log("⚠️ Clear cart already in progress, skipping...");
+      return;
+    }
+
+    clearCartInProgressRef.current = true;
+
     if (user) {
       const optimisticCart = [...cart];
       setCart([]);
@@ -350,11 +454,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
         toast.error(error.message || "Lỗi khi xóa giỏ hàng");
       } finally {
         setLoading(false);
+        // Reset flag after a short delay to allow UI to update
+        setTimeout(() => {
+          clearCartInProgressRef.current = false;
+        }, 1000);
       }
     } else {
       setCart([]);
       localStorage.removeItem("cart");
       toast.success("Đã xóa giỏ hàng");
+      // Reset flag after a short delay
+      setTimeout(() => {
+        clearCartInProgressRef.current = false;
+      }, 1000);
     }
   };
 

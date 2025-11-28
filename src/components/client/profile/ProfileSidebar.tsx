@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User, ShoppingCart, Settings, LogOut } from "lucide-react";
+import { User, ShoppingCart, Settings, LogOut, Bell } from "lucide-react";
 import { useAuth } from "@contexts/AuthContext";
 
 interface ProfileSidebarProps {
@@ -40,13 +40,22 @@ export default function ProfileSidebar({ activePath = "" }: ProfileSidebarProps)
           <span>Đơn hàng của tôi</span>
         </Link>
         <Link
+          href="/notification"
+          className={`flex items-center gap-3 px-3 py-2 text-gray-700 rounded hover:bg-amber-50 hover:text-amber-600 transition-colors ${
+            activePath === "/notification" ? "bg-amber-50 text-amber-600" : ""
+          }`}
+        >
+          <Bell size={18} />
+          <span>Thông báo của tôi</span>
+        </Link>
+        <Link
           href="/settings"
           className={`flex items-center gap-3 px-3 py-2 text-gray-700 rounded hover:bg-amber-50 hover:text-amber-600 transition-colors ${
             activePath === "/settings" ? "bg-amber-50 text-amber-600" : ""
           }`}
         >
           <Settings size={18} />
-          <span>Cài đặt</span>
+          <span>Cài Đặt</span>
         </Link>
       </nav>
       <button

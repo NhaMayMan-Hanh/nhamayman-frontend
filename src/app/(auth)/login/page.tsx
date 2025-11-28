@@ -15,15 +15,12 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [showPassword, setShowPassword] = useState(false);
 
-  // ✅ Check nếu đã login rồi thì redirect về trang chủ
   useEffect(() => {
     if (!loading && user) {
-      console.log("✅ User đã login, redirect về /");
       router.replace("/");
     }
   }, [user, loading, router]);
 
-  // ✅ Show loading khi đang check auth
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -32,7 +29,6 @@ export default function LoginPage() {
     );
   }
 
-  // ✅ Nếu đã có user thì không render form
   if (user) {
     return null;
   }
