@@ -1,10 +1,23 @@
-// app/admin/users/[id]/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Phone } from "lucide-react";
+import {
+   MapPin,
+   Phone,
+   Loader2,
+   XCircle,
+   Edit,
+   Trash2,
+   ArrowLeft,
+   CheckCircle,
+   AlertCircle,
+} from "lucide-react";
+import { useToast } from "@contexts/ToastContext";
+import apiRequest from "@lib/api";
+import DeleteConfirmModal from "@components/admin/DeleteModal";
+import Loading from "@components/admin/Loading";
 
 interface UserDetail {
    _id: string;
@@ -25,34 +38,11 @@ interface UserDetail {
    updatedAt: string;
 }
 
-// Helper an toàn cho toast (không crash nếu ToastContainer chưa mount)
-const showToast = (
-   message: string,
-   type: "success" | "error" | "loading" = "success"
-): string | null => {
-   if (
-      typeof window !== "undefined" &&
-      typeof window.showToast === "function"
-   ) {
-      return window.showToast(message, type);
-   }
-   console.log("[Toast]", type, message);
-   return null;
-};
-
-const updateToast = (
-   id: string | null,
-   message: string,
-   type: "success" | "error"
-) => {
-   if (
-      id &&
-      typeof window !== "undefined" &&
-      typeof window.updateToast === "function"
-   ) {
-      window.updateToast(id, message, type);
-   }
-};
+interface ApiResponse<T> {
+   success: boolean;
+   data: T;
+   message?: string;
+}
 
 const formatDate = (dateString: string) => {
    return new Date(dateString).toLocaleString("vi-VN", {
@@ -65,101 +55,11 @@ const formatDate = (dateString: string) => {
    });
 };
 
-// Modal xác nhận xóa
-function DeleteModal({
-   user,
-   onClose,
-   onConfirm,
-}: {
-   user: UserDetail;
-   onClose: () => void;
-   onConfirm: () => void;
-}) {
-   return (
-      <div
-         className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-         onClick={onClose}
-      >
-         <div
-            className="bg-white rounded-xl shadow-2xl max-w-md w-full"
-            onClick={(e) => e.stopPropagation()}
-         >
-            <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-xl">
-               <h3 className="text-xl font-semibold text-gray-900">
-                  Xác nhận xóa người dùng
-               </h3>
-               <button
-                  onClick={onClose}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-               >
-                  <svg
-                     className="w-6 h-6"
-                     fill="none"
-                     stroke="currentColor"
-                     viewBox="0 0 24 24"
-                  >
-                     <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                     />
-                  </svg>
-               </button>
-            </div>
-
-            <div className="p-6">
-               <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-                  <svg
-                     className="w-6 h-6 text-red-600 shrink-0 mt-0.5"
-                     fill="currentColor"
-                     viewBox="0 0 20 20"
-                  >
-                     <path
-                        fillRule="evenodd"
-                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                        clipRule="evenodd"
-                     />
-                  </svg>
-                  <div>
-                     <h4 className="font-semibold text-red-900">Cảnh báo!</h4>
-                     <p className="text-sm text-red-700 mt-1">
-                        Bạn có chắc chắn muốn xóa người dùng này? Hành động này{" "}
-                        <strong>không thể hoàn tác</strong>.
-                     </p>
-                  </div>
-               </div>
-
-               <div className="mt-4 bg-gray-50 p-4 rounded-lg">
-                  <p className="font-medium text-gray-900">{user.name}</p>
-                  <p className="text-sm text-gray-500">@{user.username}</p>
-                  <p className="text-sm text-gray-500">{user.email}</p>
-               </div>
-            </div>
-
-            <div className="bg-gray-50 border-t border-gray-200 px-6 py-4 flex flex-col sm:flex-row justify-end gap-3 rounded-b-xl">
-               <button
-                  onClick={onClose}
-                  className="w-full sm:w-auto px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-               >
-                  Hủy bỏ
-               </button>
-               <button
-                  onClick={onConfirm}
-                  className="w-full sm:w-auto px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-               >
-                  Xóa người dùng
-               </button>
-            </div>
-         </div>
-      </div>
-   );
-}
-
 export default function UserDetailPage() {
    const params = useParams();
    const router = useRouter();
    const userId = params.id as string;
+   const toast = useToast();
 
    const [user, setUser] = useState<UserDetail | null>(null);
    const [loading, setLoading] = useState(true);
@@ -170,14 +70,9 @@ export default function UserDetailPage() {
       const fetchUser = async () => {
          try {
             setLoading(true);
-            const res = await fetch(
-               `http://localhost:5000/api/admin/users/${userId}`,
-               {
-                  credentials: "include",
-               }
+            const result = await apiRequest.get<ApiResponse<UserDetail>>(
+               `/admin/users/${userId}`
             );
-
-            const result = await res.json();
 
             if (result.success) {
                setUser(result.data);
@@ -185,8 +80,8 @@ export default function UserDetailPage() {
             } else {
                setError(result.message || "Không thể tải thông tin người dùng");
             }
-         } catch (err) {
-            setError("Lỗi kết nối đến server");
+         } catch (err: any) {
+            setError(err.message || "Lỗi kết nối đến server");
             console.error(err);
          } finally {
             setLoading(false);
@@ -199,36 +94,25 @@ export default function UserDetailPage() {
    const handleDelete = async () => {
       if (!user) return;
 
-      const toastId = showToast("Đang xóa người dùng...", "loading");
+      const toastId = toast.loading("Đang xóa người dùng...");
 
       try {
-         const res = await fetch(
-            `http://localhost:5000/api/admin/users/${user._id}`,
-            {
-               method: "DELETE",
-               credentials: "include",
-            }
-         );
+         await apiRequest.delete(`/admin/users/${user._id}`);
 
-         if (res.ok) {
-            updateToast(
-               toastId,
-               `Đã xóa người dùng "${user.name}" thành công!`,
-               "success"
-            );
-            setTimeout(() => {
-               router.push("/admin/users");
-            }, 1500);
-         } else {
-            const errorData = await res.json();
-            updateToast(
-               toastId,
-               errorData.message || "Xóa người dùng thất bại",
-               "error"
-            );
-         }
-      } catch (err) {
-         updateToast(toastId, "Lỗi kết nối server", "error");
+         toast.updateToast(
+            toastId,
+            `Đã xóa người dùng "${user.name}" thành công!`,
+            "success"
+         );
+         setTimeout(() => {
+            router.push("/admin/users");
+         }, 1500);
+      } catch (err: any) {
+         toast.updateToast(
+            toastId,
+            err.message || "Xóa người dùng thất bại",
+            "error"
+         );
          console.error("Delete error:", err);
       } finally {
          setShowDeleteModal(false);
@@ -237,14 +121,7 @@ export default function UserDetailPage() {
 
    // Loading state
    if (loading) {
-      return (
-         <div className="flex items-center justify-center min-h-screen bg-gray-50">
-            <div className="text-center">
-               <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-blue-600 mx-auto"></div>
-               <p className="mt-4 text-gray-600">Đang tải thông tin...</p>
-            </div>
-         </div>
-      );
+      return <Loading />;
    }
 
    // Error state
@@ -252,17 +129,7 @@ export default function UserDetailPage() {
       return (
          <div className="flex items-center justify-center min-h-screen bg-gray-50">
             <div className="bg-red-50 border border-red-200 rounded-lg p-8 max-w-md text-center">
-               <svg
-                  className="w-16 h-16 text-red-500 mx-auto mb-4"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-               >
-                  <path
-                     fillRule="evenodd"
-                     d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                     clipRule="evenodd"
-                  />
-               </svg>
+               <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
                <h3 className="text-lg font-semibold text-red-800">
                   Lỗi tải dữ liệu
                </h3>
@@ -298,38 +165,14 @@ export default function UserDetailPage() {
                         href={`/admin/users/edit/${user._id}`}
                         className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                      >
-                        <svg
-                           className="w-5 h-5"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                           />
-                        </svg>
+                        <Edit className="w-5 h-5" />
                         Chỉnh sửa người dùng
                      </Link>
                      <button
                         onClick={() => setShowDeleteModal(true)}
                         className="flex items-center gap-2 px-5 py-3 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition"
                      >
-                        <svg
-                           className="w-5 h-5"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                           />
-                        </svg>
+                        <Trash2 className="w-5 h-5" />
                         Xóa người dùng
                      </button>
                   </div>
@@ -337,19 +180,7 @@ export default function UserDetailPage() {
                      href="/admin/users"
                      className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
                   >
-                     <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                     >
-                        <path
-                           strokeLinecap="round"
-                           strokeLinejoin="round"
-                           strokeWidth={2}
-                           d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                        />
-                     </svg>
+                     <ArrowLeft className="w-5 h-5" />
                      Quay lại
                   </Link>
                </div>
@@ -377,31 +208,11 @@ export default function UserDetailPage() {
                         </div>
                         {user.isVerified ? (
                            <div className="absolute bottom-0 right-2 bg-green-500 text-white rounded-full p-2 shadow-lg">
-                              <svg
-                                 className="w-6 h-6"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20"
-                              >
-                                 <path
-                                    fillRule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                    clipRule="evenodd"
-                                 />
-                              </svg>
+                              <CheckCircle className="w-6 h-6" />
                            </div>
                         ) : (
                            <div className="absolute bottom-0 right-2 bg-yellow-500 text-white rounded-full p-2 shadow-lg">
-                              <svg
-                                 className="w-6 h-6"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20"
-                              >
-                                 <path
-                                    fillRule="evenodd"
-                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                    clipRule="evenodd"
-                                 />
-                              </svg>
+                              <AlertCircle className="w-6 h-6" />
                            </div>
                         )}
                      </div>
@@ -562,25 +373,7 @@ export default function UserDetailPage() {
                         </div>
                      ) : (
                         <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-                           <svg
-                              className="w-10 h-10 text-gray-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                           >
-                              <path
-                                 strokeLinecap="round"
-                                 strokeLinejoin="round"
-                                 strokeWidth={2}
-                                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                              />
-                              <path
-                                 strokeLinecap="round"
-                                 strokeLinejoin="round"
-                                 strokeWidth={2}
-                                 d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                              />
-                           </svg>
+                           <MapPin className="w-10 h-10 text-gray-400" />
                            <div>
                               <p className="font-medium text-gray-900">
                                  Chưa cập nhật địa chỉ
@@ -596,14 +389,22 @@ export default function UserDetailPage() {
             </div>
          </div>
 
-         {/* Modal xóa */}
-         {showDeleteModal && user && (
-            <DeleteModal
-               user={user}
-               onClose={() => setShowDeleteModal(false)}
-               onConfirm={handleDelete}
-            />
-         )}
+         <DeleteConfirmModal
+            open={showDeleteModal}
+            onClose={() => setShowDeleteModal(false)}
+            onConfirm={handleDelete}
+            title="Xác nhận xóa người dùng"
+            message="Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể hoàn tác."
+            entityName={user.name}
+            confirmText="Xóa người dùng"
+            cancelText="Hủy bỏ"
+            details={
+               <div className="space-y-1">
+                  <p className="text-gray-600">@{user.username}</p>
+                  <p className="text-gray-600">{user.email}</p>
+               </div>
+            }
+         />
       </div>
    );
 }

@@ -1,4 +1,4 @@
-import { Blog, FilterOptions } from "./types";
+import { BlogData, FilterOptions } from "./types";
 
 export const formatDate = (dateString: string): string => {
    const date = new Date(dateString);
@@ -10,10 +10,10 @@ export const formatDate = (dateString: string): string => {
 };
 
 export const filterBlogs = (
-   blogs: Blog[],
+   blogs: BlogData[],
    searchTerm: string,
    filters: FilterOptions
-): Blog[] => {
+): BlogData[] => {
    let filtered = blogs.filter(
       (blog) =>
          blog.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -63,10 +63,10 @@ export const filterBlogs = (
 };
 
 export const paginateBlogs = (
-   blogs: Blog[],
+   blogs: BlogData[],
    currentPage: number,
    itemsPerPage: number
-): Blog[] => {
+): BlogData[] => {
    const startIndex = (currentPage - 1) * itemsPerPage;
    const endIndex = startIndex + itemsPerPage;
    return blogs.slice(startIndex, endIndex);
@@ -78,3 +78,11 @@ export const getTotalPages = (
 ): number => {
    return Math.ceil(totalItems / itemsPerPage);
 };
+
+export const calculateReadTime = (content: string): number => {
+   const wordsPerMinute = 200;
+   const textLength = content.replace(/<[^>]*>/g, "").split(/\s+/).length;
+   const readTime = Math.ceil(textLength / wordsPerMinute);
+   return readTime;
+};
+

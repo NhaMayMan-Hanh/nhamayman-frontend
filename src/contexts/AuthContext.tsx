@@ -39,7 +39,7 @@ export function AuthProvider({
 
     const checkAuth = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/client/users/profile", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/users/profile`, {
           credentials: "include",
         });
         if (res.ok) {
@@ -102,9 +102,10 @@ export function AuthProvider({
       console.log("✅ [AuthContext] Server cart load wait completed");
     }
 
-    // Refresh page để AuthLayout tự động redirect dựa trên role
-    console.log("🔄 [AuthContext] Refreshing router to trigger AuthLayout redirect...");
-    router.refresh();
+    const redirectPath = userData.role === "admin" ? "/admin/dashboard" : "/";
+    console.log("🔄 [AuthContext] Redirecting to:", redirectPath);
+
+    window.location.href = redirectPath;
   };
 
   const logout = async () => {
@@ -113,16 +114,13 @@ export function AuthProvider({
     hasCheckedAuth.current = false;
 
     try {
-      await fetch("http://localhost:5000/api/client/auth/logout", {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
     } catch (error) {
       console.error("[AuthContext] Logout API error:", error);
     }
-
-    // Clear cookie
-    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
     // Navigate to login
     router.push("/login");

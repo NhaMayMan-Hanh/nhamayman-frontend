@@ -10,7 +10,7 @@ import { Toaster } from "react-hot-toast";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const PROFILE_ENDPOINT = "http://localhost:5000/api/client/users/profile";
+const PROFILE_ENDPOINT = `${process.env.NEXT_PUBLIC_API_URL}/client/users/profile`;
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
   console.log("🚪 [AuthLayout] Bắt đầu render...");
@@ -47,8 +47,11 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   try {
     console.log("🔍 [AuthLayout] Có token, kiểm tra tính hợp lệ...");
     const res = await fetch(PROFILE_ENDPOINT, {
-      headers: { Cookie: `token=${token}` },
+      credentials: "include",
       cache: "no-store",
+      headers: {
+        Cookie: `token=${token}`,
+      },
     });
 
     if (res.ok) {

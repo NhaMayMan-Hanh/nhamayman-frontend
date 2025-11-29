@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@contexts/AuthContext";
 import ProfileSidebar from "@components/client/profile/ProfileSidebar";
 import toast from "react-hot-toast";
+import router from "next/router";
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -27,7 +28,7 @@ export default function SettingsPage() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/client/auth/change-password", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/auth/change-password`, {
         // Placeholder endpoint
         method: "PUT",
         credentials: "include",

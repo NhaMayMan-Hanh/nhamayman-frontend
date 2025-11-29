@@ -1,133 +1,94 @@
-// app/admin/products/[id]/edit/page.tsx
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-
-const showToast = (
-   message: string,
-   type: "success" | "error" | "loading" = "success"
-): string | null => {
-   if (
-      typeof window !== "undefined" &&
-      typeof window.showToast === "function"
-   ) {
-      return window.showToast(message, type);
-   }
-   console.log("[Toast]", type, message);
-   return null;
-};
-
-const updateToast = (
-   id: string | null,
-   message: string,
-   type: "success" | "error" | "loading"
-) => {
-   if (
-      id &&
-      typeof window !== "undefined" &&
-      typeof window.updateToast === "function"
-   ) {
-      window.updateToast(id, message, type);
-   }
-};
-
-interface Category {
-   _id: string;
-   name: string;
-}
-
-interface Product {
-   _id: string;
-   name: string;
-   description: string;
-   detailedDescription: string;
-   price: number;
-   category: string; // Category name (String) - được lưu trực tiếp trong DB
-   image: string;
-   stock: number;
-}
-
+import { Category, Product, ProductFormData, ApiResponse } from "../../types";
+import { useToast } from "@contexts/ToastContext";
+import Loading from "@components/admin/Loading";
+import ErrorState from "@components/admin/ErrorState";
+import apiRequest from "@lib/api";
 export default function EditProductPage() {
    const router = useRouter();
    const params = useParams();
    const id = params.id as string;
-
+   const toast = useToast();
    const [categories, setCategories] = useState<Category[]>([]);
    const [product, setProduct] = useState<Product | null>(null);
-   const [formData, setFormData] = useState({
+   const [formData, setFormData] = useState<ProductFormData>({
       name: "",
       description: "",
       detailedDescription: "",
       price: "",
-      categoryName: "", // ⭐ Đổi tên rõ ràng: lưu name thay vì _id
+      categoryName: "",
       stock: "",
    });
 
    const [imageFile, setImageFile] = useState<File | null>(null);
-   const [imagePreview, setImagePreview] = useState<string>("");
+   const [imagePreview, setImagePreview] = useState<string | null>(null);
    const [loading, setLoading] = useState(true);
    const [saving, setSaving] = useState(false);
 
-   // Fetch categories
    useEffect(() => {
-      fetch("http://localhost:5000/api/admin/categories", {
-         credentials: "include",
-      })
-         .then((res) => res.json())
-         .then((data) => data.success && setCategories(data.data || []))
-         .catch(() => showToast("Lỗi tải danh mục", "error"));
-   }, []);
-
-   // Fetch product details
-   useEffect(() => {
-      if (!id || categories.length === 0) return;
-
-      const fetchProduct = async () => {
+      const loadCategories = async () => {
          try {
-            setLoading(true);
-            const res = await fetch(
-               `http://localhost:5000/api/admin/products/${id}`,
-               { credentials: "include" }
+            const data = await apiRequest.get<ApiResponse<Category[]>>(
+               "/admin/categories"
             );
-            const result = await res.json();
-
-            if (result.success && result.data) {
-               const prod = result.data.product || result.data;
-               setProduct(prod);
-
-               // ⭐ Kiểm tra xem category name có tồn tại trong danh sách không
-               const categoryExists = categories.find(
-                  (c) => c.name === prod.category
-               );
-
-               if (!categoryExists) {
-                  showToast(
-                     `Cảnh báo: Danh mục "${prod.category}" không tồn tại`,
-                     "error"
-                  );
-               }
-
-               setFormData({
-                  name: prod.name,
-                  description: prod.description || "",
-                  detailedDescription: prod.detailedDescription || "",
-                  price: prod.price.toString(),
-                  categoryName: prod.category, // ⭐ Lưu trực tiếp category name
-                  stock: prod.stock.toString(),
-               });
+            if (data.success) {
+               setCategories(data.data || []);
             } else {
-               showToast("Không tìm thấy sản phẩm", "error");
+               toast.error("Không thể tải danh mục");
             }
-         } catch (err) {
-            showToast("Lỗi kết nối server", "error");
-         } finally {
-            setLoading(false);
+         } catch (err: any) {
+            toast.error(err.message || "Lỗi kết nối server");
          }
       };
+      loadCategories();
+   }, []);
 
+   const fetchProduct = async () => {
+      try {
+         setLoading(true);
+         const result = await apiRequest.get<ApiResponse<any>>(
+            `/admin/products/${id}`
+         );
+
+         if (result.success && result.data) {
+            const prod = result.data.product || result.data;
+            setProduct(prod);
+
+            const categoryExists = categories.find(
+               (c) => c.name === prod.category
+            );
+            if (!categoryExists) {
+               toast.error(
+                  `Cảnh báo: Danh mục "${prod.category}" không tồn tại`
+               );
+            }
+
+            setFormData({
+               name: prod.name,
+               description: prod.description || "",
+               detailedDescription: prod.detailedDescription || "",
+               price: prod.price.toString(),
+               categoryName: prod.category,
+               stock: prod.stock.toString(),
+            });
+         } else {
+            toast.error("Không tìm thấy sản phẩm");
+            setTimeout(() => router.push("/admin/products"), 2000);
+         }
+      } catch (err: any) {
+         toast.error(err.message || "Lỗi kết nối server");
+         setTimeout(() => router.push("/admin/products"), 2000);
+      } finally {
+         setLoading(false);
+      }
+   };
+
+   useEffect(() => {
+      if (!id || categories.length === 0) return;
       fetchProduct();
    }, [id, categories]);
 
@@ -136,17 +97,17 @@ export default function EditProductPage() {
       if (!file) return;
 
       if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
-         showToast("Chỉ chấp nhận file JPG hoặc PNG", "error");
+         toast.error("Chỉ chấp nhận file JPG hoặc PNG");
          return;
       }
 
       if (file.size > 10 * 1024 * 1024) {
-         showToast("Ảnh không được quá 10MB", "error");
+         toast.error("Ảnh không được quá 10MB");
          return;
       }
 
       setImageFile(file);
-
+      setImagePreview(null);
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result as string);
       reader.readAsDataURL(file);
@@ -156,109 +117,119 @@ export default function EditProductPage() {
       e.preventDefault();
       if (saving) return;
 
-      // Validate
       if (
          !formData.name.trim() ||
          !formData.categoryName ||
          !formData.price ||
          !formData.stock
       ) {
-         showToast("Vui lòng điền đầy đủ thông tin bắt buộc", "error");
+         toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
          return;
       }
 
-      // ⭐ Kiểm tra category name có hợp lệ không
       const categoryExists = categories.find(
          (c) => c.name === formData.categoryName
       );
       if (!categoryExists) {
-         showToast("Danh mục không hợp lệ", "error");
+         toast.error("Danh mục không hợp lệ");
          return;
       }
 
-      const toastId = showToast("Đang cập nhật sản phẩm...", "loading");
       setSaving(true);
+      const toastId = toast.loading("Đang cập nhật sản phẩm...");
+
+      const formDataToSend = new FormData();
+      formDataToSend.append("name", formData.name.trim());
+      formDataToSend.append("description", formData.description.trim());
+      formDataToSend.append(
+         "detailedDescription",
+         formData.detailedDescription.trim()
+      );
+      formDataToSend.append("price", formData.price);
+      formDataToSend.append("stock", formData.stock);
+      formDataToSend.append("category", formData.categoryName);
+      if (imageFile) formDataToSend.append("image", imageFile);
 
       try {
-         const formDataToSend = new FormData();
-         formDataToSend.append("name", formData.name.trim());
-         formDataToSend.append("description", formData.description.trim());
-         formDataToSend.append(
-            "detailedDescription",
-            formData.detailedDescription.trim()
-         );
-         formDataToSend.append("price", formData.price);
-         formDataToSend.append("stock", formData.stock);
-         formDataToSend.append("category", formData.categoryName); // ⭐ Gửi trực tiếp category name
-
-         if (imageFile) {
-            formDataToSend.append("image", imageFile);
-            console.log("📤 Uploading new image:", imageFile.name);
-         }
-
-         console.log("📤 Gửi category name:", formData.categoryName);
-
-         const res = await fetch(
-            `http://localhost:5000/api/admin/products/${id}`,
-            {
-               method: "PUT",
-               credentials: "include",
-               body: formDataToSend,
-            }
+         const result = await apiRequest.put<ApiResponse<any>>(
+            `/admin/products/${id}`,
+            formDataToSend
          );
 
-         const result = await res.json();
-
-         if (res.ok && result.success) {
-            updateToast(
+         if (result.success) {
+            toast.updateToast(
                toastId,
-               `Cập nhật sản phẩm "${formData.name}" thành công!`,
+               "Cập nhật sản phẩm thành công!",
                "success"
             );
             setTimeout(() => router.push("/admin/products"), 1500);
          } else {
-            updateToast(
+            toast.updateToast(
                toastId,
                result.message || "Cập nhật thất bại",
                "error"
             );
+            setSaving(false);
          }
-      } catch (err) {
-         updateToast(toastId, "Lỗi kết nối đến server", "error");
-         console.error(err);
-      } finally {
-         setSaving(false);
+      } catch (err: any) {
+         // Thử lại không có ảnh nếu có lỗi và có file ảnh
+         if (imageFile) {
+            try {
+               const formDataNoImage = new FormData();
+               formDataNoImage.append("name", formData.name.trim());
+               formDataNoImage.append(
+                  "description",
+                  formData.description.trim()
+               );
+               formDataNoImage.append(
+                  "detailedDescription",
+                  formData.detailedDescription.trim()
+               );
+               formDataNoImage.append("price", formData.price);
+               formDataNoImage.append("stock", formData.stock);
+               formDataNoImage.append("category", formData.categoryName);
+
+               const result2 = await apiRequest.put<ApiResponse<any>>(
+                  `/admin/products/${id}`,
+                  formDataNoImage
+               );
+
+               if (result2.success) {
+                  toast.updateToast(
+                     toastId,
+                     "Lưu thành công (ảnh không cập nhật)",
+                     "info"
+                  );
+                  setTimeout(() => router.push("/admin/products"), 2000);
+               } else {
+                  toast.updateToast(
+                     toastId,
+                     result2.message || "Cập nhật thất bại",
+                     "error"
+                  );
+                  setSaving(false);
+               }
+            } catch (err2: any) {
+               toast.updateToast(
+                  toastId,
+                  err2.message || "Lỗi kết nối server",
+                  "error"
+               );
+               setSaving(false);
+            }
+         } else {
+            toast.updateToast(
+               toastId,
+               err.message || "Lỗi kết nối server",
+               "error"
+            );
+            setSaving(false);
+         }
       }
    };
 
-   if (loading) {
-      return (
-         <div className="flex items-center justify-center min-h-screen bg-gray-50">
-            <div className="text-center">
-               <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-blue-600 mx-auto" />
-               <p className="mt-4 text-gray-600">
-                  Đang tải thông tin sản phẩm...
-               </p>
-            </div>
-         </div>
-      );
-   }
-
-   if (!product) {
-      return (
-         <div className="flex items-center justify-center min-h-screen bg-gray-50">
-            <div className="text-center">
-               <p className="text-red-600">Không tìm thấy sản phẩm</p>
-               <Link
-                  href="/admin/products"
-                  className="mt-4 inline-block px-6 py-3 bg-blue-600 text-white rounded-lg"
-               >
-                  Quay lại danh sách
-               </Link>
-            </div>
-         </div>
-      );
-   }
+   if (loading) return <Loading />;
+   if (!product) return <ErrorState redirect="/admin/products" />;
 
    return (
       <div className="min-h-screen bg-gray-50 p-6">
@@ -281,14 +252,16 @@ export default function EditProductPage() {
             </div>
 
             <div className="bg-white rounded-2xl shadow-xl p-8">
-               <div className="grid lg:grid-cols-3 gap-8">
+               <form
+                  onSubmit={handleSubmit}
+                  className="grid lg:grid-cols-3 gap-8"
+               >
                   {/* Cột ảnh */}
                   <div>
                      <label className="block text-sm font-semibold mb-4">
                         Ảnh sản phẩm
                      </label>
 
-                     {/* Ảnh hiện tại */}
                      <div className="mb-4">
                         <p className="text-sm text-gray-600 mb-2">
                            Ảnh hiện tại
@@ -308,7 +281,6 @@ export default function EditProductPage() {
                         </div>
                      </div>
 
-                     {/* Upload ảnh mới */}
                      <div>
                         <p className="text-sm text-gray-600 mb-2">
                            Ảnh mới (nếu muốn thay đổi)
@@ -327,7 +299,7 @@ export default function EditProductPage() {
                                     type="button"
                                     onClick={() => {
                                        setImageFile(null);
-                                       setImagePreview("");
+                                       setImagePreview(null);
                                     }}
                                     className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition"
                                  >
@@ -372,6 +344,7 @@ export default function EditProductPage() {
                                     accept="image/jpeg,image/jpg,image/png"
                                     onChange={handleImageChange}
                                     className="hidden"
+                                    disabled={saving}
                                  />
                               </label>
                            )}
@@ -388,7 +361,6 @@ export default function EditProductPage() {
                               <span className="text-red-500">*</span>
                            </label>
                            <input
-                              required
                               type="text"
                               value={formData.name}
                               onChange={(e) =>
@@ -397,6 +369,7 @@ export default function EditProductPage() {
                                     name: e.target.value,
                                  })
                               }
+                              required
                               disabled={saving}
                               className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                            />
@@ -406,7 +379,6 @@ export default function EditProductPage() {
                               Danh mục <span className="text-red-500">*</span>
                            </label>
                            <select
-                              required
                               value={formData.categoryName}
                               onChange={(e) =>
                                  setFormData({
@@ -414,6 +386,7 @@ export default function EditProductPage() {
                                     categoryName: e.target.value,
                                  })
                               }
+                              required
                               disabled={saving}
                               className="w-full px-4 py-2.5 border rounded-lg outline-none"
                            >
@@ -431,7 +404,6 @@ export default function EditProductPage() {
                               <span className="text-red-500">*</span>
                            </label>
                            <input
-                              required
                               type="number"
                               min="0"
                               value={formData.price}
@@ -441,6 +413,7 @@ export default function EditProductPage() {
                                     price: e.target.value,
                                  })
                               }
+                              required
                               disabled={saving}
                               className="w-full px-4 py-2.5 border rounded-lg outline-none"
                            />
@@ -450,7 +423,6 @@ export default function EditProductPage() {
                               Tồn kho <span className="text-red-500">*</span>
                            </label>
                            <input
-                              required
                               type="number"
                               min="0"
                               value={formData.stock}
@@ -460,6 +432,7 @@ export default function EditProductPage() {
                                     stock: e.target.value,
                                  })
                               }
+                              required
                               disabled={saving}
                               className="w-full px-4 py-2.5 border rounded-lg outline-none"
                            />
@@ -471,7 +444,6 @@ export default function EditProductPage() {
                            Mô tả ngắn <span className="text-red-500">*</span>
                         </label>
                         <textarea
-                           required
                            rows={3}
                            value={formData.description}
                            onChange={(e) =>
@@ -480,6 +452,7 @@ export default function EditProductPage() {
                                  description: e.target.value,
                               })
                            }
+                           required
                            disabled={saving}
                            className="w-full px-4 py-2.5 border rounded-lg resize-none outline-none"
                         />
@@ -511,12 +484,9 @@ export default function EditProductPage() {
                            Hủy bỏ
                         </Link>
                         <button
-                           onClick={(e) => {
-                              e.preventDefault();
-                              handleSubmit(e);
-                           }}
+                           type="submit"
                            disabled={saving}
-                           className="px-10 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-3"
+                           className="px-10 py-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-3"
                         >
                            {saving && (
                               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -525,7 +495,7 @@ export default function EditProductPage() {
                         </button>
                      </div>
                   </div>
-               </div>
+               </form>
             </div>
          </div>
       </div>

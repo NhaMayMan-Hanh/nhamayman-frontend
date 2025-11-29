@@ -24,12 +24,12 @@ export default function SidebarItem({
          href={href}
          className={`flex items-center ${
             isOpen ? "justify-start" : "justify-center"
-         } gap-3 px-3 py-3 rounded-xl transition-colors duration-200 group
+         } gap-3 px-3 py-3 rounded-[5px] transition-colors duration-200 group
         ${
            isActive
-              ? "bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-900/30"
+              ? "bg-linear-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-900/30"
               : gradient
-              ? "bg-gradient-to-r from-blue-600/80 to-blue-500/80 shadow-lg shadow-blue-900/20"
+              ? "bg-linear-to-r from-blue-600/80 to-blue-500/80 shadow-lg shadow-blue-900/20"
               : "hover:bg-slate-700/50"
         }`}
          title={title}

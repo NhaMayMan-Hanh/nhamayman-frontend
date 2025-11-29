@@ -1,111 +1,52 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-
-interface Category {
-   _id: string;
-   name: string;
-   img: string;
-   slug: string;
-   description: string;
-   createdAt: string;
-   updatedAt: string;
-   __v: number;
-}
+import Loading from "@components/admin/Loading";
+import { Category } from "../types";
+import { formatDate } from "../utils";
+import ErrorState from "@components/admin/ErrorState";
+import { ArrowLeft } from "lucide-react";
+import apiRequest from "@lib/api";
 
 export default function CategoryDetail() {
    const [category, setCategory] = useState<Category | null>(null);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState<string | null>(null);
-
    const router = useRouter();
    const params = useParams();
    const id = params.id as string;
+   const fetchCategory = async () => {
+      try {
+         setLoading(true);
+         const result = await apiRequest.get<{
+            success: boolean;
+            data: Category;
+         }>(`/admin/categories/${id}`);
 
+         if (result.success && result.data) {
+            setCategory(result.data);
+            setError(null);
+         } else {
+            setError("Không tìm thấy danh mục");
+         }
+      } catch (err: any) {
+         setError(err.message || "Lỗi kết nối đến server");
+         console.error(err);
+      } finally {
+         setLoading(false);
+      }
+   };
    useEffect(() => {
       if (!id) return;
-
-      const fetchCategory = async () => {
-         try {
-            setLoading(true);
-            const res = await fetch(
-               `http://localhost:5000/api/admin/categories/${id}`,
-               {
-                  credentials: "include",
-               }
-            );
-
-            const result = await res.json();
-
-            if (result.success && result.data) {
-               setCategory(result.data);
-               setError(null);
-            } else {
-               setError("Không tìm thấy danh mục");
-            }
-         } catch (err) {
-            setError("Lỗi kết nối đến server");
-            console.error(err);
-         } finally {
-            setLoading(false);
-         }
-      };
-
       fetchCategory();
    }, [id]);
-
-   const formatDate = (dateString: string) => {
-      const date = new Date(dateString);
-      return `${date.toLocaleDateString("vi-VN")} lúc ${date.toLocaleTimeString(
-         "vi-VN",
-         { hour: "2-digit", minute: "2-digit" }
-      )}`;
-   };
-
    if (loading) {
-      return (
-         <div className="flex items-center justify-center min-h-screen bg-gray-50">
-            <div className="text-center">
-               <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-blue-600 mx-auto"></div>
-               <p className="mt-4 text-gray-600">
-                  Đang tải thông tin danh mục...
-               </p>
-            </div>
-         </div>
-      );
+      return <Loading />;
    }
-
    if (error || !category) {
-      return (
-         <div className="flex items-center justify-center min-h-screen bg-gray-50">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center max-w-md">
-               <svg
-                  className="w-16 h-16 text-red-500 mx-auto mb-4"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-               >
-                  <path
-                     fillRule="evenodd"
-                     d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                     clipRule="evenodd"
-                  />
-               </svg>
-               <h3 className="text-lg font-semibold text-red-800">
-                  Không tìm thấy danh mục
-               </h3>
-               <p className="text-red-600 mt-2">
-                  {error || "Danh mục không tồn tại hoặc đã bị xóa"}
-               </p>
-               <button
-                  onClick={() => router.push("/admin/categories")}
-                  className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-               >
-                  Quay lại danh sách
-               </button>
-            </div>
-         </div>
-      );
+      return <ErrorState redirect="/admin/categories" />;
    }
 
    return (
@@ -143,9 +84,11 @@ export default function CategoryDetail() {
                   </Link>
                   <button
                      onClick={() => router.push("/admin/categories")}
-                     className="px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                     className="px-3 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 
+              transition-colors cursor-pointer flex items-center gap-2"
                   >
-                     Quay lại
+                     <ArrowLeft className="h-5 w-5" />
+                     <span>Quay lại</span>
                   </button>
                </div>
             </div>

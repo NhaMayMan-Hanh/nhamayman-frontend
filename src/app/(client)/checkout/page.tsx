@@ -171,7 +171,7 @@ export default function CheckoutPage() {
 
       setLoadingProfile(true);
       try {
-        const res = await fetch("http://localhost:5000/api/client/users/profile", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/users/profile`, {
           credentials: "include",
         });
 
@@ -327,7 +327,7 @@ export default function CheckoutPage() {
         discount: giamGia,
       };
 
-      const res = await fetch("http://localhost:5000/api/client/orders", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/orders`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

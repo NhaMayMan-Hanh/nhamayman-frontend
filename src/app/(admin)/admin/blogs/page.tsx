@@ -1,50 +1,83 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ApiResponse, Blog, FilterOptions } from "./types";
+import { useState, useEffect, useCallback } from "react";
+import { BlogData, BlogListResponse, FilterOptions } from "./types";
 import { filterBlogs, formatDate } from "./utils";
 import BlogFilter from "./BlogFilter";
-import Pagination from "./pagination";
-import DeleteModal from "./DeleteModal";
 import Link from "next/link";
-
+import Loading from "@components/admin/Loading";
+import DeleteConfirmModal from "@components/admin/DeleteModal";
+import ActionButton from "@components/admin/ui/ActionsButton";
+import { useToast } from "@contexts/ToastContext";
+import { Pagination } from "@components/admin/helpers/Pagination";
+import apiRequest from "@lib/api";
 export default function Blogs() {
-   const [blogs, setBlogs] = useState<Blog[]>([]);
+   const [blogs, setBlogs] = useState<BlogData[]>([]);
    const [loading, setLoading] = useState(true);
-   const [error, setError] = useState<string | null>(null);
    const [searchTerm, setSearchTerm] = useState("");
-   const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null);
-   const [showModal, setShowModal] = useState(false);
    const [currentPage, setCurrentPage] = useState(1);
    const [filters, setFilters] = useState<FilterOptions>({
       sortBy: "newest",
       dateRange: "all",
    });
+   const [deleteTarget, setDeleteTarget] = useState<BlogData | null>(null);
+
+   const toast = useToast();
    const itemsPerPage = 10;
+   const fetchBlogs = useCallback(async () => {
+      try {
+         setLoading(true);
+         const result = await apiRequest.get<BlogListResponse>("/admin/blogs");
+         if (result.success) {
+            setBlogs(result.data);
+         } else {
+            toast.error(result.message || "Không thể tải danh sách blog");
+         }
+      } catch (err: any) {
+         toast.error(err.message || "Lỗi kết nối server");
+         console.error("Fetch blogs error:", err);
+      } finally {
+         setLoading(false);
+      }
+   }, [toast]);
    useEffect(() => {
       fetchBlogs();
    }, []);
 
-   const fetchBlogs = async () => {
-      try {
-         setLoading(true);
-         const response = await fetch("http://localhost:5000/api/admin/blogs", {
-            credentials: "include",
-         });
-         const result: ApiResponse = await response.json();
-         if (result.success) {
-            setBlogs(result.data);
-            setError(null);
-         } else {
-            setError("Không thể tải dữ liệu blogs");
-         }
-      } catch (err) {
-         setError("Lỗi kết nối đến server: " + (err as Error).message);
-      } finally {
-         setLoading(false);
-      }
-   };
+   // Xử lý xóa blog
+   const confirmDelete = useCallback(async () => {
+      if (!deleteTarget) return;
 
+      const toastId = toast.loading("Đang xóa bài viết...");
+
+      try {
+         const result = await apiRequest.delete<{
+            success: boolean;
+            message?: string;
+         }>(`/admin/blogs/${deleteTarget._id}`);
+
+         if (result.success) {
+            toast.updateToast(toastId, "Xóa bài viết thành công!", "success");
+            await fetchBlogs();
+            setDeleteTarget(null);
+         } else {
+            toast.updateToast(
+               toastId,
+               result.message || "Xóa thất bại",
+               "error"
+            );
+         }
+      } catch (err: any) {
+         toast.updateToast(
+            toastId,
+            err.message || "Lỗi kết nối server",
+            "error"
+         );
+         console.error("Delete blog error:", err);
+      }
+   }, [deleteTarget, toast, fetchBlogs]);
+
+   // Filter và pagination
    const filteredBlogs = filterBlogs(blogs, searchTerm, filters);
    const totalPages = Math.ceil(filteredBlogs.length / itemsPerPage);
    const paginatedBlogs = filteredBlogs.slice(
@@ -52,71 +85,26 @@ export default function Blogs() {
       currentPage * itemsPerPage
    );
 
-   const handleDelete = (blog: Blog) => {
-      setSelectedBlog(blog);
-      setShowModal(true);
-   };
+   // Handlers
+   const handleSearchChange = useCallback((value: string) => {
+      setSearchTerm(value);
+      setCurrentPage(1);
+   }, []);
 
-   const confirmDelete = async () => {
-      if (!selectedBlog) return;
-      try {
-         const response = await fetch(
-            `http://localhost:5000/api/admin/blogs/${selectedBlog._id}`,
-            { method: "DELETE", credentials: "include" }
-         );
-         if (response.ok) fetchBlogs();
-         setShowModal(false);
-      } catch (err) {
-         console.error("Error deleting blog:", err);
-      }
-   };
+   const handleFilterChange = useCallback((f: FilterOptions) => {
+      setFilters(f);
+      setCurrentPage(1);
+   }, []);
 
-   if (loading) {
-      return (
-         <div className="flex items-center justify-center min-h-screen bg-gray-50">
-            <div className="text-center">
-               <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-blue-600"></div>
-               <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
-            </div>
-         </div>
-      );
-   }
+   const handleDelete = useCallback((blog: BlogData) => {
+      setDeleteTarget(blog);
+   }, []);
 
-   if (error) {
-      return (
-         <div className="flex items-center justify-center min-h-screen bg-gray-50">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-               <div className="flex items-center gap-3 text-red-800">
-                  <svg
-                     className="w-6 h-6 shrink-0"
-                     fill="currentColor"
-                     viewBox="0 0 20 20"
-                  >
-                     <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clipRule="evenodd"
-                     />
-                  </svg>
-                  <div>
-                     <h3 className="font-semibold">Lỗi tải dữ liệu</h3>
-                     <p className="text-sm mt-1">{error}</p>
-                  </div>
-               </div>
-               <button
-                  onClick={fetchBlogs}
-                  className="mt-4 w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
-               >
-                  Thử lại
-               </button>
-            </div>
-         </div>
-      );
-   }
+   if (loading) return <Loading />;
 
    return (
       <div className="min-h-screen bg-gray-50">
-         <div>
+         <div className="p-4 sm:p-6 lg:p-8">
             <div className="mb-6 sm:mb-8">
                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                   Quản lý Blogs
@@ -126,11 +114,12 @@ export default function Blogs() {
                </p>
             </div>
 
+            {/* Search + Add Button */}
             <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
                <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
                   <div className="relative w-full md:w-96">
                      <svg
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -146,14 +135,14 @@ export default function Blogs() {
                         type="text"
                         placeholder="Tìm kiếm blog..."
                         value={searchTerm}
-                        onChange={(e) => {
-                           setSearchTerm(e.target.value);
-                           setCurrentPage(1);
-                        }}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                      />
                   </div>
-                  <button className="w-full md:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                  <Link
+                     href="/admin/blogs/create"
+                     className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+                  >
                      <svg
                         className="w-5 h-5"
                         fill="none"
@@ -168,18 +157,13 @@ export default function Blogs() {
                         />
                      </svg>
                      Thêm Blog Mới
-                  </button>
+                  </Link>
                </div>
             </div>
 
-            <BlogFilter
-               filters={filters}
-               onFilterChange={(f) => {
-                  setFilters(f);
-                  setCurrentPage(1);
-               }}
-            />
+            <BlogFilter filters={filters} onFilterChange={handleFilterChange} />
 
+            {/* Table */}
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                <div className="overflow-x-auto">
                   <table className="w-full">
@@ -236,27 +220,11 @@ export default function Blogs() {
                               >
                                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-lg overflow-hidden shrink-0">
-                                       {blog.img ? (
-                                          <img
-                                             src={`http://localhost:3000${blog.img}`}
-                                             alt={blog.name}
-                                             className="w-full h-full object-cover"
-                                          />
-                                       ) : (
-                                          <div className="w-full h-full flex items-center justify-center">
-                                             <svg
-                                                className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"
-                                                fill="currentColor"
-                                                viewBox="0 0 20 20"
-                                             >
-                                                <path
-                                                   fillRule="evenodd"
-                                                   d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-                                                   clipRule="evenodd"
-                                                />
-                                             </svg>
-                                          </div>
-                                       )}
+                                       <img
+                                          src={blog.img}
+                                          alt={blog.name}
+                                          className="w-full h-full object-cover"
+                                       />
                                     </div>
                                  </td>
                                  <td className="px-4 sm:px-6 py-4">
@@ -275,10 +243,10 @@ export default function Blogs() {
                                        {blog.description}
                                     </div>
                                  </td>
-                                 <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
-                                    <div className="flex items-center text-sm text-gray-500">
+                                 <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <div className="flex items-center">
                                        <svg
-                                          className="w-4 h-4 mr-1 shrink-0"
+                                          className="w-4 h-4 mr-1"
                                           fill="currentColor"
                                           viewBox="0 0 20 20"
                                        >
@@ -291,59 +259,27 @@ export default function Blogs() {
                                        {formatDate(blog.createdAt)}
                                     </div>
                                  </td>
-                                 <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div className="flex items-center justify-end gap-1 sm:gap-2">
-                                       <Link
+                                 <td className="px-4 sm:px-6 py-4 text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                       <ActionButton
                                           href={`/admin/blogs/${blog._id}`}
-                                          className="p-1.5 sm:p-2 text-blue-600 rounded-lg transition-colors"
-                                          title="Xem chi tiết (không khả dụng)"
-                                       >
-                                          <svg
-                                             className="w-4 h-4 sm:w-5 sm:h-5"
-                                             fill="none"
-                                             stroke="currentColor"
-                                             viewBox="0 0 24 24"
-                                          >
-                                             <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                             />
-                                             <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                             />
-                                          </svg>
-                                       </Link>
-                                       <Link
+                                          icon="view"
+                                          color="blue"
+                                          title="Xem chi tiết"
+                                       />
+                                       <ActionButton
                                           href={`/admin/blogs/edit/${blog._id}`}
-                                          className="p-1.5 sm:p-2 text-green-600 rounded-lg transition-colors"
-                                          title="Chỉnh sửa (không khả dụng)"
-                                       >
-                                          <svg
-                                             className="w-4 h-4 sm:w-5 sm:h-5"
-                                             fill="none"
-                                             stroke="currentColor"
-                                             viewBox="0 0 24 24"
-                                          >
-                                             <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                             />
-                                          </svg>
-                                       </Link>
+                                          icon="edit"
+                                          color="green"
+                                          title="Chỉnh sửa"
+                                       />
                                        <button
                                           onClick={() => handleDelete(blog)}
-                                          className="p-1.5 sm:p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
                                           title="Xóa"
                                        >
                                           <svg
-                                             className="w-4 h-4 sm:w-5 sm:h-5"
+                                             className="w-5 h-5"
                                              fill="none"
                                              stroke="currentColor"
                                              viewBox="0 0 24 24"
@@ -372,13 +308,24 @@ export default function Blogs() {
                onPageChange={setCurrentPage}
             />
 
-            {showModal && selectedBlog && (
-               <DeleteModal
-                  blog={selectedBlog}
-                  onClose={() => setShowModal(false)}
-                  onConfirm={confirmDelete}
-               />
-            )}
+            {/* Modal Xóa */}
+            <DeleteConfirmModal
+               open={!!deleteTarget}
+               onClose={() => setDeleteTarget(null)}
+               onConfirm={confirmDelete}
+               title="Xóa blog"
+               message="Bạn có chắc chắn muốn xóa blog này? Hành động này không thể hoàn tác."
+               entityName={deleteTarget?.name || ""}
+               details={
+                  deleteTarget && (
+                     <p className="mt-1 text-sm text-gray-600 line-clamp-3">
+                        {deleteTarget.description}
+                     </p>
+                  )
+               }
+               confirmText="Xóa"
+               cancelText="Hủy"
+            />
          </div>
       </div>
    );

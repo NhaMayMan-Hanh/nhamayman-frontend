@@ -1,191 +1,23 @@
-// app/admin/products/page.tsx
 "use client";
-
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-
-interface Product {
-   _id: string;
-   name: string;
-   description: string;
-   price: number;
-   category: string;
-   image: string;
-   stock: number;
-   detailedDescription?: string;
-   __v: number;
-}
-
-interface ApiResponse {
-   success: boolean;
-   data: Product[];
-}
-
-// Toast helper (giữ nguyên trong dự án của bạn)
-const showToast = (
-   message: string,
-   type: "success" | "error" | "loading" = "success"
-): string | null => {
-   if (
-      typeof window !== "undefined" &&
-      typeof window.showToast === "function"
-   ) {
-      return window.showToast(message, type);
-   }
-   console.log("[Toast]", type, message);
-   return null;
-};
-
-const updateToast = (
-   id: string | null,
-   message: string,
-   type: "success" | "error"
-) => {
-   if (
-      id &&
-      typeof window !== "undefined" &&
-      typeof window.updateToast === "function"
-   ) {
-      window.updateToast(id, message, type);
-   }
-};
-
-// MODAL XÓA SẢN PHẨM ĐẸP CHUẨN SHOPEE ADMIN
-function DeleteProductModal({
-   product,
-   onClose,
-   onConfirm,
-   isLoading = false,
-}: {
-   product: Product;
-   onClose: () => void;
-   onConfirm: () => void;
-   isLoading?: boolean;
-}) {
-   return (
-      <div
-         className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-         onClick={onClose}
-      >
-         <div
-            className="bg-white rounded-lg shadow-2xl max-w-md w-full"
-            onClick={(e) => e.stopPropagation()}
-         >
-            {/* Header */}
-            <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-               <h3 className="text-xl font-semibold text-gray-900">
-                  Xác nhận xóa sản phẩm
-               </h3>
-               <button
-                  onClick={onClose}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-               >
-                  <svg
-                     className="w-5 h-5"
-                     fill="none"
-                     stroke="currentColor"
-                     viewBox="0 0 24 24"
-                  >
-                     <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                     />
-                  </svg>
-               </button>
-            </div>
-
-            {/* Body */}
-            <div className="p-6">
-               {/* Cảnh báo đỏ */}
-               <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3 mb-5">
-                  <svg
-                     className="w-6 h-6 text-red-600 shrink-0"
-                     fill="currentColor"
-                     viewBox="0 0 20 20"
-                  >
-                     <path
-                        fillRule="evenodd"
-                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                        clipRule="evenodd"
-                     />
-                  </svg>
-                  <div>
-                     <h4 className="font-semibold text-red-900">Cảnh báo!</h4>
-                     <p className="text-sm text-red-700 mt-1">
-                        Hành động này không thể hoàn tác.
-                     </p>
-                  </div>
-               </div>
-
-               {/* Thông tin sản phẩm */}
-               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="flex gap-4">
-                     <div className="w-20 h-20 bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
-                        <img
-                           src={product.image}
-                           alt={product.name}
-                           className="w-full h-full object-cover"
-                        />
-                     </div>
-                     <div className="flex-1">
-                        <p className="font-semibold text-gray-900 line-clamp-2">
-                           {product.name}
-                        </p>
-                        <p className="text-sm text-gray-500 mt-1">
-                           Danh mục: {product.category}
-                        </p>
-                        <p className="text-sm font-medium text-gray-700 mt-2">
-                           Giá: {product.price.toLocaleString("vi-VN")}₫
-                        </p>
-                        {product.stock === 0 && (
-                           <p className="text-xs text-red-600 mt-1 font-medium">
-                              Hết hàng
-                           </p>
-                        )}
-                     </div>
-                  </div>
-               </div>
-            </div>
-
-            {/* Footer */}
-            <div className="border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
-               <button
-                  onClick={onClose}
-                  className="px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium"
-               >
-                  Hủy bỏ
-               </button>
-               <button
-                  onClick={onConfirm}
-                  disabled={isLoading}
-                  className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-               >
-                  {isLoading && (
-                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  )}
-                  {isLoading ? "Đang xóa..." : "Xóa sản phẩm"}
-               </button>
-            </div>
-         </div>
-      </div>
-   );
-}
-
+import { Product, ApiResponse } from "./types";
+import DeleteConfirmModal from "@components/admin/DeleteModal";
+import { useToast } from "@contexts/ToastContext";
+import Loading from "@components/admin/Loading";
+import apiRequest from "@lib/api";
 export default function AdminProductsPage() {
+   const router = useRouter();
    const [products, setProducts] = useState<Product[]>([]);
    const [loading, setLoading] = useState<boolean>(true);
-   const [error, setError] = useState<string | null>(null);
    const [searchQuery, setSearchQuery] = useState<string>("");
    const [categoryFilter, setCategoryFilter] = useState<string>("all");
    const [currentPage, setCurrentPage] = useState<number>(1);
-   const itemsPerPage = 10;
-
-   // State cho modal xóa
-   const [showDeleteModal, setShowDeleteModal] = useState(false);
    const [productToDelete, setProductToDelete] = useState<Product | null>(null);
    const [deleting, setDeleting] = useState(false);
+   const toast = useToast();
+   const itemsPerPage = 10;
 
    useEffect(() => {
       fetchProducts();
@@ -194,15 +26,13 @@ export default function AdminProductsPage() {
    const fetchProducts = async () => {
       try {
          setLoading(true);
-         const response = await fetch(
-            "http://localhost:5000/api/client/products"
+         const result = await apiRequest.get<ApiResponse<Product[]>>(
+            "/client/products",
+            { noAuth: true }
          );
-         if (!response.ok) throw new Error("Không thể tải sản phẩm");
-         const result: ApiResponse = await response.json();
          setProducts(result.data || []);
-         setError(null);
-      } catch (err) {
-         setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra");
+      } catch (err: any) {
+         toast.error(err.message || "Không thể tải sản phẩm");
       } finally {
          setLoading(false);
       }
@@ -210,43 +40,42 @@ export default function AdminProductsPage() {
 
    const handleDelete = (product: Product) => {
       setProductToDelete(product);
-      setShowDeleteModal(true);
    };
 
    const confirmDelete = async () => {
       if (!productToDelete) return;
 
-      const toastId = showToast("Đang xóa sản phẩm...", "loading");
+      const toastId = toast.loading("Đang xóa sản phẩm...");
       setDeleting(true);
 
       try {
-         const res = await fetch(
-            `http://localhost:5000/api/admin/products/${productToDelete._id}`,
-            {
-               method: "DELETE",
-               credentials: "include",
-            }
+         const result = await apiRequest.delete<ApiResponse<any>>(
+            `/admin/products/${productToDelete._id}`
          );
-         const result = await res.json();
-
-         if (res.ok && result.success) {
-            updateToast(toastId, "Xóa sản phẩm thành công!", "success");
+         if (result.success) {
+            toast.updateToast(toastId, "Xóa sản phẩm thành công!", "success");
             setProducts((prev) =>
                prev.filter((p) => p._id !== productToDelete._id)
             );
          } else {
-            updateToast(toastId, result.message || "Xóa thất bại", "error");
+            toast.updateToast(
+               toastId,
+               result.message || "Xóa thất bại",
+               "error"
+            );
          }
-      } catch (err) {
-         updateToast(toastId, "Lỗi kết nối server", "error");
+      } catch (err: any) {
+         toast.updateToast(
+            toastId,
+            err.message || "Lỗi kết nối server",
+            "error"
+         );
       } finally {
          setDeleting(false);
-         setShowDeleteModal(false);
          setProductToDelete(null);
       }
    };
 
-   // Filter & Pagination
    const categories = Array.from(new Set(products.map((p) => p.category)));
    const filteredProducts = products.filter((product) => {
       const matchesSearch =
@@ -256,6 +85,7 @@ export default function AdminProductsPage() {
          categoryFilter === "all" || product.category === categoryFilter;
       return matchesSearch && matchesCategory;
    });
+
    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
    const startIndex = (currentPage - 1) * itemsPerPage;
    const endIndex = startIndex + itemsPerPage;
@@ -263,46 +93,10 @@ export default function AdminProductsPage() {
 
    useEffect(() => {
       setCurrentPage(1);
-   }, [searchQuery, categoryFilter]);
+   }, []);
 
    if (loading) {
-      return (
-         <div className="flex items-center justify-center h-screen bg-slate-50">
-            <div className="text-center">
-               <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-               <p className="text-slate-600">Đang tải sản phẩm...</p>
-            </div>
-         </div>
-      );
-   }
-
-   if (error) {
-      return (
-         <div className="flex items-center justify-center h-screen bg-slate-50">
-            <div className="text-center bg-white p-8 rounded-xl shadow-lg">
-               <svg
-                  className="w-16 h-16 text-red-500 mx-auto mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-               >
-                  <path
-                     strokeLinecap="round"
-                     strokeLinejoin="round"
-                     strokeWidth={2}
-                     d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-               </svg>
-               <p className="text-red-600 font-medium mb-4">{error}</p>
-               <button
-                  onClick={fetchProducts}
-                  className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-               >
-                  Thử lại
-               </button>
-            </div>
-         </div>
-      );
+      return <Loading />;
    }
 
    return (
@@ -321,7 +115,7 @@ export default function AdminProductsPage() {
                   </div>
                   <Link
                      href="/admin/products/create"
-                     className="inline-flex items-center gap-2.5 px-7 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-2xl hover:from-blue-700 hover:to-indigo-700 transform transition-all duration-300 hover:scale-105 active:scale-100 focus:outline-none focus:ring-4 focus:ring-blue-300"
+                     className="inline-flex items-center gap-2.5 px-7 py-3.5 bg-linear-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-2xl hover:from-blue-700 hover:to-indigo-700 transform transition-all duration-300  active:scale-100 focus:outline-none focus:ring-4 focus:ring-blue-300"
                   >
                      <svg
                         className="w-5 h-5 transition-transform duration-300 group-hover:rotate-90"
@@ -384,7 +178,7 @@ export default function AdminProductsPage() {
                <div className="overflow-x-auto">
                   <table className="w-full">
                      <thead>
-                        <tr className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
+                        <tr className="bg-linear-to-r from-slate-50 to-slate-100 border-b border-slate-200">
                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                               Sản phẩm
                            </th>
@@ -413,7 +207,7 @@ export default function AdminProductsPage() {
                            >
                               <td className="px-6 py-4">
                                  <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0">
+                                    <div className="w-16 h-16 bg-slate-100 rounded-lg overflow-hidden shrink-0">
                                        <img
                                           src={product.image}
                                           alt={product.name}
@@ -458,9 +252,11 @@ export default function AdminProductsPage() {
                               <td className="px-6 py-4">
                                  <div className="flex items-center justify-center gap-2">
                                     <button
-                                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                                        onClick={() =>
-                                          (window.location.href = `/admin/product/${product._id}`)
+                                          router.push(
+                                             `/admin/product/${product._id}`
+                                          )
                                        }
                                     >
                                        <svg
@@ -503,7 +299,7 @@ export default function AdminProductsPage() {
                                     </Link>
                                     <button
                                        onClick={() => handleDelete(product)}
-                                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                                     >
                                        <svg
                                           className="w-5 h-5"
@@ -526,8 +322,6 @@ export default function AdminProductsPage() {
                      </tbody>
                   </table>
                </div>
-
-               {/* Pagination */}
                {filteredProducts.length > 0 && (
                   <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
                      <p className="text-sm text-slate-600">
@@ -636,15 +430,41 @@ export default function AdminProductsPage() {
             )}
          </div>
 
-         {/* MODAL XÓA ĐẸP LUNG LINH */}
-         {showDeleteModal && productToDelete && (
-            <DeleteProductModal
-               product={productToDelete}
-               onClose={() => setShowDeleteModal(false)}
-               onConfirm={confirmDelete}
-               isLoading={deleting}
-            />
-         )}
+         {/* Modal Xóa */}
+         <DeleteConfirmModal
+            open={!!productToDelete}
+            onClose={() => setProductToDelete(null)}
+            onConfirm={confirmDelete}
+            title="Xóa sản phẩm"
+            message="Bạn có chắc chắn muốn xóa sản phẩm này? Hành động này không thể hoàn tác."
+            entityName={productToDelete?.name || ""}
+            details={
+               productToDelete && (
+                  <>
+                     <p className="mt-1 text-xs text-gray-500">
+                        Danh mục:{" "}
+                        <span className="font-medium">
+                           {productToDelete.category}
+                        </span>
+                     </p>
+                     <p className="text-xs text-gray-500">
+                        Giá:{" "}
+                        <span className="font-medium">
+                           {productToDelete.price.toLocaleString("vi-VN")}₫
+                        </span>
+                     </p>
+                     <p className="text-xs text-gray-500">
+                        Tồn kho:{" "}
+                        <span className="font-medium">
+                           {productToDelete.stock}
+                        </span>
+                     </p>
+                  </>
+               )
+            }
+            confirmText={deleting ? "Đang xóa..." : "Xóa sản phẩm"}
+            cancelText="Hủy"
+         />
       </>
    );
 }

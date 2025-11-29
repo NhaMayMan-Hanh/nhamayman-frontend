@@ -3,6 +3,17 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+   ArrowLeft,
+   AlertCircle,
+   Edit,
+   Trash2,
+   Clock,
+   RefreshCw,
+   Tag,
+   FileText,
+} from "lucide-react";
+import Loading from "@components/admin/Loading";
 
 interface Product {
    _id: string;
@@ -44,7 +55,7 @@ export default function AdminProductDetailPage() {
       try {
          setLoading(true);
          const response = await fetch(
-            `http://localhost:5000/api/client/products/${productId}`
+            `${process.env.NEXT_PUBLIC_API_URL}/client/products/${productId}`
          );
          if (!response.ok) throw new Error("Không thể tải chi tiết sản phẩm");
          const result: ApiResponse = await response.json();
@@ -68,39 +79,20 @@ export default function AdminProductDetailPage() {
    };
 
    if (loading) {
-      return (
-         <div className="flex items-center justify-center h-screen bg-slate-50">
-            <div className="text-center">
-               <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-               <p className="text-slate-600">Đang tải chi tiết sản phẩm...</p>
-            </div>
-         </div>
-      );
+      return <Loading />;
    }
 
    if (error || !product) {
       return (
          <div className="flex items-center justify-center h-screen bg-slate-50">
-            <div className="text-center bg-white p-8 rounded-xl">
-               <svg
-                  className="w-16 h-16 text-red-500 mx-auto mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-               >
-                  <path
-                     strokeLinecap="round"
-                     strokeLinejoin="round"
-                     strokeWidth={2}
-                     d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-               </svg>
+            <div className="text-center bg-white p-8 rounded-xl shadow-md">
+               <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
                <p className="text-red-600 font-medium mb-4">
                   {error || "Không tìm thấy sản phẩm"}
                </p>
                <button
                   onClick={() => router.push("/admin/products")}
-                  className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                  className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition cursor-pointer"
                >
                   Quay lại danh sách
                </button>
@@ -114,21 +106,9 @@ export default function AdminProductDetailPage() {
          {/* Back Button */}
          <button
             onClick={() => router.push("/admin/products")}
-            className="flex items-center gap-2 text-slate-600 hover:text-slate-800 mb-6 transition"
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-800 mb-6 transition cursor-pointer"
          >
-            <svg
-               className="w-5 h-5"
-               fill="none"
-               stroke="currentColor"
-               viewBox="0 0 24 24"
-            >
-               <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
-               />
-            </svg>
+            <ArrowLeft className="w-5 h-5" />
             Quay lại danh sách sản phẩm
          </button>
 
@@ -136,7 +116,7 @@ export default function AdminProductDetailPage() {
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             {/* Product Image */}
             <div className="lg:col-span-1">
-               <div className="bg-white rounded-xl overflow-hidden sticky top-6">
+               <div className="bg-white rounded-xl shadow-sm overflow-hidden sticky top-6">
                   <div className="aspect-square bg-slate-100">
                      <img
                         src={product.image}
@@ -150,7 +130,7 @@ export default function AdminProductDetailPage() {
             {/* Product Info */}
             <div className="lg:col-span-2 space-y-6">
                {/* Basic Info Card */}
-               <div className="bg-white rounded-xl p-6">
+               <div className="bg-white rounded-xl shadow-sm p-6">
                   <div className="flex items-start justify-between mb-4">
                      <div className="flex-1">
                         <h1 className="text-3xl font-bold text-slate-800 mb-2">
@@ -161,36 +141,12 @@ export default function AdminProductDetailPage() {
                      <div className="flex gap-2">
                         <Link
                            href={`/admin/products/edit/${product._id}`}
-                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition cursor-pointer"
                         >
-                           <svg
-                              className="w-6 h-6"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                           >
-                              <path
-                                 strokeLinecap="round"
-                                 strokeLinejoin="round"
-                                 strokeWidth={2}
-                                 d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                              />
-                           </svg>
+                           <Edit className="w-6 h-6" />
                         </Link>
-                        <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition">
-                           <svg
-                              className="w-6 h-6"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                           >
-                              <path
-                                 strokeLinecap="round"
-                                 strokeLinejoin="round"
-                                 strokeWidth={2}
-                                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                           </svg>
+                        <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer">
+                           <Trash2 className="w-6 h-6" />
                         </button>
                      </div>
                   </div>
@@ -235,7 +191,7 @@ export default function AdminProductDetailPage() {
 
                {/* Detailed Description */}
                {product.detailedDescription && (
-                  <div className="bg-white rounded-xl p-6">
+                  <div className="bg-white rounded-xl shadow-sm p-6">
                      <h2 className="text-xl font-bold text-slate-800 mb-4">
                         Mô tả chi tiết
                      </h2>
@@ -246,25 +202,13 @@ export default function AdminProductDetailPage() {
                )}
 
                {/* Meta Info */}
-               <div className="bg-white rounded-xl p-6">
+               <div className="bg-white rounded-xl shadow-sm p-6">
                   <h2 className="text-xl font-bold text-slate-800 mb-4">
                      Thông tin hệ thống
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                        <svg
-                           className="w-5 h-5 text-slate-500"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                           />
-                        </svg>
+                        <Clock className="w-5 h-5 text-slate-500" />
                         <div>
                            <p className="text-xs text-slate-500">Ngày tạo</p>
                            <p className="text-sm font-medium text-slate-800">
@@ -273,19 +217,7 @@ export default function AdminProductDetailPage() {
                         </div>
                      </div>
                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                        <svg
-                           className="w-5 h-5 text-slate-500"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                           />
-                        </svg>
+                        <RefreshCw className="w-5 h-5 text-slate-500" />
                         <div>
                            <p className="text-xs text-slate-500">
                               Cập nhật lần cuối
@@ -296,19 +228,7 @@ export default function AdminProductDetailPage() {
                         </div>
                      </div>
                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                        <svg
-                           className="w-5 h-5 text-slate-500"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                           />
-                        </svg>
+                        <Tag className="w-5 h-5 text-slate-500" />
                         <div>
                            <p className="text-xs text-slate-500">ID Sản phẩm</p>
                            <p className="text-sm font-medium text-slate-800 font-mono">
@@ -317,19 +237,7 @@ export default function AdminProductDetailPage() {
                         </div>
                      </div>
                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                        <svg
-                           className="w-5 h-5 text-slate-500"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                        >
-                           <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                           />
-                        </svg>
+                        <FileText className="w-5 h-5 text-slate-500" />
                         <div>
                            <p className="text-xs text-slate-500">Version</p>
                            <p className="text-sm font-medium text-slate-800">

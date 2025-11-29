@@ -14,8 +14,6 @@ import {
    PieChart,
    Pie,
    Cell,
-   LineChart,
-   Line,
 } from "recharts";
 import {
    ShoppingBag,
@@ -25,10 +23,8 @@ import {
    DollarSign,
    TrendingUp,
 } from "lucide-react";
+import apiRequest from "@lib/api";
 
-const API_BASE = "http://localhost:5000/api";
-
-// Types
 interface Product {
    _id: string;
    name: string;
@@ -94,6 +90,11 @@ interface About {
    content: string;
 }
 
+interface ApiResponse<T> {
+   data: T;
+   message?: string;
+}
+
 interface Stats {
    products: Product[];
    users: User[];
@@ -133,6 +134,7 @@ interface InfoCardProps {
 
 export default function Dashboard() {
    const [loading, setLoading] = useState<boolean>(true);
+   const [error, setError] = useState<string>("");
    const [stats, setStats] = useState<Stats>({
       products: [],
       users: [],
@@ -149,6 +151,8 @@ export default function Dashboard() {
    const fetchAllData = async (): Promise<void> => {
       try {
          setLoading(true);
+         setError("");
+
          const [
             productsRes,
             usersRes,
@@ -157,43 +161,34 @@ export default function Dashboard() {
             blogsRes,
             aboutRes,
          ] = await Promise.all([
-            fetch(`${API_BASE}/client/products`, {
-               credentials: "include",
-            }).then((r) => r.json()),
-            fetch(`${API_BASE}/admin/users`, {
-               credentials: "include",
-            }).then((r) => r.json()),
-            fetch(`${API_BASE}/admin/orders`, {
-               credentials: "include",
-            }).then((r) => r.json()),
-            fetch(`${API_BASE}/admin/categories`, {
-               credentials: "include",
-            }).then((r) => r.json()),
-            fetch(`${API_BASE}/admin/blogs`, {
-               credentials: "include",
-            }).then((r) => r.json()),
-            fetch(`${API_BASE}/admin/about`, {
-               credentials: "include",
-            }).then((r) => r.json()),
+            apiRequest.get<ApiResponse<Product[]>>("/client/products"),
+            apiRequest.get<ApiResponse<User[]>>("/admin/users"),
+            apiRequest.get<ApiResponse<Order[]>>("/admin/orders"),
+            apiRequest.get<ApiResponse<Category[]>>("/admin/categories"),
+            apiRequest.get<ApiResponse<Blog[]>>("/admin/blogs"),
+            apiRequest.get<ApiResponse<About[]>>("/admin/about"),
          ]);
+
          setStats({
-            products: productsRes.data,
-            users: usersRes.data,
-            orders: ordersRes.data,
-            categories: categoriesRes.data,
-            blogs: blogsRes.data,
-            about: aboutRes.data,
+            products: productsRes.data || [],
+            users: usersRes.data || [],
+            orders: ordersRes.data || [],
+            categories: categoriesRes.data || [],
+            blogs: blogsRes.data || [],
+            about: aboutRes.data || [],
          });
-         console.log(stats);
-      } catch (error) {
+      } catch (error: any) {
          console.error("Error fetching data:", error);
+         setError(error.message || "Không thể tải dữ liệu");
       } finally {
          setLoading(false);
       }
    };
 
    const calculateRevenue = (): number => {
-      return stats.orders?.reduce((sum, order) => sum + (order.total || 0), 0);
+      return (
+         stats.orders?.reduce((sum, order) => sum + (order.total || 0), 0) || 0
+      );
    };
 
    const getProductsByCategory = (): ChartData[] => {
@@ -239,6 +234,25 @@ export default function Dashboard() {
             <div className="text-center">
                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
                <p className="text-gray-600 text-lg">Đang tải dữ liệu...</p>
+            </div>
+         </div>
+      );
+   }
+
+   if (error) {
+      return (
+         <div className="flex items-center justify-center min-h-screen bg-gray-50">
+            <div className="text-center max-w-md">
+               <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-4">
+                  <p className="font-semibold mb-2">Lỗi tải dữ liệu</p>
+                  <p className="text-sm">{error}</p>
+               </div>
+               <button
+                  onClick={fetchAllData}
+                  className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition"
+               >
+                  Thử lại
+               </button>
             </div>
          </div>
       );

@@ -10,6 +10,10 @@ import {
    FileText,
    Users,
    Settings,
+   ChevronLeft,
+   ChevronRight,
+   Package,
+   BookOpen,
 } from "lucide-react";
 
 export default function AdminSidebar() {
@@ -20,27 +24,17 @@ export default function AdminSidebar() {
       <aside
          className={`${
             isOpen ? "w-58" : "w-20"
-         } bg-gradient-to-b from-slate-900 to-slate-800 text-white flex flex-col shadow-2xl transition-all duration-300 relative`}
+         } bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 text-white h-screen transition-all duration-300 shadow-2xl border-r border-gray-700 sticky top-0`}
       >
          <button
             onClick={() => setIsOpen(!isOpen)}
-            className="absolute -right-4 top-8 p-2.5 bg-gradient-to-br from-blue-600 to-blue-500 rounded-lg shadow-lg hover:scale-110 z-50 transition-all"
+            className="absolute -right-4 top-8 p-2.5 bg-linear-to-br from-blue-600 to-blue-500 rounded-lg shadow-lg hover:scale-110 z-50 transition-all"
          >
-            <svg
-               className={`w-4 h-4 transition-transform duration-300 ${
-                  isOpen ? "rotate-0" : "rotate-180"
-               }`}
-               fill="none"
-               stroke="currentColor"
-               viewBox="0 0 24 24"
-            >
-               <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2.5}
-                  d="M15 19l-7-7 7-7"
-               />
-            </svg>
+            {isOpen ? (
+               <ChevronLeft className="w-4 h-4" />
+            ) : (
+               <ChevronRight className="w-4 h-4" />
+            )}
          </button>
 
          {/* Navigation */}
@@ -50,50 +44,51 @@ export default function AdminSidebar() {
                   isOpen={isOpen}
                   href="/admin/dashboard"
                   title="Tổng quan"
-                  icon={<Home />}
+                  icon={<Home className="w-6 h-6" />}
                   isActive={pathname === "/admin/dashboard"}
                />
                <SidebarItem
                   isOpen={isOpen}
                   href="/admin/categories"
                   title="Danh mục"
-                  icon={<Box />}
+                  icon={<Box className="w-6 h-6" />}
                   isActive={pathname === "/admin/categories"}
                />
                <SidebarItem
                   isOpen={isOpen}
                   href="/admin/products"
                   title="Sản phẩm"
-                  icon={<ShoppingCart />}
+                  icon={<ShoppingCart className="w-6 h-6" />}
                   isActive={pathname === "/admin/products"}
                />
                <SidebarItem
                   isOpen={isOpen}
                   href="/admin/orders"
                   title="Đơn hàng"
-                  icon={<FileText />}
+                  icon={<Package className="w-6 h-6" />}
                   isActive={pathname === "/admin/orders"}
+               />
+
+               <SidebarItem
+                  isOpen={isOpen}
+                  href="/admin/blogs"
+                  title="Bài viết"
+                  icon={<BookOpen className="w-6 h-6" />}
+                  isActive={pathname === "/admin/blogs"}
                />
                <SidebarItem
                   isOpen={isOpen}
                   href="/admin/users"
                   title="Người dùng"
-                  icon={<Users />}
+                  icon={<Users className="w-6 h-6" />}
                   isActive={pathname === "/admin/users"}
                />
                <SidebarItem
                   isOpen={isOpen}
                   href="/admin/settings"
                   title="Cài đặt"
-                  icon={<Settings />}
+                  icon={<Settings className="w-6 h-6" />}
                   isActive={pathname === "/admin/settings"}
-               />
-               <SidebarItem
-                  isOpen={isOpen}
-                  href="/admin/blogs"
-                  title="Bài viết"
-                  icon={<FileText />}
-                  isActive={pathname === "/admin/blogs"}
                />
             </div>
          </nav>

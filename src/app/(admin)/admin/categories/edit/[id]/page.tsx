@@ -1,33 +1,15 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-
-interface Category {
-   _id: string;
-   name: string;
-   slug: string;
-   description: string;
-   img: string;
-}
-
-const getImageUrl = (img: string): string => {
-   if (!img) return "/img/fallback/no-image.jpg";
-   if (img.startsWith("http")) return img;
-   return `http://localhost:5000${img.startsWith("/") ? "" : "/"}${img}`;
-};
-
-const getFallbackUrl = (img: string): string => {
-   if (!img) return "/img/fallback/no-image.jpg";
-   if (img.startsWith("http")) {
-      try {
-         return new URL(img).pathname;
-      } catch {
-         return img;
-      }
-   }
-   return img.startsWith("/") ? img : `/${img}`;
-};
+import { Check, Upload } from "lucide-react";
+import Loading from "@components/admin/Loading";
+import { Category } from "../../types";
+import { generateSlug } from "@components/admin/helpers/generateSlug";
+import { useToast } from "@contexts/ToastContext";
+import ErrorState from "@components/admin/ErrorState";
+import apiRequest from "@lib/api";
 
 export default function EditCategory() {
    const [category, setCategory] = useState<Category | null>(null);
@@ -38,26 +20,12 @@ export default function EditCategory() {
    const [imagePreview, setImagePreview] = useState<string | null>(null);
 
    const [loading, setLoading] = useState(true);
-   const [saving, setSaving] = useState(false);
-   const [error, setError] = useState<string | null>(null);
-   const [success, setSuccess] = useState(false);
+   const [submitting, setSubmitting] = useState(false);
 
    const router = useRouter();
    const params = useParams();
    const id = params.id as string;
-
-   // Tạo slug tự động
-   const generateSlug = (text: string) => {
-      return text
-         .toLowerCase()
-         .normalize("NFD")
-         .replace(/[\u0300-\u036f]/g, "")
-         .replace(/đ/g, "d")
-         .replace(/[^a-z0-9\s-]/g, "")
-         .trim()
-         .replace(/\s+/g, "-")
-         .replace(/-+/g, "-");
-   };
+   const toast = useToast();
 
    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
@@ -70,126 +38,143 @@ export default function EditCategory() {
       if (!file) return;
 
       if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
-         setError("Chỉ chấp nhận file JPG hoặc PNG");
+         toast.error("Chỉ chấp nhận file JPG hoặc PNG");
          return;
       }
       if (file.size > 2 * 1024 * 1024) {
-         setError("Hình ảnh không được vượt quá 2MB");
+         toast.error("Hình ảnh không được vượt quá 2MB");
          return;
       }
 
       setNewImage(file);
-      setError(null);
+      setImagePreview(null);
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result as string);
       reader.readAsDataURL(file);
    };
+   const fetchCategory = async () => {
+      try {
+         setLoading(true);
+         const result = await apiRequest.get<{
+            success: boolean;
+            data: Category;
+         }>(`/admin/categories/${id}`);
 
+         if (result.success && result.data) {
+            const cat = result.data;
+            setCategory(cat);
+            setName(cat.name);
+            setSlug(cat.slug);
+            setDescription(cat.description || "");
+         } else {
+            toast.error("Không tìm thấy danh mục");
+            setTimeout(() => router.push("/admin/categories"), 2000);
+         }
+      } catch (err: any) {
+         toast.error(err.message || "Lỗi kết nối server");
+         setTimeout(() => router.push("/admin/categories"), 2000);
+      } finally {
+         setLoading(false);
+      }
+   };
    useEffect(() => {
       if (!id) return;
-
-      const fetchCategory = async () => {
-         try {
-            setLoading(true);
-            const res = await fetch(
-               `http://localhost:5000/api/admin/categories/${id}`,
-               {
-                  credentials: "include",
-               }
-            );
-            const result = await res.json();
-            if (result.success && result.data) {
-               const cat = result.data;
-               setCategory(cat);
-               setName(cat.name);
-               setSlug(cat.slug);
-               setDescription(cat.description || "");
-            } else {
-               setError("Không tìm thấy danh mục");
-            }
-         } catch (err) {
-            setError("Lỗi kết nối server");
-         } finally {
-            setLoading(false);
-         }
-      };
-
       fetchCategory();
    }, [id]);
+
    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
 
       if (!name.trim() || !slug.trim()) {
-         setError("Tên và Slug là bắt buộc");
+         toast.error("Tên và Slug là bắt buộc");
          return;
       }
 
-      setSaving(true);
-      setError(null);
+      if (submitting) return; // Prevent double submit
+      setSubmitting(true);
+
+      const toastId = toast.loading("Đang lưu thay đổi...");
+
+      const formData = new FormData();
+      formData.append("name", name.trim());
+      formData.append("slug", slug.trim());
+      formData.append("description", description.trim());
+      if (newImage) formData.append("img", newImage);
 
       try {
-         const formData = new FormData();
-         formData.append("name", name.trim());
-         formData.append("slug", slug.trim());
-         formData.append("description", description.trim());
-
-         // Chỉ append ảnh nếu có
-         if (newImage) {
-            formData.append("img", newImage);
-            console.log("📤 Uploading new image:", newImage.name);
-         }
-
-         console.log(
-            "📤 Sending request to:",
-            `http://localhost:5000/api/admin/categories/${id}`
-         );
-         console.log("📦 FormData contents:");
-         for (let [key, value] of formData.entries()) {
-            console.log(
-               `  ${key}:`,
-               value instanceof File ? `File(${value.name})` : value
-            );
-         }
-
-         const res = await fetch(
-            `http://localhost:5000/api/admin/categories/${id}`,
-            {
-               method: "PUT",
-               credentials: "include",
-               body: formData,
-               // KHÔNG set Content-Type header - để browser tự động set với boundary
-            }
-         );
-
-         console.log("📥 Response status:", res.status);
-
-         const result = await res.json();
-         console.log("📥 Response data:", result);
+         const result = await apiRequest.put<{
+            success: boolean;
+            message?: string;
+         }>(`/admin/categories/${id}`, formData);
 
          if (result.success) {
-            setSuccess(true);
-            setTimeout(() => router.push("/admin/categories"), 1200);
+            toast.updateToast(
+               toastId,
+               "Cập nhật danh mục thành công!",
+               "success"
+            );
+            // Không setSubmitting(false) ở đây, giữ nút disable cho đến khi redirect
+            setTimeout(() => router.push("/admin/categories"), 1500);
          } else {
-            setError(result.message || "Cập nhật thất bại");
+            toast.updateToast(
+               toastId,
+               result.message || "Cập nhật thất bại",
+               "error"
+            );
+            setSubmitting(false);
          }
-      } catch (err) {
-         console.error("❌ Error:", err);
-         setError("Lỗi kết nối server");
-      } finally {
-         setSaving(false);
+      } catch (err: any) {
+         // Nếu lỗi và có ảnh mới → thử lưu không ảnh
+         if (newImage) {
+            try {
+               const formDataNoImage = new FormData();
+               formDataNoImage.append("name", name.trim());
+               formDataNoImage.append("slug", slug.trim());
+               formDataNoImage.append("description", description.trim());
+
+               const result2 = await apiRequest.put<{
+                  success: boolean;
+                  message?: string;
+               }>(`/admin/categories/${id}`, formDataNoImage);
+
+               if (result2.success) {
+                  toast.updateToast(
+                     toastId,
+                     "Lưu thành công (ảnh không được cập nhật do lỗi server)",
+                     "info"
+                  );
+                  // Không setSubmitting(false) ở đây, giữ nút disable cho đến khi redirect
+                  setTimeout(() => router.push("/admin/categories"), 2000);
+               } else {
+                  toast.updateToast(toastId, "Cập nhật thất bại", "error");
+                  setSubmitting(false);
+               }
+            } catch (err2: any) {
+               toast.updateToast(
+                  toastId,
+                  err2.message || "Lỗi kết nối server",
+                  "error"
+               );
+               setSubmitting(false);
+            }
+         } else {
+            toast.updateToast(
+               toastId,
+               err.message || "Lỗi kết nối server",
+               "error"
+            );
+            console.error(err);
+            setSubmitting(false);
+         }
       }
    };
+
    if (loading) {
-      return (
-         <div className="flex items-center justify-center min-h-screen bg-gray-50">
-            <div className="text-center">
-               <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-blue-600 mx-auto" />
-               <p className="mt-4 text-gray-600">
-                  Đang tải thông tin danh mục...
-               </p>
-            </div>
-         </div>
-      );
+      return <Loading />;
+   }
+
+   if (!category) {
+      return <ErrorState redirect="/admin/categories" />;
    }
 
    return (
@@ -203,30 +188,6 @@ export default function EditCategory() {
                   Cập nhật thông tin danh mục sản phẩm
                </p>
             </div>
-
-            {success && (
-               <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3 animate-in fade-in">
-                  <svg
-                     className="w-6 h-6 text-blue-600"
-                     fill="currentColor"
-                     viewBox="0 0 20 20"
-                  >
-                     <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                     />
-                  </svg>
-                  <div>
-                     <p className="font-medium text-green-800">
-                        Cập nhật thành công!
-                     </p>
-                     <p className="text-sm text-green-700">
-                        Đang chuyển về danh sách...
-                     </p>
-                  </div>
-               </div>
-            )}
 
             <form
                onSubmit={handleSubmit}
@@ -248,22 +209,11 @@ export default function EditCategory() {
                            Ảnh hiện tại
                         </p>
                         <div className="border-2 border-dashed border-gray-300 rounded-xl p-4">
-                           {category && (
-                              <img
-                                 src={getImageUrl(category.img)}
-                                 alt={category.name}
-                                 className="mx-auto max-h-64 rounded-lg object-cover shadow-md"
-                                 onError={(e) => {
-                                    e.currentTarget.src = getFallbackUrl(
-                                       category.img
-                                    );
-                                    e.currentTarget.onerror = () => {
-                                       e.currentTarget.src =
-                                          "/img/fallback/no-image.jpg";
-                                    };
-                                 }}
-                              />
-                           )}
+                           <img
+                              src={category.img}
+                              alt={category.name}
+                              className="mx-auto max-h-64 rounded-lg object-cover shadow-md"
+                           />
                         </div>
                      </div>
 
@@ -293,19 +243,7 @@ export default function EditCategory() {
                               </div>
                            ) : (
                               <div>
-                                 <svg
-                                    className="mx-auto w-16 h-16 text-gray-400 mb-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                 >
-                                    <path
-                                       strokeLinecap="round"
-                                       strokeLinejoin="round"
-                                       strokeWidth={2}
-                                       d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                                    />
-                                 </svg>
+                                 <Upload className="mx-auto w-16 h-16 text-gray-400 mb-4" />
                                  <p className="text-gray-600 mb-2">
                                     Chọn ảnh mới (JPG, PNG - max 2MB)
                                  </p>
@@ -367,56 +305,20 @@ export default function EditCategory() {
                   />
                </div>
 
-               {error && (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
-                     <svg
-                        className="w-5 h-5 text-red-600"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                     >
-                        <path
-                           fillRule="evenodd"
-                           d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                           clipRule="evenodd"
-                        />
-                     </svg>
-                     <p className="text-red-700">{error}</p>
-                  </div>
-               )}
-
                <div className="flex gap-4 pt-6 border-t border-gray-200">
                   <button
                      type="submit"
-                     disabled={saving}
-                     className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed font-medium transition-colors"
+                     disabled={loading || submitting}
+                     className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
                   >
-                     {saving ? (
-                        <>
-                           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                           Đang lưu...
-                        </>
-                     ) : (
-                        <>
-                           <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                           >
-                              <path
-                                 strokeLinecap="round"
-                                 strokeLinejoin="round"
-                                 strokeWidth={2}
-                                 d="M5 13l4 4L19 7"
-                              />
-                           </svg>
-                           Lưu thay đổi
-                        </>
-                     )}
+                     <Check className="w-5 h-5" />
+                     {submitting ? "Đang lưu..." : "Lưu thay đổi"}
                   </button>
                   <Link
                      href="/admin/categories"
-                     className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                     className={`px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors ${
+                        submitting ? "pointer-events-none opacity-50" : ""
+                     }`}
                   >
                      Hủy bỏ
                   </Link>

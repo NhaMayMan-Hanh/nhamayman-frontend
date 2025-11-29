@@ -1,81 +1,70 @@
-// app/admin/products/create/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-
-const showToast = (
-   message: string,
-   type: "success" | "error" | "loading" = "success"
-): string | null => {
-   if (
-      typeof window !== "undefined" &&
-      typeof window.showToast === "function"
-   ) {
-      return window.showToast(message, type);
-   }
-   console.log("[Toast]", type, message);
-   return null;
-};
-
-const updateToast = (
-   id: string | null,
-   message: string,
-   type: "success" | "error" | "loading"
-) => {
-   if (
-      id &&
-      typeof window !== "undefined" &&
-      typeof window.updateToast === "function"
-   ) {
-      window.updateToast(id, message, type);
-   }
-};
+import { useToast } from "@contexts/ToastContext";
+import apiRequest from "@lib/api";
 
 interface Category {
    _id: string;
    name: string;
 }
 
+interface ApiResponse<T> {
+   success: boolean;
+   data?: T;
+   message?: string;
+}
+
 export default function CreateProductPage() {
    const router = useRouter();
-
+   const toast = useToast();
    const [categories, setCategories] = useState<Category[]>([]);
    const [formData, setFormData] = useState({
       name: "",
       description: "",
       detailedDescription: "",
       price: "",
-      category: "", // ← Lưu _id tạm để select hoạt động
+      category: "",
       stock: "",
    });
-
    const [imageFile, setImageFile] = useState<File | null>(null);
    const [imagePreview, setImagePreview] = useState<string>("");
    const [saving, setSaving] = useState(false);
 
+   const loadCategories = async () => {
+      try {
+         const data = await apiRequest.get<ApiResponse<Category[]>>(
+            "/admin/categories"
+         );
+         if (data.success) {
+            setCategories(data.data || []);
+         } else {
+            toast.error("Không thể tải danh mục");
+         }
+      } catch (err: any) {
+         toast.error(err.message || "Lỗi kết nối server");
+      }
+   };
+
    useEffect(() => {
-      fetch("http://localhost:5000/api/admin/categories", {
-         credentials: "include",
-      })
-         .then((res) => res.json())
-         .then((data) => data.success && setCategories(data.data || []))
-         .catch(() => showToast("Lỗi tải danh mục", "error"));
+      loadCategories();
    }, []);
 
+   // XỬ LÝ ẢNH
    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
 
       if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
-         showToast("Chỉ chấp nhận file JPG hoặc PNG", "error");
+         toast.error("Chỉ chấp nhận file JPG hoặc PNG");
          return;
       }
 
       if (file.size > 10 * 1024 * 1024) {
-         showToast("Ảnh không được quá 10MB", "error");
+         toast.error("Ảnh không được quá 10MB");
          return;
       }
 
@@ -86,6 +75,7 @@ export default function CreateProductPage() {
       reader.readAsDataURL(file);
    };
 
+   // GỬI FORM
    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       if (saving) return;
@@ -97,26 +87,24 @@ export default function CreateProductPage() {
          !formData.price ||
          !formData.stock
       ) {
-         showToast("Vui lòng điền đầy đủ thông tin bắt buộc", "error");
+         toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
          return;
       }
 
       if (!imageFile) {
-         showToast("Vui lòng chọn hình ảnh sản phẩm", "error");
+         toast.error("Vui lòng chọn hình ảnh sản phẩm");
          return;
       }
 
-      // ⭐ Tìm category name từ _id
       const selectedCategory = categories.find(
          (c) => c._id === formData.category
       );
       if (!selectedCategory) {
-         showToast("Danh mục không hợp lệ", "error");
+         toast.error("Danh mục không hợp lệ");
          return;
       }
 
-      const toastId = showToast("Đang tạo sản phẩm...", "loading");
-      setSaving(true);
+      const toastId = toast.loading("Đang tạo sản phẩm...");
 
       const formDataToSend = new FormData();
       formDataToSend.append("name", formData.name.trim());
@@ -127,36 +115,37 @@ export default function CreateProductPage() {
       );
       formDataToSend.append("price", formData.price);
       formDataToSend.append("stock", formData.stock);
-      formDataToSend.append("category", selectedCategory.name); // ⭐ GỬI NAME thay vì _id
+      formDataToSend.append("category", selectedCategory.name);
       formDataToSend.append("image", imageFile);
 
-      console.log("📤 Gửi category name:", selectedCategory.name); // Debug
+      setSaving(true);
 
       try {
-         const res = await fetch("http://localhost:5000/api/admin/products", {
-            method: "POST",
-            credentials: "include",
-            body: formDataToSend,
-         });
+         const result = await apiRequest.post<ApiResponse<any>>(
+            "/admin/products",
+            formDataToSend
+         );
 
-         const result = await res.json();
-
-         if (res.ok && result.success) {
-            updateToast(
+         if (result.success) {
+            toast.updateToast(
                toastId,
                `Tạo sản phẩm "${formData.name}" thành công!`,
                "success"
             );
             setTimeout(() => router.push("/admin/products"), 1500);
          } else {
-            updateToast(
+            toast.updateToast(
                toastId,
                result.message || "Tạo sản phẩm thất bại",
                "error"
             );
          }
-      } catch (err) {
-         updateToast(toastId, "Lỗi kết nối đến server", "error");
+      } catch (err: any) {
+         toast.updateToast(
+            toastId,
+            err.message || "Lỗi kết nối đến server",
+            "error"
+         );
          console.error(err);
       } finally {
          setSaving(false);
@@ -184,7 +173,10 @@ export default function CreateProductPage() {
             </div>
 
             <div className="bg-white rounded-2xl shadow-xl p-8">
-               <div className="grid lg:grid-cols-3 gap-8">
+               <form
+                  onSubmit={handleSubmit}
+                  className="grid lg:grid-cols-3 gap-8"
+               >
                   {/* Cột upload ảnh */}
                   <div>
                      <label className="block text-sm font-semibold mb-4">
@@ -247,6 +239,7 @@ export default function CreateProductPage() {
                                  accept="image/jpeg,image/jpg,image/png"
                                  onChange={handleImageChange}
                                  className="hidden"
+                                 disabled={saving}
                               />
                            </label>
                         )}
@@ -390,12 +383,9 @@ export default function CreateProductPage() {
                            Hủy bỏ
                         </Link>
                         <button
-                           onClick={(e) => {
-                              e.preventDefault();
-                              handleSubmit(e);
-                           }}
+                           type="submit"
                            disabled={saving || !imageFile}
-                           className="px-10 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-3"
+                           className="px-10 py-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:scale-105 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-3"
                         >
                            {saving && (
                               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -404,7 +394,7 @@ export default function CreateProductPage() {
                         </button>
                      </div>
                   </div>
-               </div>
+               </form>
             </div>
          </div>
       </div>
