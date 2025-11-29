@@ -1,5 +1,5 @@
-// Type definitions
-export interface Blog {
+// Blog Data Model
+export interface BlogData {
    _id: string;
    name: string;
    description: string;
@@ -7,14 +7,34 @@ export interface Blog {
    slug: string;
    content: string;
    createdAt: string;
-   updatedAt?: string;
+   updatedAt: string;
+   __v?: number;
 }
 
-export interface ApiResponse {
+// Generic API Response
+export interface ApiResponse<T = any> {
    success: boolean;
-   data: Blog[];
+   data: T;
+   message?: string; // Thêm message cho error handling
 }
 
+// Specific Response Types
+export type BlogListResponse = ApiResponse<BlogData[]>;
+export type BlogDetailResponse = ApiResponse<BlogData>;
+export type BlogCreateResponse = ApiResponse<BlogData>;
+export type BlogUpdateResponse = ApiResponse<BlogData>;
+export type BlogDeleteResponse = ApiResponse<{ message: string }>;
+
+// Form Data Types
+export interface BlogFormData {
+   name: string;
+   slug: string;
+   description: string;
+   content: string;
+   img: string | File | null;
+}
+
+// UI State Types
 export type ModalType = "delete" | "";
 
 export interface FilterOptions {

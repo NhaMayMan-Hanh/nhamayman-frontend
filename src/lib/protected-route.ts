@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { jwtVerify } from "jose";
+import { useAuth } from "@contexts/AuthContext";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
