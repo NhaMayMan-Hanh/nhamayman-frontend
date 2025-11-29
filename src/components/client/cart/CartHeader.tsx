@@ -35,9 +35,16 @@ export default function CartHeader({
       <div className="flex items-center gap-3">
         <input
           type="checkbox"
-          ref={checkboxRef} // ← Dùng useRef
+          ref={checkboxRef}
           checked={isAllSelected}
-          onChange={onSelectAll}
+          // THAY ĐỔI CHỈ 1 DÒNG NÀY!!!
+          onChange={(e) => {
+            // Chỉ gọi onSelectAll khi người dùng thực sự click
+            // Không để React tự động trigger do indeterminate
+            if (e.target.checked !== isAllSelected) {
+              onSelectAll();
+            }
+          }}
           className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500 cursor-pointer"
         />
         <span className="font-medium text-gray-700">

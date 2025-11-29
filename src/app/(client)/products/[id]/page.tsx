@@ -1,4 +1,3 @@
-// app/products/[id]/page.tsx
 import ProductClient from "./ProductClient";
 import apiRequest from "@lib/api/index";
 import { notFound } from "next/navigation";

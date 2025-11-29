@@ -79,7 +79,7 @@ export default function ProductClient({ initialData }: ProductClientProps) {
 
       <div className="grid md:grid-cols-2 gap-8 mb-12">
         {/* Hình ảnh */}
-        <div className="relative w-full h-8/12 rounded-xl shadow-lg overflow-hidden">
+        <div className="relative w-full h-[300px] md:h-[500px] rounded-xl shadow-lg overflow-hidden">
           <Image
             src={product.image}
             alt={product.name}
@@ -88,6 +88,7 @@ export default function ProductClient({ initialData }: ProductClientProps) {
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 50vw"
             priority
           />
+
           {isOutOfStock && (
             <div className="absolute top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-full font-bold text-lg">
               Hết hàng
