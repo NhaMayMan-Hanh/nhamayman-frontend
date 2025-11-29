@@ -17,7 +17,13 @@ export default function BlogBox({ blog }: BlogBoxProps) {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative h-48">
-        <Image fill src={blog.img} alt={blog.name} className="object-cover" />
+        <Image
+          fill
+          src={blog.img}
+          alt={blog.name}
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        />
       </div>
       <div className="p-6">
         <h3 className="text-xl font-semibold mb-2 line-clamp-2">{blog.name}</h3>

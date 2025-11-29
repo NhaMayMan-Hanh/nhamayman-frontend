@@ -26,6 +26,8 @@ export default function ProductCard({ product }: ProductCardProps) {
     addToCart(product);
   };
 
+  const formatPrice = (price: number) => price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
   return (
     <Link href={`/products/${product._id}`} className="block">
       <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
@@ -34,9 +36,9 @@ export default function ProductCard({ product }: ProductCardProps) {
             fill
             src={product.image}
             alt={product.name}
-            className="object-contain
-               group-hover:scale-105 transition-transform duration-300"
+            className="object-contain group-hover:scale-105 transition-transform duration-300"
             priority
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         </div>
         <div className="p-4">
@@ -44,7 +46,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <p className="text-gray-600 mb-2 line-clamp-2">
             {product.description.substring(0, 80)}...
           </p>
-          <p className="text-amber-500 font-bold mb-2">{product.price.toLocaleString()} VNĐ</p>
+          <p className="text-amber-500 font-bold mb-2">{formatPrice(product.price)} VNĐ</p>{" "}
           <button
             onClick={handleAddToCart}
             className="w-full bg-button-g text-white py-2 px-4 rounded-lg transition-colors"

@@ -6,27 +6,7 @@ import { useAuth } from "@contexts/AuthContext";
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-
-interface CartItem {
-  _id: string;
-  ten_sp: string;
-  gia_mua: number;
-  hinh: string;
-  so_luong: number;
-}
-
-interface Province {
-  code: number;
-  name: string;
-}
-interface District {
-  code: number;
-  name: string;
-}
-interface Ward {
-  code: number;
-  name: string;
-}
+import { CartItem, Province, District, Ward } from "./type";
 
 export default function CheckoutPage() {
   const router = useRouter();
