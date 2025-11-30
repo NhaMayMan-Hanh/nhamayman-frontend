@@ -79,20 +79,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Batched toast notification for adding to cart
   const showAddToCartToast = useCallback(() => {
-    // Clear existing timer
     if (addToCartTimerRef.current) {
       clearTimeout(addToCartTimerRef.current);
     }
 
-    // Increment count
     addToCartCountRef.current += 1;
 
-    // Dismiss previous toast if exists
     if (activeToastRef.current) {
       toast.dismiss(activeToastRef.current);
     }
 
-    // Set timer to show toast after 500ms of no new additions
     addToCartTimerRef.current = setTimeout(() => {
       const count = addToCartCountRef.current;
 
@@ -104,7 +100,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         });
       }
 
-      // Reset counter
       addToCartCountRef.current = 0;
       addToCartTimerRef.current = null;
     }, 500);
@@ -112,20 +107,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Batched toast notification for removing from cart
   const showRemoveFromCartToast = useCallback(() => {
-    // Clear existing timer
     if (removeFromCartTimerRef.current) {
       clearTimeout(removeFromCartTimerRef.current);
     }
 
-    // Increment count
     removeFromCartCountRef.current += 1;
 
-    // Dismiss previous toast if exists
     if (activeRemoveToastRef.current) {
       toast.dismiss(activeRemoveToastRef.current);
     }
 
-    // Set timer to show toast after 500ms of no new removals
     removeFromCartTimerRef.current = setTimeout(() => {
       const count = removeFromCartCountRef.current;
 
@@ -137,7 +128,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         });
       }
 
-      // Reset counter
       removeFromCartCountRef.current = 0;
       removeFromCartTimerRef.current = null;
     }, 500);
@@ -189,7 +179,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         } catch (error) {
           console.error("❌ CartContext: Error parsing local cart for merge:", error);
         }
-      } else {
       }
       hasMergedRef.current = true;
     }
@@ -279,6 +268,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return data;
   };
 
+  // ✅ FIX: Không gọi refreshCart() sau mỗi lần thêm
   const addToCart = async (product: any) => {
     if (user) {
       const optimisticCart = [...cart];
@@ -294,19 +284,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCart((prev) => [...prev, { ...product, quantity: 1 }]);
       }
 
-      // Show batched toast
       showAddToCartToast();
 
-      setLoading(true);
       try {
-        await addToCartOnServer({ ...product, quantity: 1 });
-        await refreshCart();
+        const result = await addToCartOnServer({ ...product, quantity: 1 });
+        // ✅ Cập nhật từ response thay vì gọi refreshCart()
+        if (result.success && result.data?.items) {
+          setCart(result.data.items);
+        }
       } catch (error: any) {
         setCart(optimisticCart);
         console.error("Add to cart error:", error);
         toast.error(error.message || "Lỗi khi thêm vào giỏ hàng");
-      } finally {
-        setLoading(false);
       }
     } else {
       setCart((prev) => {
@@ -319,7 +308,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return [...prev, { ...product, quantity: 1 }];
       });
 
-      // Show batched toast
       showAddToCartToast();
     }
   };
@@ -329,7 +317,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const optimisticCart = [...cart];
       setCart((prev) => prev.filter((item) => item._id !== id));
 
-      // Show batched toast
       showRemoveFromCartToast();
 
       setLoading(true);
@@ -352,37 +339,60 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     } else {
       setCart((prev) => prev.filter((item) => item._id !== id));
-
-      // Show batched toast
       showRemoveFromCartToast();
     }
   };
 
-  // New function to remove multiple items
+  // ✅ FIX: Gọi API xóa song song thay vì từng lần
   const removeMultipleItems = async (ids: string[]) => {
+    if (ids.length === 0) return;
+
     if (user) {
       const optimisticCart = [...cart];
       setCart((prev) => prev.filter((item) => !ids.includes(item._id)));
 
       setLoading(true);
       try {
-        // Remove items one by one from server
+        // ✅ Gọi song song tất cả request
         const removePromises = ids.map((id) =>
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/cart/${id}`, {
             method: "DELETE",
             credentials: "include",
           })
+            .then(async (res) => {
+              const data = await res.json();
+              return { id, ok: res.ok, status: res.status, data };
+            })
+            .catch((err) => {
+              console.error(`Failed to delete item ${id}:`, err);
+              return { id, ok: false, status: 0, data: null, error: err };
+            })
         );
 
         const results = await Promise.all(removePromises);
-        const allSuccess = results.every((res) => res.ok);
 
-        if (allSuccess) {
+        // Đếm số lượng thành công và thất bại
+        const successCount = results.filter((r) => r.ok).length;
+        const failedCount = results.length - successCount;
+
+        if (failedCount === 0) {
+          // Tất cả thành công
           toast.success(`Đã xóa ${ids.length} sản phẩm khỏi giỏ hàng`);
+        } else if (successCount > 0) {
+          // Một số thành công
+          toast.success(`Đã xóa ${successCount}/${ids.length} sản phẩm`, {
+            icon: "⚠️",
+          });
+          // Chỉ rollback những item thất bại
+          const failedIds = results.filter((r) => !r.ok).map((r) => r.id);
+          const itemsToRestore = optimisticCart.filter((item) => failedIds.includes(item._id));
+          setCart((prev) => [...prev, ...itemsToRestore]);
         } else {
-          throw new Error("Some items failed to remove");
+          // Tất cả thất bại
+          throw new Error("All items failed to remove");
         }
       } catch (error: any) {
+        // Rollback toàn bộ nếu có lỗi nghiêm trọng
         setCart(optimisticCart);
         console.error("Remove multiple items error:", error);
         toast.error("Lỗi khi xóa sản phẩm khỏi giỏ hàng");
@@ -421,7 +431,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const clearCart = async () => {
-    // Prevent multiple simultaneous clear operations
     if (clearCartInProgressRef.current) {
       return;
     }
@@ -451,7 +460,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         toast.error(error.message || "Lỗi khi xóa giỏ hàng");
       } finally {
         setLoading(false);
-        // Reset flag after a short delay to allow UI to update
         setTimeout(() => {
           clearCartInProgressRef.current = false;
         }, 1000);
@@ -460,7 +468,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setCart([]);
       localStorage.removeItem("cart");
       toast.success("Đã xóa giỏ hàng");
-      // Reset flag after a short delay
       setTimeout(() => {
         clearCartInProgressRef.current = false;
       }, 1000);

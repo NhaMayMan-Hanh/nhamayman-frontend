@@ -14,9 +14,8 @@ import DeleteConfirmModal from "@components/client/cart/DeleteConfirmModal";
 
 export default function CartClient() {
   const router = useRouter();
-  const { cart, loading: cartLoading } = useCart();
+  const { cart, loading: cartLoading, removeFromCart, removeMultipleItems, clearCart } = useCart();
   const { user, loading: authLoading } = useAuth();
-  const { removeFromCart, clearCart } = useCart();
 
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -79,6 +78,28 @@ export default function CartClient() {
     setShowDeleteModal(true);
   };
 
+  // ✅ FIX: Gọi removeMultipleItems() thay vì loop
+  const handleConfirmDelete = async () => {
+    try {
+      if (deleteMode === "single" && itemToDelete) {
+        await removeFromCart(itemToDelete);
+        setSelectedItems((prev) => prev.filter((id) => id !== itemToDelete));
+      } else if (deleteMode === "selected" && selectedItems.length > 0) {
+        // ✅ Gọi 1 lần duy nhất với array IDs
+        await removeMultipleItems(selectedItems);
+        setSelectedItems([]);
+      } else if (deleteMode === "all") {
+        await clearCart();
+        setSelectedItems([]);
+      }
+    } catch (err) {
+      toast.error("Xóa thất bại");
+    } finally {
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto py-6 md:py-12 px-4">
       <h1 className="text-2xl md:text-3xl font-bold mb-6">Giỏ hàng của bạn</h1>
@@ -127,7 +148,6 @@ export default function CartClient() {
         open={showDeleteModal}
         mode={deleteMode}
         itemCount={
-          // ← THÊM DẤU = Ở ĐÂY!!!
           deleteMode === "single"
             ? 1
             : deleteMode === "selected"
@@ -136,27 +156,7 @@ export default function CartClient() {
         }
         itemId={itemToDelete}
         onClose={() => setShowDeleteModal(false)}
-        onConfirm={async () => {
-          try {
-            if (deleteMode === "single" && itemToDelete) {
-              await removeFromCart(itemToDelete);
-              setSelectedItems((prev) => prev.filter((id) => id !== itemToDelete));
-            } else if (deleteMode === "selected" && selectedItems.length > 0) {
-              for (const id of selectedItems) {
-                await removeFromCart(id);
-              }
-              setSelectedItems([]);
-            } else if (deleteMode === "all") {
-              await clearCart();
-              setSelectedItems([]);
-            }
-          } catch (err) {
-            toast.error("Xóa thất bại");
-          } finally {
-            setShowDeleteModal(false);
-            setItemToDelete(null);
-          }
-        }}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );
