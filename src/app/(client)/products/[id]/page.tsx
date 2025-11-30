@@ -21,11 +21,7 @@ interface ProductData {
   }>;
 }
 
-export default async function ProductDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>; // ← Next.js bắt buộc phải khai báo kiểu này
-}) {
+export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   // BẮT BUỘC PHẢI AWAIT params
   const { id } = await params;
 

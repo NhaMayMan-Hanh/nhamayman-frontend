@@ -1,4 +1,3 @@
-// src/components/client/cart/CartHeader.tsx
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -22,8 +21,10 @@ export default function CartHeader({
 }: CartHeaderProps) {
   const checkboxRef = useRef<HTMLInputElement>(null);
 
+  // Tính trạng thái gạch ngang
   const isIndeterminate = selectedCount > 0 && selectedCount < totalCount;
 
+  // Cập nhật indeterminate cho checkbox gốc
   useEffect(() => {
     if (checkboxRef.current) {
       checkboxRef.current.indeterminate = isIndeterminate;
@@ -37,14 +38,7 @@ export default function CartHeader({
           type="checkbox"
           ref={checkboxRef}
           checked={isAllSelected}
-          // THAY ĐỔI CHỈ 1 DÒNG NÀY!!!
-          onChange={(e) => {
-            // Chỉ gọi onSelectAll khi người dùng thực sự click
-            // Không để React tự động trigger do indeterminate
-            if (e.target.checked !== isAllSelected) {
-              onSelectAll();
-            }
-          }}
+          onChange={onSelectAll}
           className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500 cursor-pointer"
         />
         <span className="font-medium text-gray-700">

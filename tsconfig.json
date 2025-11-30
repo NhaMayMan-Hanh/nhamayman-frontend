@@ -24,7 +24,7 @@
       "@components/*": ["components/*"],
       "@components/client/*": ["components/client/*"],
       "@components/admin/*": ["components/admin/*"],
-
+      "@data/*": ["data/*"],
       "@hooks/*": ["hooks/*"],
       "@contexts/*": ["contexts/*"],
       "@lib/*": ["lib/*"],

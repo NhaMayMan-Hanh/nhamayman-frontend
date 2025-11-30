@@ -50,6 +50,7 @@ const ProductCard = ({ product }: { product: Product }) => {
       toast.error("Không thể thêm vào giỏ!");
     }
   };
+
   return (
     <a href={`/products/${product._id}`} className="block">
       <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
@@ -78,7 +79,7 @@ const ProductCard = ({ product }: { product: Product }) => {
             className={`w-full py-2 px-4 rounded-lg font-medium transition-all ${
               product.stock === 0
                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                : "bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
             }`}
           >
             {product.stock === 0 ? "Hết hàng" : "Thêm vào giỏ hàng"}
@@ -237,17 +238,26 @@ const ProductsAll = () => {
 
   const productsPerPage = 8;
 
+  // Fetch products khi component mount hoặc khi URL search params thay đổi
   useEffect(() => {
-    fetchProducts();
+    const params = new URLSearchParams(window.location.search);
+    const searchQuery = params.get("search") || "";
+    fetchProducts(searchQuery);
   }, []);
 
+  // Filter và sort products khi có thay đổi
   useEffect(() => {
     filterAndSortProducts();
   }, [products, selectedCategory, priceRange, sortBy]);
 
-  const fetchProducts = async (): Promise<void> => {
+  const fetchProducts = async (searchQuery: string = ""): Promise<void> => {
     try {
-      const result = await apiRequest.get<ApiResponse<Product[]>>("/client/products", {
+      setLoading(true);
+      const url = searchQuery
+        ? `/client/products?search=${encodeURIComponent(searchQuery)}`
+        : "/client/products";
+
+      const result = await apiRequest.get<ApiResponse<Product[]>>(url, {
         noAuth: true,
       });
 
@@ -256,9 +266,11 @@ const ProductsAll = () => {
         setFilteredProducts(result.data);
       } else {
         console.error(result.message || "Lỗi không xác định");
+        toast.error(result.message || "Lỗi không xác định");
       }
     } catch (err: unknown) {
       console.error("Error fetching products:", getErrorMessage(err));
+      toast.error("Không thể tải danh sách sản phẩm");
     } finally {
       setLoading(false);
     }
@@ -335,7 +347,7 @@ const ProductsAll = () => {
           </button>
 
           {/* Filter Sidebar - Desktop */}
-          <div className="hidden lg:block w-64 flex-shrink-0">
+          <div className="hidden lg:block w-64 shrink-0">
             <FilterSidebar
               categories={categories}
               selectedCategory={selectedCategory}

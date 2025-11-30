@@ -23,6 +23,8 @@ export default function CartClient() {
   const [deleteMode, setDeleteMode] = useState<"single" | "selected" | "all">("all");
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
+  const isAllSelected = selectedItems.length === cart.length && cart.length > 0;
+
   // Tự động chọn tất cả khi giỏ thay đổi
   useEffect(() => {
     if (cart.length > 0 && selectedItems.length === 0) {
@@ -86,11 +88,11 @@ export default function CartClient() {
           <CartHeader
             selectedCount={selectedItems.length}
             totalCount={cart.length}
-            onSelectAll={() =>
-              setSelectedItems((isAllSelected) => (isAllSelected ? [] : cart.map((i) => i._id)))
-            }
+            onSelectAll={() => {
+              setSelectedItems(isAllSelected ? [] : cart.map((i) => i._id));
+            }}
             onDeleteSelected={() => openDeleteModal("selected")}
-            isAllSelected={selectedItems.length === cart.length && cart.length > 0}
+            isAllSelected={isAllSelected}
             hasSelected={selectedItems.length > 0}
           />
 

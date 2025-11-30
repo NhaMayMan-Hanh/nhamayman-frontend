@@ -9,8 +9,6 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
-  console.log("🚪 [AuthLayout] Render trang auth");
-
   return (
     <AuthProvider skipFetch={false}>
       <CartProvider>

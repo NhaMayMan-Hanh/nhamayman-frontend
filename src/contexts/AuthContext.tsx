@@ -72,7 +72,6 @@ export function AuthProvider({
         hasLocalCart = false;
       }
     } else {
-      console.log("📭 [AuthContext] No local cart found");
     }
 
     if (hasLocalCart) {
@@ -84,12 +83,10 @@ export function AuthProvider({
         window.addEventListener("cart-merged", handleMerge);
 
         setTimeout(() => {
-          console.log("⏰ [AuthContext] Cart merge timeout (5s)");
           window.removeEventListener("cart-merged", handleMerge);
           resolve(false);
         }, 5000);
       });
-      console.log("[AuthContext] Cart merge result:", mergeSuccess);
     } else {
       await new Promise((resolve) => setTimeout(resolve, 300));
     }

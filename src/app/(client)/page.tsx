@@ -3,6 +3,8 @@ import HeroSlider from "@components/client/home/HeroSlider";
 import FeedbackForm from "@components/client/home/FeedbackForm";
 import CategoryGrid from "@components/client/category/CategoryGrid";
 import CategorySection from "@components/client/category/CategorySection";
+import PhotoGalleryBanner from "@components/client/home/PhotoGalleryBanner";
+import { galleryBanners } from "@data/galleryData";
 import AdImage from "@components/common/AdImage";
 import BlogSection from "@components/client/blog/BlogSection";
 import apiRequest from "@lib/api/index";
@@ -13,8 +15,6 @@ interface HomeData {
   categories: Category[];
   productsByCategory: { [key: string]: Product[] };
 }
-
-const adImages = ["/img/ad1.jpg", "/img/ad2.jpg", "/img/ad1.jpg"];
 
 export default async function HomePage() {
   let data: HomeData | null = null;
@@ -60,10 +60,14 @@ export default async function HomePage() {
                 category={category}
                 products={data.productsByCategory[category.name] || []}
               />
-              {/* Quảng cáo sau mỗi 2 danh mục */}
-              {(index + 1) % 2 === 0 && adImages[Math.floor(index / 2)] && (
+
+              {/* Gallery Banner sau mỗi 2 danh mục */}
+              {(index + 1) % 2 === 0 && galleryBanners[Math.floor(index / 2)] && (
                 <div className="my-12">
-                  <AdImage src={adImages[Math.floor(index / 2)]} />
+                  <PhotoGalleryBanner
+                    images={galleryBanners[Math.floor(index / 2)]}
+                    title={`Khoảnh khắc ${Math.floor(index / 2) + 1}`}
+                  />
                 </div>
               )}
             </div>

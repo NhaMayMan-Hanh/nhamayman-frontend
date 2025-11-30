@@ -25,6 +25,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
             style={{
               flex: "1 0 auto",
               width: "100%",
+              backgroundColor: "#f9fafb",
             }}
           >
             {children}

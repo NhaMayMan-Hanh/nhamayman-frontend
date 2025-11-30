@@ -179,7 +179,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Merge local cart to server on login
   useEffect(() => {
     if (user && !hasMergedRef.current && !authLoading) {
-      console.log("🔄 CartContext: User logged in, checking for merge...");
       const savedLocal = localStorage.getItem("cart");
       if (savedLocal) {
         try {
@@ -191,7 +190,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
           console.error("❌ CartContext: Error parsing local cart for merge:", error);
         }
       } else {
-        console.log("📭 CartContext: No local cart found");
       }
       hasMergedRef.current = true;
     }
@@ -425,7 +423,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = async () => {
     // Prevent multiple simultaneous clear operations
     if (clearCartInProgressRef.current) {
-      console.log("⚠️ Clear cart already in progress, skipping...");
       return;
     }
 

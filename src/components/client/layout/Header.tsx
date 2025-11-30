@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Menu, X, Search, ShoppingCart, User, LogOut, ChevronDown } from "lucide-react";
 import { useAuth } from "@contexts/AuthContext";
 import { useCart } from "@contexts/CartContext";
+import SearchBarWithSuggestions from "@components/client/search/SearchBarWithSuggestions";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -74,7 +75,7 @@ export default function Header() {
         {/* Desktop Navigation - Fixed height and minimum width */}
         <nav className="hidden md:flex items-center gap-3 text-sm font-medium h-14 shrink-0">
           {/* Search Input - Fixed width with icon inside */}
-          <form onSubmit={handleSearch} className="relative shrink-0">
+          {/* <form onSubmit={handleSearch} className="relative shrink-0">
             <input
               type="text"
               placeholder="Tìm kiếm sản phẩm..."
@@ -88,7 +89,8 @@ export default function Header() {
             >
               <Search size={20} />
             </button>
-          </form>
+          </form> */}
+          <SearchBarWithSuggestions />
 
           {/* Navigation Links - Fixed spacing */}
           <div className="flex items-center gap-2 shrink-0">
@@ -199,7 +201,7 @@ export default function Header() {
         {isMenuOpen && (
           <div className="absolute top-full left-0 w-full bg-white border-t border-gray-200 shadow-lg md:hidden z-40">
             <nav className="flex flex-col items-start gap-2 py-4 px-4 text-sm font-medium">
-              <form onSubmit={handleSearch} className="w-full relative mb-4">
+              {/* <form onSubmit={handleSearch} className="w-full relative mb-4">
                 <input
                   type="text"
                   placeholder="Tìm kiếm..."
@@ -213,8 +215,8 @@ export default function Header() {
                 >
                   <Search size={20} />
                 </button>
-              </form>
-
+              </form> */}
+              <SearchBarWithSuggestions />
               <Link
                 href="/productsAll"
                 className="text-gray-700 hover:text-amber-500 transition-colors w-full py-2 px-2 rounded hover:bg-gray-50"
