@@ -5,6 +5,9 @@ import { ChevronLeft, ChevronRight, Filter, X } from "lucide-react";
 import { useCart } from "@contexts/CartContext";
 import Image from "next/image";
 import toast from "react-hot-toast";
+import type { ApiResponse } from "@app/(client)/types";
+import apiRequest from "@lib/api/index";
+import getErrorMessage from "@utils/getErrorMessage";
 
 interface Product {
   _id: string;
@@ -244,14 +247,18 @@ const ProductsAll = () => {
 
   const fetchProducts = async (): Promise<void> => {
     try {
-      const response = await fetch("http://localhost:5000/api/client/products");
-      const result = await response.json();
+      const result = await apiRequest.get<ApiResponse<Product[]>>("/client/products", {
+        noAuth: true,
+      });
+
       if (result.success) {
         setProducts(result.data);
         setFilteredProducts(result.data);
+      } else {
+        console.error(result.message || "Lỗi không xác định");
       }
-    } catch (error) {
-      console.error("Error fetching products:", error);
+    } catch (err: unknown) {
+      console.error("Error fetching products:", getErrorMessage(err));
     } finally {
       setLoading(false);
     }
