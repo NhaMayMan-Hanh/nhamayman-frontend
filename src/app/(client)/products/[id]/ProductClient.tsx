@@ -44,6 +44,7 @@ export default function ProductClient({ initialData }: ProductClientProps) {
   const isOutOfStock = product.stock < 1;
   const [showAllComments, setShowAllComments] = useState(false);
 
+  // ✅ FIX: Thêm với quantity thay vì loop
   const handleAddToCart = async () => {
     if (isOutOfStock) {
       toast.error("Sản phẩm đã hết hàng");
@@ -55,9 +56,8 @@ export default function ProductClient({ initialData }: ProductClientProps) {
     }
 
     try {
-      for (let i = 0; i < quantity; i++) {
-        await addToCart(product);
-      }
+      // ✅ Gọi 1 lần với quantity
+      await addToCart({ ...product, quantity });
       setQuantity(1);
     } catch (err) {
       toast.error("Không thể thêm vào giỏ hàng");
