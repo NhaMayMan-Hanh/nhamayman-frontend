@@ -43,7 +43,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Toast batching refs
   const addToCartCountRef = useRef(0);
-  const addToCartQuantityRef = useRef(0); // ✅ Track total quantity added
+  const addToCartQuantityRef = useRef(0); // Track total quantity added
   const addToCartTimerRef = useRef<NodeJS.Timeout | null>(null);
   const activeToastRef = useRef<string | null>(null);
   const clearCartInProgressRef = useRef(false);
@@ -53,7 +53,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const removeFromCartTimerRef = useRef<NodeJS.Timeout | null>(null);
   const activeRemoveToastRef = useRef<string | null>(null);
 
-  // ✅ Debounce/throttle for add to cart
+  // Debounce/throttle for add to cart
   const pendingAddToCartRef = useRef<Map<string, number>>(new Map());
   const addToCartDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -81,7 +81,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  // ✅ FIX: Toast hiển thị tổng số lượng thêm vào
+  // FIX: Toast hiển thị tổng số lượng thêm vào
   const showAddToCartToast = useCallback((quantityAdded: number) => {
     if (addToCartTimerRef.current) {
       clearTimeout(addToCartTimerRef.current);
@@ -266,7 +266,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return data;
   };
 
-  // ✅ NEW: Process batched add to cart requests
+  //  NEW: Process batched add to cart requests
   const processPendingAddToCart = useCallback(async () => {
     if (pendingAddToCartRef.current.size === 0) return;
 
@@ -299,7 +299,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [cart]);
 
-  // ✅ FIX: Debounced add to cart
+  // FIX: Debounced add to cart
   const addToCart = async (product: any) => {
     const quantityToAdd = product.quantity || 1;
 
@@ -320,7 +320,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       showAddToCartToast(quantityToAdd);
 
-      // ✅ Batch API calls within 300ms window
+      // Batch API calls within 300ms window
       const currentPending = pendingAddToCartRef.current.get(product._id) || 0;
       pendingAddToCartRef.current.set(product._id, currentPending + quantityToAdd);
 
