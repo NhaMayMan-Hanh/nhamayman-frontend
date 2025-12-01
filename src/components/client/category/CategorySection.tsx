@@ -84,7 +84,7 @@ export default function CategorySection({ category, products }: CategorySectionP
             products.slice(0, 8).map((product) => (
               <div
                 key={product._id}
-                className="flex-shrink-0 w-[calc(100%-1rem)] sm:w-[calc(50%-0.375rem)] md:w-[calc(33.333%-0.5rem)] lg:w-[250px] snap-start"
+                className="shrink-0 w-full min-[425px]:w-[calc(50%-0.375rem)] md:w-[calc(33.333%-0.5rem)] lg:w-[250px] snap-start"
               >
                 <ProductCard product={product} />
               </div>
