@@ -343,7 +343,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // ✅ FIX: Gọi API xóa song song thay vì từng lần
+  // ✅ FIX: Gọi API batch delete một lần duy nhất - TRÁNH RACE CONDITION
   const removeMultipleItems = async (ids: string[]) => {
     if (ids.length === 0) return;
 
@@ -353,46 +353,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       setLoading(true);
       try {
-        // ✅ Gọi song song tất cả request
-        const removePromises = ids.map((id) =>
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/cart/${id}`, {
-            method: "DELETE",
-            credentials: "include",
-          })
-            .then(async (res) => {
-              const data = await res.json();
-              return { id, ok: res.ok, status: res.status, data };
-            })
-            .catch((err) => {
-              console.error(`Failed to delete item ${id}:`, err);
-              return { id, ok: false, status: 0, data: null, error: err };
-            })
-        );
+        // ✅ GỌI ENDPOINT MỚI: POST /client/cart/batch-delete
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/cart/batch-delete`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" }, // ⚠️ Cần có header này
+          body: JSON.stringify({ productIds: ids }),
+        });
 
-        const results = await Promise.all(removePromises);
+        const data = await res.json();
 
-        // Đếm số lượng thành công và thất bại
-        const successCount = results.filter((r) => r.ok).length;
-        const failedCount = results.length - successCount;
-
-        if (failedCount === 0) {
-          // Tất cả thành công
+        if (data.success) {
           toast.success(`Đã xóa ${ids.length} sản phẩm khỏi giỏ hàng`);
-        } else if (successCount > 0) {
-          // Một số thành công
-          toast.success(`Đã xóa ${successCount}/${ids.length} sản phẩm`, {
-            icon: "⚠️",
-          });
-          // Chỉ rollback những item thất bại
-          const failedIds = results.filter((r) => !r.ok).map((r) => r.id);
-          const itemsToRestore = optimisticCart.filter((item) => failedIds.includes(item._id));
-          setCart((prev) => [...prev, ...itemsToRestore]);
+          // ✅ Cập nhật cart từ response
+          if (data.data?.items) {
+            setCart(data.data.items);
+          }
         } else {
-          // Tất cả thất bại
-          throw new Error("All items failed to remove");
+          throw new Error(data.message || "Failed to remove items");
         }
       } catch (error: any) {
-        // Rollback toàn bộ nếu có lỗi nghiêm trọng
+        // Rollback toàn bộ nếu lỗi
         setCart(optimisticCart);
         console.error("Remove multiple items error:", error);
         toast.error("Lỗi khi xóa sản phẩm khỏi giỏ hàng");
@@ -400,6 +381,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       }
     } else {
+      // Guest user - xóa local
       setCart((prev) => prev.filter((item) => !ids.includes(item._id)));
       toast.success(`Đã xóa ${ids.length} sản phẩm khỏi giỏ hàng`);
     }
