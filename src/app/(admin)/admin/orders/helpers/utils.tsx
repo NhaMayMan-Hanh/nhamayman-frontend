@@ -108,11 +108,47 @@ export const useOrderActions = (
       useState<OrderActionModal | null>(null);
 
    const updateOrderStatus = useCallback(
-      async (orderId: string, newStatus: OrderStatus, action: OrderAction) => {
+      async (
+         orderId: string,
+         newStatus: OrderStatus | null,
+         action: OrderAction
+      ) => {
          const toastId = toast.loading(ACTION_MESSAGES[action].loading);
 
          try {
             setActionLoading(orderId);
+
+            // Nếu là delete thì gọi DELETE
+            if (action === "delete") {
+               const res = await fetch(
+                  `${process.env.NEXT_PUBLIC_API_URL}/admin/orders/${orderId}`,
+                  {
+                     method: "DELETE",
+                     credentials: "include",
+                  }
+               );
+
+               const result = await res.json();
+
+               if (result.success) {
+                  setOrders((prev) => prev.filter((o) => o._id !== orderId));
+                  toast.updateToast(
+                     toastId,
+                     "Xóa đơn hàng thành công!",
+                     "success"
+                  );
+                  return true;
+               } else {
+                  toast.updateToast(
+                     toastId,
+                     result.message || "Xóa thất bại",
+                     "error"
+                  );
+                  return false;
+               }
+            }
+
+            // Các action khác giữ nguyên
             const res = await fetch(
                `${process.env.NEXT_PUBLIC_API_URL}/admin/orders/${orderId}`,
                {
@@ -147,7 +183,7 @@ export const useOrderActions = (
             setActionLoading(null);
          }
       },
-      [toast]
+      [toast, setOrders]
    );
 
    const handleAction = useCallback(

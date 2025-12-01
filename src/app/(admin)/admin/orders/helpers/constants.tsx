@@ -58,11 +58,12 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
 };
 
 // Action to status mapping
-export const STATUS_ACTION_MAP: Record<OrderAction, OrderStatus> = {
+export const STATUS_ACTION_MAP: Record<OrderAction, OrderStatus | null> = {
    confirm: "confirmed",
    ship: "shipped",
    deliver: "delivered",
    cancel: "cancelled",
+   delete: null,
 };
 
 // Action messages for toast notifications
@@ -93,6 +94,11 @@ export const ACTION_MESSAGES: Record<
       loading: "Đang hủy đơn hàng...",
       success: "Đã hủy đơn hàng",
       error: "Hủy đơn hàng thất bại",
+   },
+   delete: {
+      loading: "Đang xóa đơn hàng...",
+      success: "Xóa đơn hàng thành công!",
+      error: "Xóa đơn hàng thất bại",
    },
 };
 
