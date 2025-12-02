@@ -1,8 +1,8 @@
 // components/admin/ConfirmModal.tsx
-import { X, CheckCircle, Truck, XCircle } from "lucide-react";
+import { X, CheckCircle, Truck, XCircle, Trash2 } from "lucide-react";
 interface ConfirmModalProps {
    isOpen: boolean;
-   action: "cancel" | "confirm" | "ship" | "deliver";
+   action: "cancel" | "confirm" | "ship" | "deliver" | "delete";
    isLoading: boolean;
    onConfirm: () => void;
    onCancel: () => void;
@@ -45,6 +45,16 @@ const ACTION_CONFIG = {
       iconColor: "text-blue-600",
       buttonClass:
          "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-blue-500/30",
+   },
+   delete: {
+      title: "Xóa đơn hàng",
+      description:
+         "Đơn hàng sẽ bị xóa vĩnh viễn và không thể khôi phục. Bạn có chắc chắn?",
+      icon: Trash2,
+      iconBg: "bg-red-100",
+      iconColor: "text-red-600",
+      buttonClass:
+         "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-red-500/30",
    },
 };
 export default function ConfirmModal({
