@@ -2,6 +2,7 @@
 export interface BlogData {
    _id: string;
    name: string;
+   like: number;
    description: string;
    img?: string;
    slug: string;

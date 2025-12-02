@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, Clock, Share2 } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Share2, Heart } from "lucide-react";
 import type { BlogData, BlogDetailResponse } from "../types";
 import { calculateReadTime, formatDate } from "../utils";
 import Loading from "@components/admin/Loading";
 import ErrorState from "@components/admin/ErrorState";
 import apiRequest from "@lib/api";
+
 const BlogDetail = () => {
    const params = useParams();
    const router = useRouter();
@@ -16,6 +17,9 @@ const BlogDetail = () => {
    const [blog, setBlog] = useState<BlogData | null>(null);
    const [loading, setLoading] = useState<boolean>(true);
    const [error, setError] = useState<string | null>(null);
+   const [isLiked, setIsLiked] = useState<boolean>(false);
+   const [likeCount, setLikeCount] = useState<number>(0);
+   const [isLiking, setIsLiking] = useState<boolean>(false);
 
    const fetchBlogDetail = useCallback(async () => {
       try {
@@ -26,6 +30,12 @@ const BlogDetail = () => {
          );
          if (data.success) {
             setBlog(data.data);
+            setLikeCount(data.data.like || 0);
+            // Check if user has liked this blog (from localStorage)
+            const likedBlogs = JSON.parse(
+               localStorage.getItem("likedBlogs") || "[]"
+            );
+            setIsLiked(likedBlogs.includes(id));
          } else {
             setError(data.message || "Không tìm thấy bài viết");
          }
@@ -42,6 +52,43 @@ const BlogDetail = () => {
          fetchBlogDetail();
       }
    }, [id]);
+
+   const handleLike = async () => {
+      if (isLiking) return;
+
+      try {
+         setIsLiking(true);
+
+         // Optimistic update
+         const newIsLiked = !isLiked;
+         setIsLiked(newIsLiked);
+         setLikeCount((prev) => (newIsLiked ? prev + 1 : prev - 1));
+
+         // Update localStorage
+         const likedBlogs = JSON.parse(
+            localStorage.getItem("likedBlogs") || "[]"
+         );
+         if (newIsLiked) {
+            likedBlogs.push(id);
+         } else {
+            const index = likedBlogs.indexOf(id);
+            if (index > -1) likedBlogs.splice(index, 1);
+         }
+         localStorage.setItem("likedBlogs", JSON.stringify(likedBlogs));
+
+         // API call to update like count
+         await apiRequest.post(`/admin/blogs/${id}/like`, {
+            action: newIsLiked ? "like" : "unlike",
+         });
+      } catch (err: any) {
+         console.error("Like error:", err);
+         // Revert on error
+         setIsLiked(!isLiked);
+         setLikeCount((prev) => (isLiked ? prev + 1 : prev - 1));
+      } finally {
+         setIsLiking(false);
+      }
+   };
 
    const handleScrollToTop = useCallback(() => {
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -67,13 +114,33 @@ const BlogDetail = () => {
          {/* Sticky Header */}
          <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-               <button
-                  onClick={() => router.back()}
-                  className="group flex items-center gap-2 text-gray-600 hover:text-pink-600 transition-all duration-200 font-medium"
-               >
-                  <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                  Quay lại
-               </button>
+               <div className="flex items-center justify-between">
+                  <button
+                     onClick={() => router.back()}
+                     className="group flex items-center gap-2 text-gray-600 hover:text-pink-600 transition-all duration-200 font-medium"
+                  >
+                     <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                     Quay lại
+                  </button>
+
+                  {/* Like Button in Header */}
+                  <button
+                     onClick={handleLike}
+                     disabled={isLiking}
+                     className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                        isLiked
+                           ? "bg-pink-100 text-pink-600"
+                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                     }`}
+                  >
+                     <Heart
+                        className={`w-5 h-5 transition-all duration-300 ${
+                           isLiked ? "fill-pink-600" : ""
+                        }`}
+                     />
+                     <span className="font-semibold">{likeCount}</span>
+                  </button>
+               </div>
             </div>
          </div>
 
@@ -108,6 +175,14 @@ const BlogDetail = () => {
                            {calculateReadTime(blog.content)} phút đọc
                         </span>
                      </div>
+                     <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                        <Heart
+                           className={`w-4 h-4 ${isLiked ? "fill-white" : ""}`}
+                        />
+                        <span className="text-sm font-medium">
+                           {likeCount} lượt thích
+                        </span>
+                     </div>
                   </div>
                </div>
             </div>
@@ -138,6 +213,35 @@ const BlogDetail = () => {
                   prose-code:text-pink-600 prose-code:bg-pink-50 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:font-mono prose-code:text-sm"
                   dangerouslySetInnerHTML={{ __html: blog.content }}
                />
+
+               {/* Like Section at Bottom of Content */}
+               <div className="mt-12 pt-8 border-t border-gray-200">
+                  <div className="flex items-center justify-center gap-4">
+                     <span className="text-gray-600 font-medium">
+                        Bạn thấy bài viết này hữu ích?
+                     </span>
+                     <button
+                        onClick={handleLike}
+                        disabled={isLiking}
+                        className={`group flex items-center gap-3 px-6 py-3 rounded-full transition-all duration-300 transform hover:scale-105 ${
+                           isLiked
+                              ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                     >
+                        <Heart
+                           className={`w-6 h-6 transition-all duration-300 ${
+                              isLiked
+                                 ? "fill-white animate-pulse"
+                                 : "group-hover:scale-110"
+                           }`}
+                        />
+                        <span className="font-semibold text-lg">
+                           {isLiked ? "Đã thích" : "Thích"} ({likeCount})
+                        </span>
+                     </button>
+                  </div>
+               </div>
             </div>
 
             {/* Action Buttons */}

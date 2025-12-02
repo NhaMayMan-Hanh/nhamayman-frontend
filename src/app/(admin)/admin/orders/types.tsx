@@ -56,8 +56,7 @@ export interface ApiResponse<T = any> {
 }
 
 // Utility types
-export type OrderAction = "confirm" | "ship" | "deliver" | "cancel";
-
+export type OrderAction = "confirm" | "ship" | "deliver" | "cancel" | "delete";
 export interface OrderActionModal {
    orderId: string;
    action: OrderAction;

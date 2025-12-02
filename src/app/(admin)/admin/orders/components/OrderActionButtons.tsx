@@ -1,7 +1,6 @@
 // components/admin/OrderActionButtons.tsx
-import { Eye, Check, X, Truck, CheckCircle } from "lucide-react";
 import { Order, OrderAction } from "../types";
-
+import { Eye, Check, X, Truck, CheckCircle, Trash2 } from "lucide-react";
 interface OrderActionButtonsProps {
    order: Order;
    actionLoading: string | null;
@@ -58,7 +57,14 @@ const ACTION_BUTTONS: Record<Order["status"], ActionButton[]> = {
       },
    ],
    delivered: [],
-   cancelled: [],
+   cancelled: [
+      {
+         action: "delete",
+         icon: Trash2,
+         colorClass: "text-red-700 hover:bg-red-50",
+         title: "Xóa đơn hàng",
+      },
+   ],
 };
 
 export default function OrderActionButtons({
