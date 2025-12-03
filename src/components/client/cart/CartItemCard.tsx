@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useCart } from "@contexts/CartContext";
+import * as GA from "../../../lib/services/googleAnalytics";
 
 interface CartItemCardProps {
   item: any;
@@ -17,6 +18,23 @@ export default function CartItemCard({
   onDelete,
 }: CartItemCardProps) {
   const { updateQuantity, loading } = useCart();
+
+  const handleDelete = () => {
+    GA.trackRemoveFromCart(item);
+    onDelete();
+  };
+
+  const handleDecrease = () => {
+    if (item.quantity > 1) {
+      updateQuantity(item._id, item.quantity - 1);
+      GA.trackUpdateCart(item, item.quantity - 1);
+    }
+  };
+
+  const handleIncrease = () => {
+    updateQuantity(item._id, item.quantity + 1);
+    GA.trackUpdateCart(item, item.quantity + 1);
+  };
 
   return (
     <div
@@ -43,15 +61,15 @@ export default function CartItemCard({
       <div className="flex items-center gap-3">
         <div className="flex items-center border rounded-lg">
           <button
-            onClick={() => updateQuantity(item._id, item.quantity - 1)}
-            disabled={loading}
+            onClick={handleDecrease}
+            disabled={loading || item.quantity <= 1}
             className="px-3 py-1 hover:bg-gray-100"
           >
             −
           </button>
           <span className="px-4 py-1 font-semibold">{item.quantity}</span>
           <button
-            onClick={() => updateQuantity(item._id, item.quantity + 1)}
+            onClick={handleIncrease}
             disabled={loading}
             className="px-3 py-1 hover:bg-gray-100"
           >
@@ -59,7 +77,7 @@ export default function CartItemCard({
           </button>
         </div>
 
-        <button onClick={onDelete} className="text-red-500 hover:bg-red-50 p-2 rounded">
+        <button onClick={handleDelete} className="text-red-500 hover:bg-red-50 p-2 rounded">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"

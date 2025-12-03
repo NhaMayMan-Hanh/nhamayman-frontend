@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
+import * as GA from "../../../lib/services/googleAnalytics";
 
 export default function LoginPage() {
   const { login, user } = useAuth();
@@ -20,18 +21,6 @@ export default function LoginPage() {
       router.replace("/");
     }
   }, [user, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-600">Đang kiểm tra...</div>
-      </div>
-    );
-  }
-
-  if (user) {
-    return null;
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +38,6 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        // Handle specific errors từ Zod
         if (data.errors && Array.isArray(data.errors)) {
           const fieldErrors: { [key: string]: string } = {};
           data.errors.forEach((err: { field: string; message: string }) => {
@@ -63,8 +51,10 @@ export default function LoginPage() {
       }
 
       toast.success("Đăng nhập thành công 🎉");
-
       await login(data.data.user);
+
+      // ✅ GA Tracking Login
+      GA.trackLogin();
 
       setFormData({ username: "", password: "" });
     } catch (error) {
@@ -73,6 +63,16 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-600">Đang kiểm tra...</div>
+      </div>
+    );
+  }
+
+  if (user) return null;
 
   return (
     <div className="max-w-md mx-auto py-12 px-4">
