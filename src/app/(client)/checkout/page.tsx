@@ -7,6 +7,7 @@ import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { CartItem, Province, District, Ward } from "./type";
+import * as GA from "../../../lib/services/googleAnalytics";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -103,7 +104,6 @@ export default function CheckoutPage() {
         const data = await res.json();
         setDistricts(data.districts || []);
 
-        // Tự động chọn quận nếu có trong donhang
         if (donhang.quan_huyen) {
           const district = data.districts?.find((d: District) => d.name === donhang.quan_huyen);
           if (district) setSelectedDistrict(district.code);
@@ -170,7 +170,6 @@ export default function CheckoutPage() {
               dia_chi_chi_tiet: u.address?.dia_chi_chi_tiet || "",
             }));
 
-            // Tự động chọn tỉnh nếu có
             if (u.address?.tinh_thanh && provinces.length > 0) {
               const province = provinces.find((p) => p.name === u.address.tinh_thanh);
               if (province) setSelectedProvince(province.code);
@@ -278,6 +277,18 @@ export default function CheckoutPage() {
       router.push("/login?redirect=/checkout");
       return;
     }
+
+    // ✅ Tích hợp GA trackBeginCheckout
+    GA.trackBeginCheckout({
+      total: tongTien,
+      items: checkoutItems.map((item) => ({
+        _id: item._id,
+        name: item.ten_sp,
+        price: item.gia_mua,
+        quantity: item.so_luong,
+      })),
+    });
+
     setShowConfirmModal(true);
   };
 
@@ -337,6 +348,8 @@ export default function CheckoutPage() {
       </div>
     );
   }
+
+
 
   return (
     <div className="max-w-6xl mx-auto py-12 px-4">

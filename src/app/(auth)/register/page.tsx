@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -40,7 +41,6 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        // Handle specific errors từ Zod
         if (data.errors && Array.isArray(data.errors)) {
           const fieldErrors: { [key: string]: string } = {};
           data.errors.forEach((err: { field: string; message: string }) => {
@@ -53,7 +53,7 @@ export default function RegisterPage() {
         throw new Error(data.message || "Đăng ký thất bại");
       }
 
-      toast.success(data.message || "Đăng ký thành công");
+      toast.success(data.message || "Đăng ký thành công 🎉");
       setFormData({ name: "", username: "", email: "", password: "", confirmPassword: "" });
       router.push("/login");
     } catch (error) {
@@ -69,49 +69,43 @@ export default function RegisterPage() {
         <h1 className="text-2xl font-bold text-center text-gray-900 mb-6">Đăng ký</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
-              type="text"
-              placeholder="Họ và tên"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                errors.name ? "border-red-500" : "border-gray-300"
-              }`}
-              required
-            />
-            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-          </div>
+          <input
+            type="text"
+            placeholder="Họ và tên"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+              errors.name ? "border-red-500" : "border-gray-300"
+            }`}
+            required
+          />
+          {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
 
-          <div>
-            <input
-              type="text"
-              placeholder="Tài khoản"
-              autoComplete="username"
-              value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                errors.username ? "border-red-500" : "border-gray-300"
-              }`}
-              required
-            />
-            {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
-          </div>
+          <input
+            type="text"
+            placeholder="Tài khoản"
+            autoComplete="username"
+            value={formData.username}
+            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+              errors.username ? "border-red-500" : "border-gray-300"
+            }`}
+            required
+          />
+          {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
 
-          <div>
-            <input
-              type="email"
-              placeholder="Email"
-              autoComplete="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                errors.email ? "border-red-500" : "border-gray-300"
-              }`}
-              required
-            />
-            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-          </div>
+          <input
+            type="email"
+            placeholder="Email"
+            autoComplete="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+              errors.email ? "border-red-500" : "border-gray-300"
+            }`}
+            required
+          />
+          {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
 
           <div className="relative">
             <input
