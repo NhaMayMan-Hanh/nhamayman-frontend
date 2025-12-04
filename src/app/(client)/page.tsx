@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Loading } from "@components/common/Loading";
 import HeroSlider from "@components/client/home/HeroSlider";
 import FeedbackForm from "@components/client/home/FeedbackForm";
