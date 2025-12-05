@@ -78,9 +78,9 @@ export default function PhotoGalleryBanner({ images, title }: PhotoGalleryBanner
     <>
       {/* Desktop View */}
       <div className="hidden md:block my-12">
-        {title && <h3 className="text-2xl font-semibold mb-6 text-center">{title}</h3>}
+        {title && <h3 className="text-3xl font-semibold mb-6 text-center">{title}</h3>}
 
-        <div className="grid grid-cols-3 gap-4 auto-rows-[200px] p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl shadow-lg">
+        <div className="grid grid-cols-3 gap-4 auto-rows-[200px] p-4 bg-linear-to-br from-amber-50 to-orange-50 rounded-2xl shadow-lg">
           {displayImages.map((image, index) => (
             <div
               key={index}

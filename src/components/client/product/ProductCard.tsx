@@ -30,7 +30,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Link href={`/products/${product._id}`} className="block">
-      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
         <div className="relative aspect-square bg-white">
           <Image
             fill
@@ -49,9 +49,9 @@ export default function ProductCard({ product }: ProductCardProps) {
           <p className="text-amber-500 font-bold mb-2">{formatPrice(product.price)} VNĐ</p>{" "}
           <button
             onClick={handleAddToCart}
-            className="w-full bg-button-g text-white py-2 px-4 rounded-lg transition-colors"
+            className="w-full bg-button-g text-white py-2 px-2 md:px-4 rounded-lg transition-colors"
           >
-            Thêm vào giỏ hàng
+            <span className="text-sm"> Thêm vào giỏ hàng</span>
           </button>
         </div>
       </div>

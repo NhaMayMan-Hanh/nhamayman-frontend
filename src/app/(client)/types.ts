@@ -24,6 +24,14 @@ interface Product {
   stock: number;
 }
 
+export interface Blog {
+  _id: string;
+  name: string;
+  img: string;
+  slug: string;
+  description: string;
+}
+
 export interface Me {
   id: string;
   username: string;
