@@ -114,7 +114,7 @@ export default function SearchBarWithSuggestions() {
 
         <button
           type="submit"
-          className="absolute right-0 top-1/2 -translate-y-1/2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-3 md:py-2.5 rounded-full font-medium transition"
+          className="absolute right-0 top-1/2 -translate-y-1/2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-3 md:py-2.5 rounded-full font-medium transition cursor-pointer"
         >
           Tìm kiếm
         </button>

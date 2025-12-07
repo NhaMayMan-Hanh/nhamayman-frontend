@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
    Bell,
    CheckCheck,
@@ -11,98 +11,48 @@ import {
    Filter,
 } from "lucide-react";
 import ProfileSidebar from "@components/client/profile/ProfileSidebar";
+import { useNotifications } from "@contexts/NotificationContext";
 import apiRequest from "@lib/api";
-
-interface NotificationMetadata {
-   adminResponse?: string;
-   feedbackMessage?: string;
-}
-
-interface Notification {
-   _id: string;
-   userId: string;
-   type: string;
-   title: string;
-   message: string;
-   relatedId?: string;
-   relatedModel?: string;
-   link?: string;
-   metadata?: NotificationMetadata;
-   isRead: boolean;
-   createdAt: string;
-}
-
-interface NotificationResponse {
-   success: boolean;
-   data: Notification[];
-   pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-   };
-}
-
 export default function NotificationPage() {
-   const [notifications, setNotifications] = useState<Notification[]>([]);
-   const [loading, setLoading] = useState(true);
+   const {
+      notifications,
+      loading,
+      markAsRead,
+      markAllAsRead,
+      refreshNotifications,
+   } = useNotifications();
+
    const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
    const [error, setError] = useState<string | null>(null);
-
-   useEffect(() => {
-      fetchNotifications();
-   }, []);
-
-   const fetchNotifications = async () => {
-      try {
-         setLoading(true);
-         setError(null);
-
-         const response = await apiRequest.get<NotificationResponse>(
-            "/client/notification"
-         );
-         setNotifications(response.data || []);
-      } catch (err: any) {
-         setError(err.message || "Không thể tải thông báo");
-      } finally {
-         setLoading(false);
-      }
-   };
-
-   const markAsRead = async (notificationId: string) => {
-      try {
-         await apiRequest.patch(`/client/notification/${notificationId}/read`);
-         setNotifications((prev) =>
-            prev.map((notif) =>
-               notif._id === notificationId ? { ...notif, isRead: true } : notif
-            )
-         );
-      } catch (err) {
-         console.error("Không thể đánh dấu đã đọc:", err);
-      }
-   };
-
-   const markAllAsRead = async () => {
-      try {
-         await apiRequest.patch("/client/notification/read-all");
-         setNotifications((prev) =>
-            prev.map((notif) => ({ ...notif, isRead: true }))
-         );
-      } catch (err) {
-         console.error("Không thể đánh dấu tất cả:", err);
-      }
-   };
 
    const deleteNotification = async (notificationId: string) => {
       try {
          if (confirm("Bạn chắc chắn muốn xóa thông báo này!")) {
             await apiRequest.delete(`/client/notification/${notificationId}`);
-            setNotifications((prev) =>
-               prev.filter((notif) => notif._id !== notificationId)
-            );
+            // Refresh notifications after delete
+            await refreshNotifications();
          }
       } catch (err) {
          console.error("Không thể xóa thông báo:", err);
+         setError("Không thể xóa thông báo");
+      }
+   };
+
+   const handleMarkAsRead = async (notificationId: string) => {
+      try {
+         await markAsRead(notificationId);
+      } catch (err) {
+         console.error("Không thể đánh dấu đã đọc:", err);
+         setError("Không thể đánh dấu đã đọc");
+      }
+   };
+
+   const handleMarkAllAsRead = async () => {
+      try {
+         await markAllAsRead();
+      } catch (err) {
+         console.error("Không thể đánh dấu tất cả:", err);
+         setError("Không thể đánh dấu tất cả");
       }
    };
 
@@ -156,12 +106,13 @@ export default function NotificationPage() {
    });
 
    const unreadCount = notifications.filter((n) => !n.isRead).length;
+
    return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
          <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                {/* Sidebar */}
-               <ProfileSidebar activePath="/profile/notifications" />
+               <ProfileSidebar activePath="/notification" />
 
                {/* Main Content */}
                <div className="lg:col-span-3">
@@ -173,14 +124,6 @@ export default function NotificationPage() {
                               <div className="w-8 h-8 bg-[#3494c8] to-indigo-600 rounded-2xl flex items-center justify-center">
                                  <Bell className="w-7 h-7 text-white" />
                               </div>
-                              {unreadCount > 0 && (
-                                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-                                    <span className="relative flex h-3 w-3">
-                                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                       <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                                    </span>
-                                 </div>
-                              )}
                            </div>
                            <div>
                               <h1 className="text-xl font-bold text-gray-900">
@@ -196,7 +139,7 @@ export default function NotificationPage() {
 
                         {unreadCount > 0 && (
                            <button
-                              onClick={markAllAsRead}
+                              onClick={handleMarkAllAsRead}
                               className="flex items-center gap-2 px-5 py-2.5 hover:underline font-medium cursor-pointer text-[#ea8724]"
                            >
                               <CheckCheck className="w-4 h-4" />
@@ -213,7 +156,7 @@ export default function NotificationPage() {
                               <button
                                  key={f}
                                  onClick={() => setFilter(f)}
-                                 className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
+                                 className={`px-5 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                                     filter === f
                                        ? "bg-[#3494c8] text-white shadow-md"
                                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -247,7 +190,7 @@ export default function NotificationPage() {
                            </p>
                            <p className="text-gray-500 mb-4">{error}</p>
                            <button
-                              onClick={fetchNotifications}
+                              onClick={refreshNotifications}
                               className="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md hover:shadow-lg font-medium"
                            >
                               Thử lại
@@ -350,7 +293,7 @@ export default function NotificationPage() {
                                           </div>
 
                                           <div className="flex items-center gap-2 ml-auto">
-                                             <button className="flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all font-medium">
+                                             <button className="flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all font-medium cursor-pointer">
                                                 <span>Chi tiết</span>
                                                 <svg
                                                    className="w-4 h-4"
@@ -370,11 +313,11 @@ export default function NotificationPage() {
                                              {!notification.isRead && (
                                                 <button
                                                    onClick={() =>
-                                                      markAsRead(
+                                                      handleMarkAsRead(
                                                          notification._id
                                                       )
                                                    }
-                                                   className="px-3 py-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all font-medium"
+                                                   className="px-3 py-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all font-medium cursor-pointer"
                                                 >
                                                    Đánh dấu đã đọc
                                                 </button>
@@ -386,7 +329,7 @@ export default function NotificationPage() {
                                                       notification._id
                                                    )
                                                 }
-                                                className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all"
+                                                className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
                                              >
                                                 <Trash2 className="w-4 h-4" />
                                              </button>
