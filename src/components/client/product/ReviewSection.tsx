@@ -207,7 +207,7 @@ export default function ReviewSection({ productId }: ReviewSectionProps) {
         </div>
       )}
 
-      {!user && (
+      {/* {!user && (
         <div className="bg-blue-50 rounded-xl p-6 mb-10 text-center">
           <p className="text-blue-700">
             Vui lòng{" "}
@@ -217,7 +217,7 @@ export default function ReviewSection({ productId }: ReviewSectionProps) {
             để đánh giá sản phẩm
           </p>
         </div>
-      )}
+      )} */}
 
       {/* Danh sách đánh giá */}
       <div className="space-y-6">

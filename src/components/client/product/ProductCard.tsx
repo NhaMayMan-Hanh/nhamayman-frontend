@@ -1,6 +1,7 @@
 "use client";
 
 import { useCart } from "@contexts/CartContext";
+import AddToCartButton from "@components/client/product/AddToCartButton";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -19,7 +20,8 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const { addToCart } = useCart();
+  const { addToCart, loading: cartLoading } = useCart();
+  const isOutOfStock = product.stock < 1;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault(); // Ngăn link navigate khi click button
@@ -47,12 +49,11 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.description.substring(0, 80)}...
           </p>
           <p className="text-amber-500 font-bold mb-2">{formatPrice(product.price)} VNĐ</p>{" "}
-          <button
+          <AddToCartButton
             onClick={handleAddToCart}
-            className="w-full bg-button-g text-white py-2 px-2 md:px-4 rounded-lg transition-colors"
-          >
-            <span className="text-sm"> Thêm vào giỏ hàng</span>
-          </button>
+            loading={cartLoading}
+            disabled={isOutOfStock}
+          />
         </div>
       </div>
     </Link>

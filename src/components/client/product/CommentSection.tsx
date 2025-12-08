@@ -95,18 +95,14 @@ export default function CommentSection({ productId }: CommentSectionProps) {
             height={20}
             src="/img/default-avatar.jpg"
             alt="Avatar"
-            className="w-5 h-full object-cover"
+            className="w-7 h-full object-cover"
             onError={(e) => {
               e.currentTarget.src = "/img/default-avatar.jpg";
             }}
           />
           <div className="flex-1 space-y-4">
             <textarea
-              placeholder={
-                user
-                  ? "Chia sẻ suy nghĩ của bạn về sản phẩm này..."
-                  : "Vui lòng đăng nhập để bình luận"
-              }
+              placeholder={user ? "Chia sẻ suy nghĩ của bạn về sản phẩm này..." : "Xin chào bạn"}
               className="w-full p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               rows={4}
               value={content}
@@ -127,22 +123,36 @@ export default function CommentSection({ productId }: CommentSectionProps) {
       </div>
 
       {!user && (
-        <div className="bg-blue-50 rounded-xl p-6 mb-10 text-center">
-          <p className="text-blue-700">
-            Vui lòng{" "}
-            <a href="/login" className="underline font-medium">
-              đăng nhập
-            </a>{" "}
-            để bình luận
-          </p>
+        <div className="bg-blue-50 rounded-xl p-6 mb-2 text-center">
+          <p className="text-blue-700 mb-3">Bạn cần đăng nhập để bình luận</p>
+          <a
+            href="/login"
+            className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5m0 0l-5-5m5 5H3"
+              />
+            </svg>
+            Đăng nhập
+          </a>
         </div>
       )}
 
       {/* Danh sách bình luận */}
       <div className="space-y-6">
         {displayedComments.map((comment) => (
-          <div key={comment._id} className="flex gap-4 pb-6 border-b last:border-0">
-            <div className="w-12 h-12 rounded-full bg-gray-200 border shrink-0 overflow-hidden">
+          <div key={comment._id} className="flex gap-4 pb-6 border-b last:border-0 border-gray-300">
+            <div className="w-12 h-12 rounded-full  border bg-gray-50 shrink-0 overflow-hidden">
               <Image
                 width={20}
                 height={20}

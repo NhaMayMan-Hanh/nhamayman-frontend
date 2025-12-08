@@ -7,7 +7,6 @@ import { useAuth } from "@contexts/AuthContext";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import Image from "next/image";
-import { Star, MessageCircle } from "lucide-react";
 import ProductInfo from "@components/client/product/ProductInfo";
 import QuantitySelector from "@components/client/product/QuantitySelector";
 import AddToCartButton from "@components/client/product/AddToCartButton";
