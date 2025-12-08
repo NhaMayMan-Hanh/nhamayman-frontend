@@ -11,13 +11,36 @@ import apiRequest from "@lib/api";
 
 interface Notification {
    _id: string;
-   userId: string;
+   userId?: string | null;
+   email?: string | null;
+   type: string;
    title: string;
    message: string;
-   type: string;
+   relatedId?: string;
+   relatedModel?: "Feedback" | "Order" | "Promotion";
+   link?: string;
+   metadata?: {
+      // Feedback metadata
+      feedbackMessage?: string;
+      adminResponse?: string;
+
+      // Order metadata
+      orderStatus?: string;
+      previousStatus?: string;
+      updatedBy?: string;
+      cancelledBy?: string;
+      trackingNumber?: string;
+      cancelReason?: string;
+
+      // Promotion metadata
+      discount?: string;
+      validUntil?: string;
+
+      // Other metadata
+      [key: string]: any;
+   };
    isRead: boolean;
    createdAt: string;
-   metadata?: any; // 👈 thêm dòng này
 }
 
 interface NotificationContextType {
@@ -33,10 +56,12 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType | undefined>(
    undefined
 );
+
 export function NotificationProvider({ children }: { children: ReactNode }) {
    const [notifications, setNotifications] = useState<Notification[]>([]);
    const [loading, setLoading] = useState(false);
    const { user } = useAuth();
+
    const fetchNotifications = async () => {
       if (!user?.id) {
          setNotifications([]);
@@ -57,6 +82,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
          setLoading(false);
       }
    };
+
    const markAsRead = async (notificationId: string) => {
       try {
          await apiRequest.patch(`/client/notification/${notificationId}/read`, {
@@ -72,6 +98,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
          console.error("Error marking notification as read:", error);
       }
    };
+
    const markAllAsRead = async () => {
       try {
          await apiRequest.patch("/client/notification/read-all");
@@ -84,11 +111,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
          console.error("Error marking all notifications as read:", error);
       }
    };
+
    useEffect(() => {
       fetchNotifications();
       const interval = setInterval(fetchNotifications, 30000);
       return () => clearInterval(interval);
    }, [user?.id]);
+
    const hasUnreadNotification = notifications.some((notif) => !notif.isRead);
    const unreadCount = notifications.filter((notif) => !notif.isRead).length;
 

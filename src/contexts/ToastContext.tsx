@@ -17,7 +17,7 @@ interface Toast {
    message: string;
    type: ToastType;
    duration?: number;
-   isExiting?: boolean; // ✅ Flag để trigger fade-out
+   isExiting?: boolean;
 }
 
 interface ToastContextType {
@@ -267,8 +267,6 @@ function ToastContainer({
                </div>
             );
          })}
-
-         {/* ✅ Inline keyframes animation */}
          <style jsx>{`
             @keyframes slideIn {
                from {
