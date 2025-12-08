@@ -24,8 +24,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NhaMayMan-Hanh",
-  description: "NhaMayMan-Hanh",
+  title: {
+    default: "NhaMayMan - Bánh Handmade Tươi Ngon",
+    template: "%s | NhaMayMan",
+  },
+  description: "Bánh handmade tươi ngon – sạch – an toàn, giao hàng nhanh.",
+  metadataBase: new URL("https://nhamayman-hanh.io.vn"),
 };
 
 export default function RootLayout({

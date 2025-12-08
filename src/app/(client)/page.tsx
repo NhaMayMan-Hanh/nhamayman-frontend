@@ -12,6 +12,12 @@ import apiRequest from "@lib/api/index";
 import getErrorMessage from "@utils/getErrorMessage";
 import type { ApiResponse, Category, Product, Blog } from "./types";
 
+export const metadata = {
+  title: "Trang chủ",
+  description:
+    "Bánh handmade tươi ngon mỗi ngày – chọn lọc nguyên liệu sạch. của Nha May Man - Hanh",
+};
+
 interface HomeData {
   categories: Category[];
   productsByCategory: { [key: string]: Product[] };

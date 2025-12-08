@@ -6,6 +6,23 @@ import getErrorMessage from "@utils/getErrorMessage";
 import type { Blog } from "./type";
 import type { ApiResponse } from "@app/(client)/types";
 
+// Metadata SEO cho trang Blog
+export const metadata = {
+  title: "Tin tức & bài viết | NhaMayMan",
+  description: "Tổng hợp tin tức, chia sẻ kinh nghiệm và các bài viết hữu ích từ NhaMayMan.",
+  openGraph: {
+    title: "Tin tức & bài viết | NhaMayMan",
+    description:
+      "Đọc các bài viết mới nhất về bánh handmade, chia sẻ kinh nghiệm, mẹo vặt và xu hướng mới.",
+    url: "https://nhamayman-hanh.io.vn/blog",
+    siteName: "NhaMayMan",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://nhamayman-hanh.io.vn/blog",
+  },
+};
+
 export default async function BlogListPage() {
   let blogs: Blog[] | null = null;
   let error: string | null = null;
