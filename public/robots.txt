@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://nhamayman-hanh.io.vn
+
+# Sitemaps
+Sitemap: https://nhamayman-hanh.io.vn/sitemap.xml
