@@ -8,7 +8,7 @@ export default function AddToCartButton({ onClick, loading, disabled }: Props) {
     <button
       onClick={onClick}
       disabled={disabled || loading}
-      className={`w-full bg-button-g text-white cursor-pointer py-2 px-2 md:px-4 rounded-lg transition-colors
+      className={`w-full bg-button-g text-white text-sm cursor-pointer py-2 px-2 md:px-4 rounded-lg transition-colors
         ${
           disabled
             ? "bg-gray-300 text-gray-500"
