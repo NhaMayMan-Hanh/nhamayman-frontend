@@ -8,136 +8,184 @@ import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
-  const { login, user } = useAuth();
-  const router = useRouter();
-  const [formData, setFormData] = useState({ username: "", password: "" });
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [showPassword, setShowPassword] = useState(false);
+   const { login, user } = useAuth();
+   const router = useRouter();
+   const [formData, setFormData] = useState({ username: "", password: "" });
+   const [loading, setLoading] = useState(false);
+   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+   const [showPassword, setShowPassword] = useState(false);
 
-  useEffect(() => {
-    if (!loading && user) {
-      router.replace("/");
-    }
-  }, [user, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-600">Đang kiểm tra...</div>
-      </div>
-    );
-  }
-
-  if (user) {
-    return null;
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrors({});
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/auth/login`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        // Handle specific errors từ Zod
-        if (data.errors && Array.isArray(data.errors)) {
-          const fieldErrors: { [key: string]: string } = {};
-          data.errors.forEach((err: { field: string; message: string }) => {
-            fieldErrors[err.field] = err.message;
-          });
-          setErrors(fieldErrors);
-          toast.error(data.message || "Đăng nhập thất bại");
-          return;
-        }
-        throw new Error(data.message || "Đăng nhập thất bại");
+   useEffect(() => {
+      if (!loading && user) {
+         router.replace("/");
       }
+   }, [user, loading, router]);
 
-      toast.success("Đăng nhập thành công 🎉");
+   if (loading) {
+      return (
+         <div className="flex items-center justify-center min-h-screen">
+            <div className="text-gray-600">Đang kiểm tra...</div>
+         </div>
+      );
+   }
 
-      await login(data.data.user);
+   if (user) {
+      return null;
+   }
 
-      setFormData({ username: "", password: "" });
-    } catch (error) {
-      toast.error((error as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
+   const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setLoading(true);
+      setErrors({});
 
-  return (
-    <div className="max-w-md mx-auto py-12 px-4">
-      <div className="bg-white rounded-lg shadow-md p-8">
-        <h1 className="text-2xl font-bold text-center text-gray-900 mb-6">Đăng nhập</h1>
+      try {
+         const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/client/auth/login`,
+            {
+               method: "POST",
+               credentials: "include",
+               headers: { "Content-Type": "application/json" },
+               body: JSON.stringify(formData),
+            }
+         );
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Tên đăng nhập"
-            autoComplete="username"
-            value={formData.username}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-              errors.username ? "border-red-500" : "border-gray-300"
-            }`}
-            required
-          />
-          {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
+         const data = await res.json();
 
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Mật khẩu"
-              autoComplete="current-password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className={`w-full pr-10 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                errors.password ? "border-red-500" : "border-gray-300"
-              }`}
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-            </button>
-            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-          </div>
+         if (!res.ok || !data.success) {
+            // Handle specific errors từ Zod
+            if (data.errors && Array.isArray(data.errors)) {
+               const fieldErrors: { [key: string]: string } = {};
+               data.errors.forEach(
+                  (err: { field: string; message: string }) => {
+                     fieldErrors[err.field] = err.message;
+                  }
+               );
+               setErrors(fieldErrors);
+               toast.error(data.message || "Đăng nhập thất bại");
+               return;
+            }
+            throw new Error(data.message || "Đăng nhập thất bại");
+         }
 
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full bg-amber-500 hover:bg-amber-600 text-white font-medium py-3 px-4 rounded-lg transition-colors ${
-              loading ? "opacity-70 cursor-not-allowed" : ""
-            }`}
-          >
-            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
-          </button>
-        </form>
+         toast.success("Đăng nhập thành công 🎉");
 
-        <div className="mt-6 text-center space-y-2">
-          <Link href="/forgot" className="text-amber-500 hover:underline text-sm">
-            Quên mật khẩu?
-          </Link>
-          <p className="text-sm text-gray-600">
-            Chưa có tài khoản?{" "}
-            <Link href="/register" className="text-amber-500 hover:underline">
-              Đăng ký ngay
-            </Link>
-          </p>
-        </div>
+         await login(data.data.user);
+
+         setFormData({ username: "", password: "" });
+      } catch (error) {
+         toast.error((error as Error).message);
+      } finally {
+         setLoading(false);
+      }
+   };
+
+   return (
+      <div className="max-w-md mx-auto py-12 px-4">
+         <div className="bg-white rounded-lg shadow-md p-8">
+            <h1 className="text-2xl font-bold text-center text-gray-900 mb-6">
+               Đăng nhập
+            </h1>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+               {/* Username */}
+               <div>
+                  <label className="block mb-1 font-medium text-gray-700">
+                     Tên đăng nhập:
+                  </label>
+                  <input
+                     type="text"
+                     placeholder="Tên đăng nhập"
+                     autoComplete="username"
+                     value={formData.username}
+                     onChange={(e) =>
+                        setFormData({ ...formData, username: e.target.value })
+                     }
+                     className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+                        errors.username ? "border-red-500" : "border-gray-300"
+                     }`}
+                     required
+                  />
+                  {errors.username && (
+                     <p className="text-red-500 text-sm mt-1">
+                        {errors.username}
+                     </p>
+                  )}
+               </div>
+
+               {/* Password */}
+               <div>
+                  <label className="block mb-1 font-medium text-gray-700">
+                     Mật khẩu:
+                  </label>
+                  <div className="relative">
+                     <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Mật khẩu"
+                        autoComplete="current-password"
+                        value={formData.password}
+                        onChange={(e) =>
+                           setFormData({
+                              ...formData,
+                              password: e.target.value,
+                           })
+                        }
+                        className={`w-full pr-10 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+                           errors.password
+                              ? "border-red-500"
+                              : "border-gray-300"
+                        }`}
+                        required
+                     />
+
+                     <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-[38%] text-gray-500 hover:text-gray-700 cursor-pointer"
+                     >
+                        {showPassword ? (
+                           <EyeOff size={20} />
+                        ) : (
+                           <Eye size={20} />
+                        )}
+                     </button>
+                  </div>
+                  {errors.password && (
+                     <p className="text-red-500 text-sm mt-1">
+                        {errors.password}
+                     </p>
+                  )}
+               </div>
+
+               {/* Submit Button */}
+               <button
+                  type="submit"
+                  disabled={loading}
+                  className={`w-full bg-amber-500 hover:bg-amber-600 text-white font-medium py-3 px-4 rounded-lg transition-colors ${
+                     loading ? "opacity-70 cursor-not-allowed" : ""
+                  }`}
+               >
+                  {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+               </button>
+            </form>
+
+            <div className="mt-6 text-center space-y-2">
+               <Link
+                  href="/forgot"
+                  className="text-amber-500 hover:underline text-sm"
+               >
+                  Quên mật khẩu?
+               </Link>
+               <p className="text-sm text-gray-600">
+                  Chưa có tài khoản?{" "}
+                  <Link
+                     href="/register"
+                     className="text-amber-500 hover:underline"
+                  >
+                     Đăng ký ngay
+                  </Link>
+               </p>
+            </div>
+         </div>
       </div>
-    </div>
-  );
+   );
 }

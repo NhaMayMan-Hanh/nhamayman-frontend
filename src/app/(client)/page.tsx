@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Loading } from "@components/common/Loading";
 import HeroSlider from "@components/client/home/HeroSlider";
 import FeedbackForm from "@components/client/home/FeedbackForm";
@@ -5,20 +7,22 @@ import CategoryGrid from "@components/client/category/CategoryGrid";
 import CategorySection from "@components/client/category/CategorySection";
 import PhotoGalleryBanner from "@components/client/home/PhotoGalleryBanner";
 import { galleryBanners } from "@data/galleryData";
-import AdImage from "@components/common/AdImage";
 import BlogSection from "@components/client/blog/BlogSection";
 import apiRequest from "@lib/api/index";
 import getErrorMessage from "@utils/getErrorMessage";
-import type { ApiResponse, Category, Product } from "./types";
+import type { ApiResponse, Category, Product, Blog } from "./types";
 
 interface HomeData {
   categories: Category[];
   productsByCategory: { [key: string]: Product[] };
+  homeBlogs: Blog[];
 }
 
 export default async function HomePage() {
   let data: HomeData | null = null;
   let error: string | null = null;
+
+  console.log("HOME RUN ON SERVER");
 
   try {
     const result = await apiRequest.get<ApiResponse<HomeData>>("/client/home", {
@@ -74,7 +78,7 @@ export default async function HomePage() {
           ))}
         </div>
 
-        <BlogSection />
+        <BlogSection blogs={data.homeBlogs} />
         <FeedbackForm />
       </div>
     </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User, ShoppingCart, Settings, LogOut, Bell } from "lucide-react";
 import { useAuth } from "@contexts/AuthContext";
+import { useNotifications } from "@contexts/NotificationContext";
 
 interface ProfileSidebarProps {
   activePath?: string;
@@ -12,7 +13,7 @@ interface ProfileSidebarProps {
 export default function ProfileSidebar({ activePath = "" }: ProfileSidebarProps) {
   const { logout } = useAuth();
   const router = useRouter();
-
+  const { hasUnreadNotification } = useNotifications();
   const handleLogout = async () => {
     await logout();
   };
@@ -41,12 +42,20 @@ export default function ProfileSidebar({ activePath = "" }: ProfileSidebarProps)
         </Link>
         <Link
           href="/notification"
-          className={`flex items-center gap-3 px-3 py-2 text-gray-700 rounded hover:bg-amber-50 hover:text-amber-600 transition-colors ${
+          className={`flex items-center gap-3 px-3 py-2 text-gray-700 rounded hover:bg-amber-50 hover:text-amber-600 transition-colors relative ${
             activePath === "/notification" ? "bg-amber-50 text-amber-600" : ""
           }`}
         >
           <Bell size={18} />
           <span>Thông báo của tôi</span>
+          {hasUnreadNotification && (
+            <div className="absolute top-0 right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-400"></span>
+              </span>
+            </div>
+          )}
         </Link>
         <Link
           href="/settings"

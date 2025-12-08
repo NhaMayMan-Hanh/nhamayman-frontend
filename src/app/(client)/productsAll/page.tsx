@@ -76,11 +76,13 @@ const ProductCard = ({ product }: { product: Product }) => {
           <button
             onClick={handleAddToCart}
             disabled={product.stock === 0}
-            className={`w-full py-2 px-4 rounded-lg font-medium transition-all ${
+            className={`w-full bg-button cursor-pointer py-2 px-4 md:px-4 rounded-lg font-medium transition-colors
+            ${
               product.stock === 0
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
-            }`}
+                ? "bg-gray-300 text-gray-500"
+                : "bg-button-g hover:bg-amber-600 text-white shadow-lg"
+            }
+         `}
           >
             {product.stock === 0 ? "Hết hàng" : "Thêm vào giỏ hàng"}
           </button>
@@ -363,7 +365,7 @@ const ProductsAll = () => {
 
           {/* Filter Sidebar - Mobile */}
           {showMobileFilter && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 lg:hidden">
+            <div className="fixed inset-0 bg-black/30 bg-opacity-50 z-50 lg:hidden">
               <div className="absolute right-0 top-0 h-full w-80 bg-gray-50 overflow-y-auto">
                 <div className="p-4">
                   <FilterSidebar

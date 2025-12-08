@@ -1,51 +1,35 @@
-"use client";
+export const dynamic = "force-dynamic";
 
-import { useState, useEffect } from "react";
 import Image from "next/image";
 import apiRequest from "@lib/api/index";
 import getErrorMessage from "@utils/getErrorMessage";
-import { Loading } from "@components/common/Loading";
 import type { About } from "./type";
 import type { ApiResponse } from "@app/(client)/types";
 
-export default function AboutPage() {
-  const [about, setAbout] = useState<About | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default async function AboutPage() {
+  let about: About | null = null;
+  let error: string | null = null;
 
-  useEffect(() => {
-    const fetchAbout = async () => {
-      try {
-        const result = await apiRequest.get<ApiResponse<About>>("/client/about", {
-          noAuth: true,
-        });
+  try {
+    const result = await apiRequest.get<ApiResponse<About>>("/client/about", {
+      noAuth: true,
+    });
 
-        if (result.success) {
-          setAbout(result.data);
-        } else {
-          setError(result.message || "Lỗi không xác định");
-        }
-      } catch (err: unknown) {
-        setError(getErrorMessage(err));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAbout();
-  }, []);
-
+    if (result.success) {
+      about = result.data;
+    } else {
+      error = result.message || "Lỗi không xác định";
+    }
+  } catch (err) {
+    error = getErrorMessage(err);
+  }
   return (
     <div className="w-full min-h-screen">
-      {loading && (
-        <div className="py-12">
-          <Loading message="Chờ chút xíu..." size="md" />
-        </div>
-      )}
+      {/* Hiển thị lỗi */}
+      {error && <div className="text-center py-12 text-red-500 text-lg">{error}</div>}
 
-      {!loading && error && <div className="text-center py-8 text-red-500">Lỗi: {error}</div>}
-
-      {!loading && about && (
+      {/* Hiển thị chính */}
+      {!error && about && (
         <>
           {/* Hero Section với text overlay */}
           <div className="relative w-full h-[350px] md:h-[450px] lg:h-[500px]">

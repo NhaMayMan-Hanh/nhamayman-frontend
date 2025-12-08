@@ -4,47 +4,50 @@ import ClientHeader from "@components/client/layout/Header";
 import ClientFooter from "@components/client/layout/Footer";
 import { AuthProvider } from "@contexts/AuthContext";
 import { Toaster } from "react-hot-toast";
+import { NotificationProvider } from "@contexts/NotificationContext";
 
 export default function ClientLayout({ children }: { children: ReactNode }) {
-  return (
-    <AuthProvider skipFetch={false}>
-      <CartProvider>
-        {/* Main container - NO wrapper divs */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            minHeight: "100vh",
-          }}
-        >
-          {/* Header - Direct render, no wrapper */}
-          <ClientHeader />
+   return (
+      <AuthProvider skipFetch={false}>
+         <NotificationProvider>
+            <CartProvider>
+               {/* Main container - NO wrapper divs */}
+               <div
+                  style={{
+                     display: "flex",
+                     flexDirection: "column",
+                     minHeight: "100vh",
+                  }}
+               >
+                  {/* Header - Direct render, no wrapper */}
+                  <ClientHeader />
 
-          {/* Main content - Flexible */}
-          <main
-            style={{
-              flex: "1 0 auto",
-              width: "100%",
-              backgroundColor: "#f9fafb",
-            }}
-          >
-            {children}
-          </main>
+                  {/* Main content - Flexible */}
+                  <main
+                     style={{
+                        flex: "1 0 auto",
+                        width: "100%",
+                        backgroundColor: "#f9fafb",
+                     }}
+                  >
+                     {children}
+                  </main>
 
-          {/* Footer - Direct render, no wrapper */}
-          <ClientFooter />
+                  {/* Footer - Direct render, no wrapper */}
+                  <ClientFooter />
 
-          <Toaster
-            position="top-right"
-            reverseOrder={false}
-            toastOptions={{
-              style: {
-                marginTop: "80px",
-              },
-            }}
-          />
-        </div>
-      </CartProvider>
-    </AuthProvider>
-  );
+                  <Toaster
+                     position="top-right"
+                     reverseOrder={false}
+                     toastOptions={{
+                        style: {
+                           marginTop: "80px",
+                        },
+                     }}
+                  />
+               </div>
+            </CartProvider>
+         </NotificationProvider>
+      </AuthProvider>
+   );
 }

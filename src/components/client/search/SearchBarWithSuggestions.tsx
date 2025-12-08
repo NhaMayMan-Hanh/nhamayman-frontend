@@ -93,7 +93,7 @@ export default function SearchBarWithSuggestions() {
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
           placeholder="Tìm kiếm sản phẩm"
-          className="w-full pl-12 pr-40 py-3 text-sm rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition"
+          className="w-full pl-12 pr-28 py-3 text-sm rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition"
         />
 
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-500" />
@@ -114,7 +114,7 @@ export default function SearchBarWithSuggestions() {
 
         <button
           type="submit"
-          className="absolute right-1 top-1/2 -translate-y-1/2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-full font-medium transition"
+          className="absolute right-0 top-1/2 -translate-y-1/2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-3 md:py-2.5 rounded-full font-medium transition cursor-pointer"
         >
           Tìm kiếm
         </button>

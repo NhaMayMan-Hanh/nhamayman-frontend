@@ -40,11 +40,11 @@ export default function CategorySection({ category, products }: CategorySectionP
   return (
     <div className="bg-white rounded-lg p-4 md:p-6 relative mb-8 md:mb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 md:mb-6">
+      <div className="flex flex-col border-b pb-2 border-gray-300 sm:flex-row justify-between items-start sm:items-center gap-3 mb-2 md:mb-6">
         <div className="flex-1">
           <h2 className="text-xl md:text-3xl font-semibold mb-1">{category.name}</h2>
           {category.description && (
-            <p className="text-sm md:text-base text-gray-600 line-clamp-2">
+            <p className="text-sm md:text-base  text-gray-600 line-clamp-2">
               {category.description}
             </p>
           )}
