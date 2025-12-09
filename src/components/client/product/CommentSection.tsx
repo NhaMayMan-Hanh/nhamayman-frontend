@@ -103,7 +103,7 @@ export default function CommentSection({ productId }: CommentSectionProps) {
           <div className="flex-1 space-y-4">
             <textarea
               placeholder={user ? "Chia sẻ suy nghĩ của bạn về sản phẩm này..." : "Xin chào bạn"}
-              className="w-full p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full h-20 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               rows={4}
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -192,7 +192,7 @@ export default function CommentSection({ productId }: CommentSectionProps) {
       )}
 
       {comments.length === 0 && (
-        <p className="text-center text-gray-500 py-8">Chưa có bình luận nào</p>
+        <p className="text-center text-gray-500 py-4">Chưa có bình luận nào</p>
       )}
     </div>
   );

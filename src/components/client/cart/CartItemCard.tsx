@@ -20,7 +20,7 @@ export default function CartItemCard({
 
   return (
     <div
-      className={`flex items-center gap-4 p-4 bg-white rounded-lg shadow transition-all ${
+      className={`flex items-center flex-wrap gap-4 p-4 bg-white rounded-lg shadow transition-all ${
         isSelected ? "ring-2 ring-orange-500" : "hover:shadow-lg"
       }`}
     >

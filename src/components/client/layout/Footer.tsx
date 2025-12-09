@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Facebook, Instagram, Mail, Phone, MapPin } from "lucide-react";
+import Image from "next/image";
 
 export default function Footer() {
   const currentYear = 2025;
@@ -36,16 +37,18 @@ export default function Footer() {
           <div className="col-span-1 md:col-span-2">
             <Link
               href="/"
-              className="text-2xl font-bold text-amber-400 block leading-tight"
-              style={{
-                height: "32px",
-                marginBottom: "16px",
-                display: "block",
-              }}
+              className="text-2xl font-bold text-amber-500 hover:text-amber-600 transition-colors shrink-0"
             >
-              NhaMayMan-Hanh
+              <Image
+                src="/img/logo-hanh.jpg"
+                alt="Logo"
+                width={70}
+                height={70}
+                className=" w-[70px] h-[70px] object-cover"
+                priority
+              />
             </Link>
-            <p className="text-gray-300 text-sm leading-relaxed break-words">
+            <p className="pt-2 text-gray-300 text-sm leading-relaxed break-words">
               Lan tỏa yêu thương 💛 qua những món quà handmade tinh tế, mang đến niềm vui và sự ấm
               áp cho mọi người.
             </p>

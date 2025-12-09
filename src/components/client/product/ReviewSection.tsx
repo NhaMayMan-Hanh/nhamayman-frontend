@@ -129,7 +129,7 @@ export default function ReviewSection({ productId }: ReviewSectionProps) {
 
   return (
     <div className="mt-16 border-t pt-10">
-      <div className="flex items-center gap-3 mb-8">
+      <div className="flex flex-wrap items-center gap-3 mb-8">
         <Star className="w-8 h-8 text-amber-500 fill-amber-500" />
         <h2 className="text-2xl font-bold">Đánh giá sản phẩm</h2>
         <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-medium">
@@ -166,7 +166,7 @@ export default function ReviewSection({ productId }: ReviewSectionProps) {
                           className="focus:outline-none disabled:cursor-not-allowed"
                         >
                           <Star
-                            className={`w-8 h-8 ${
+                            className={`w-6 h-6 ${
                               star <= rating ? "fill-amber-500 text-amber-500" : "text-gray-300"
                             }`}
                           />
@@ -181,21 +181,21 @@ export default function ReviewSection({ productId }: ReviewSectionProps) {
                         ? "Chia sẻ cảm nhận của bạn về sản phẩm này..."
                         : canReviewMessage || "Bạn cần mua sản phẩm trước khi đánh giá"
                     }
-                    className="w-full p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="w-full h-20 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                     rows={4}
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     disabled={!canReview}
                   />
 
-                  <div className="flex justify-between items-center mt-4">
+                  <div className="flex flex-wrap justify-between items-center mt-4">
                     {!canReview && (
                       <p className="text-sm text-amber-600 font-medium">{canReviewMessage}</p>
                     )}
                     <button
                       onClick={handleSubmitReview}
                       disabled={!canReview || loading || !content.trim()}
-                      className="ml-auto px-8 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+                      className="ml-auto mt-2 px-4 py-2 md:px-8 text-sm md:text-base md:py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
                     >
                       {loading ? "Đang gửi..." : "Gửi đánh giá"}
                     </button>
@@ -259,7 +259,7 @@ export default function ReviewSection({ productId }: ReviewSectionProps) {
       )}
 
       {reviews.length === 0 && (
-        <p className="text-center text-gray-500 py-8">Chưa có đánh giá nào</p>
+        <p className="text-center text-gray-500 py-4">Chưa có đánh giá nào</p>
       )}
     </div>
   );
