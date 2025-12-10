@@ -13,9 +13,39 @@ import getErrorMessage from "@utils/getErrorMessage";
 import type { ApiResponse, Category, Product, Blog } from "./types";
 
 export const metadata = {
-  title: "Trang chủ",
+  title: "Trang chủ | Bánh Handmade – Thú Bông, Tranh & Đồ Thủ Công | NhaMayMan - Hanh",
   description:
-    "Bánh handmade tươi ngon mỗi ngày – chọn lọc nguyên liệu sạch. của Nha May Man - Hanh",
+    "Chuyên bánh handmade tươi ngon, thú bông thủ công, tranh trang trí và sản phẩm đá độc đáo. Tất cả đều làm bằng tay tỉ mỉ, mang sự ấm áp và yêu thương đến mọi nhà – NhaMayMan - Hanh.",
+  keywords: [
+    "bánh handmade",
+    "quà handmade",
+    "đồ handmade",
+    "thú bông handmade",
+    "tranh handmade",
+    "đá handmade",
+    "bánh tươi mỗi ngày",
+    "quà tặng thủ công",
+  ],
+  openGraph: {
+    title: "Bánh Handmade – Thú Bông, Tranh & Đồ Thủ Công | NhaMayMan - Hanh",
+    description:
+      "Bánh handmade tươi ngon, thú bông, tranh trang trí và sản phẩm đá nhỏ – tất cả được làm thủ công tỉ mỉ. Sự ấm áp từ những món quà handmade độc nhất.",
+    url: "https://nhamayman-hanh.io.vn",
+    siteName: "NhaMayMan - Hanh",
+    images: [
+      {
+        url: "https://nhamayman-hanh.io.vn/og/may-8.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Bánh handmade & sản phẩm thủ công – NhaMayMan - Hanh",
+      },
+    ],
+    locale: "vi_VN",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://nhamayman-hanh.io.vn",
+  },
 };
 
 interface HomeData {

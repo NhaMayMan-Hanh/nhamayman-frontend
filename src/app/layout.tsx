@@ -64,6 +64,18 @@ export default function RootLayout({
       >
         {children}
         <SpeedInsights />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Nha May Man - Hanh",
+              url: "https://nhamayman-hanh.io.vn",
+              logo: "https://nhamayman-hanh.io.vn/icon.png",
+            }),
+          }}
+        />
       </body>
     </html>
   );

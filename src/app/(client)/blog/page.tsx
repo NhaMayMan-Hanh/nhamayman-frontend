@@ -8,18 +8,47 @@ import type { ApiResponse } from "@app/(client)/types";
 
 // Metadata SEO cho trang Blog
 export const metadata = {
-  title: "Tin tức & bài viết | NhaMayMan",
-  description: "Tổng hợp tin tức, chia sẻ kinh nghiệm và các bài viết hữu ích từ NhaMayMan.",
+  title: "Tin tức & Bài viết | NhaMayMan - Bánh & đồ handmade",
+  description:
+    "Tổng hợp tin tức, chia sẻ kinh nghiệm làm bánh handmade, thú bông, đồ trang trí và sản phẩm thủ công chất lượng từ NhaMayMan - Hanh.",
+  keywords: [
+    "bài viết handmade",
+    "tin tức handmade",
+    "bánh handmade",
+    "đồ thủ công",
+    "NhaMayMan Hanh",
+    "chia sẻ kinh nghiệm làm bánh",
+    "sản phẩm thủ công",
+  ],
   openGraph: {
-    title: "Tin tức & bài viết | NhaMayMan",
+    title: "Tin tức & Bài viết | NhaMayMan",
     description:
-      "Đọc các bài viết mới nhất về bánh handmade, chia sẻ kinh nghiệm, mẹo vặt và xu hướng mới.",
+      "Đọc các bài viết mới nhất về bánh handmade, đồ thủ công, mẹo vặt và câu chuyện ý nghĩa từ NhaMayMan - Hanh.",
     url: "https://nhamayman-hanh.io.vn/blog",
-    siteName: "NhaMayMan",
+    siteName: "NhaMayMan - Hanh",
     type: "website",
+    images: [
+      {
+        url: "https://nhamayman-hanh.io.vn/og/image-15.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Tin tức & bài viết handmade - NhaMayMan - Hanh",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Tin tức & Bài viết | NhaMayMan",
+    description:
+      "Tổng hợp tin tức, chia sẻ kinh nghiệm và các bài viết hữu ích về bánh handmade và sản phẩm thủ công.",
+    images: ["https://nhamayman-hanh.io.vn/og/image-15.jpg"],
   },
   alternates: {
     canonical: "https://nhamayman-hanh.io.vn/blog",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

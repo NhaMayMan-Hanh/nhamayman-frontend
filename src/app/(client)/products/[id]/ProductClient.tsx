@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react"; // useEffect không dùng nữa nên bỏ
 import { useRouter } from "next/navigation";
 import { useCart } from "@contexts/CartContext";
 import { useAuth } from "@contexts/AuthContext";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import Image from "next/image";
+import Script from "next/script"; // Thêm để inject JSON-LD
 import ProductInfo from "@components/client/product/ProductInfo";
 import QuantitySelector from "@components/client/product/QuantitySelector";
 import AddToCartButton from "@components/client/product/AddToCartButton";
@@ -58,6 +59,7 @@ export default function ProductClient({ initialData }: ProductClientProps) {
 
     try {
       await addToCart({ ...product, quantity });
+      toast.success("Đã thêm vào giỏ hàng!");
       setQuantity(1);
     } catch (err) {
       toast.error("Không thể thêm vào giỏ hàng");
@@ -69,75 +71,113 @@ export default function ProductClient({ initialData }: ProductClientProps) {
     router.push("/cart");
   };
 
+  // Đảm bảo URL hình ảnh absolute cho JSON-LD
+  const absoluteImage =
+    typeof window !== "undefined" && product.image.startsWith("http")
+      ? product.image
+      : `https://nhamayman-hanh.io.vn${product.image}`;
+
+  const pageUrl = typeof window !== "undefined" ? window.location.href : "";
+
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4">
-      <nav className="flex mb-8 text-sm text-gray-600">
-        <Link href="/" className="hover:text-amber-500">
-          Trang chủ
-        </Link>
-        <span className="mx-2">/</span>
-        <span className="text-gray-900">{product.name}</span>
-      </nav>
+    <>
+      {/* Structured Data - Product Schema */}
+      <Script
+        id="product-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            name: product.name,
+            image: absoluteImage,
+            description: product.description,
+            sku: product._id,
+            brand: {
+              "@type": "Brand",
+              name: "NhaMayMan",
+            },
+            offers: {
+              "@type": "Offer",
+              url: pageUrl,
+              priceCurrency: "VND",
+              price: product.price,
+              priceValidUntil: "2026-12-31", // Có thể dynamic nếu có
+              itemCondition: "https://schema.org/NewCondition",
+              availability:
+                product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+            },
+          }),
+        }}
+      />
 
-      <div className="grid md:grid-cols-2 gap-8 mb-12">
-        {/* Hình ảnh */}
-        <div className="relative w-full h-[300px] md:h-[500px] rounded-xl shadow-lg overflow-hidden">
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 50vw"
-            priority
-          />
+      <div className="max-w-6xl mx-auto py-12 px-4">
+        <nav className="flex mb-8 text-sm text-gray-600">
+          <Link href="/" className="hover:text-amber-500">
+            Trang chủ
+          </Link>
+          <span className="mx-2">/</span>
+          <span className="text-gray-900">{product.name}</span>
+        </nav>
 
-          {isOutOfStock && (
-            <div className="absolute top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-full font-bold text-lg">
-              Hết hàng
-            </div>
-          )}
-        </div>
-
-        {/* Thông tin */}
-        <div className="space-y-2">
-          <ProductInfo product={product} />
-
-          <QuantitySelector
-            quantity={quantity}
-            setQuantity={setQuantity}
-            max={product.stock}
-            disabled={isOutOfStock || cartLoading}
-          />
-
-          <div className="flex flex-col gap-3">
-            <AddToCartButton
-              onClick={handleAddToCart}
-              loading={cartLoading}
-              disabled={isOutOfStock}
+        <div className="grid md:grid-cols-2 gap-8 mb-12">
+          {/* Hình ảnh */}
+          <div className="relative w-full h-[300px] md:h-[500px] rounded-xl shadow-lg overflow-hidden">
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 50vw"
+              priority
             />
-            {!isOutOfStock && <BuyNowButton onClick={handleBuyNow} disabled={cartLoading} />}
+
+            {isOutOfStock && (
+              <div className="absolute top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-full font-bold text-lg">
+                Hết hàng
+              </div>
+            )}
+          </div>
+
+          {/* Thông tin */}
+          <div className="space-y-2">
+            <ProductInfo product={product} />
+
+            <QuantitySelector
+              quantity={quantity}
+              setQuantity={setQuantity}
+              max={product.stock}
+              disabled={isOutOfStock || cartLoading}
+            />
+
+            <div className="flex flex-col gap-3">
+              <AddToCartButton
+                onClick={handleAddToCart}
+                loading={cartLoading}
+                disabled={isOutOfStock}
+              />
+              {!isOutOfStock && <BuyNowButton onClick={handleBuyNow} disabled={cartLoading} />}
+            </div>
           </div>
         </div>
+
+        {/* Mô tả chi tiết */}
+        {product.detailedDescription && (
+          <div
+            className="bg-white rounded-xl shadow-md p-8 prose max-w-none mb-12"
+            dangerouslySetInnerHTML={{ __html: product.detailedDescription }}
+          />
+        )}
+
+        {/* Đánh giá & Bình luận */}
+        <ReviewSection productId={product._id} />
+        <CommentSection productId={product._id} />
+
+        {/* Sản phẩm liên quan */}
+        {initialData.relatedProducts.length > 0 && (
+          <RelatedProducts products={initialData.relatedProducts} />
+        )}
       </div>
-
-      {/* Mô tả chi tiết */}
-      {product.detailedDescription && (
-        <div
-          className="bg-white rounded-xl shadow-md p-8 prose max-w-none mb-12"
-          dangerouslySetInnerHTML={{ __html: product.detailedDescription }}
-        />
-      )}
-
-      {/* === PHẦN ĐÁNH GIÁ === */}
-      <ReviewSection productId={product._id} />
-
-      {/* === PHẦN BÌNH LUẬN === */}
-      <CommentSection productId={product._id} />
-
-      {/* Sản phẩm liên quan */}
-      {initialData.relatedProducts.length > 0 && (
-        <RelatedProducts products={initialData.relatedProducts} />
-      )}
-    </div>
+    </>
   );
 }
