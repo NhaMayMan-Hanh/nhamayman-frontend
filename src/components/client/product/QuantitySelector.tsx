@@ -1,51 +1,82 @@
-import { Plus, Minus } from "lucide-react";
+"use client";
 
-interface Props {
-   quantity: number;
-   setQuantity: (q: number) => void;
-   max: number;
-   disabled?: boolean;
+import { Minus, Plus } from "lucide-react";
+
+interface QuantitySelectorProps {
+  quantity: number;
+  setQuantity: (quantity: number) => void;
+  max: number;
+  disabled?: boolean;
 }
 
 export default function QuantitySelector({
-   quantity,
-   setQuantity,
-   max,
-   disabled,
-}: Props) {
-   return (
-      <div>
-         <label className="block text-sm font-medium text-gray-700 mb-1">
-            Số lượng
-         </label>
-         <div className="flex items-center gap-3">
-            <button
-               onClick={() => setQuantity(Math.max(1, quantity - 1))}
-               disabled={disabled || quantity <= 1}
-               className="flex justify-center items-center w-10 h-10 border rounded-lg hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
-            >
-               <Minus size={20} />
-            </button>
-            <input
-               type="number"
-               value={quantity}
-               onChange={(e) => {
-                  const val = parseInt(e.target.value) || 1;
-                  setQuantity(Math.min(max, Math.max(1, val)));
-               }}
-               className="w-24 text-center border rounded-lg py-2"
-               min="1"
-               max={max}
-            />
-            <button
-               onClick={() => setQuantity(Math.min(max, quantity + 1))}
-               disabled={disabled || quantity >= max}
-               className="flex justify-center items-center w-10 h-10 border rounded-lg hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
-            >
-               <Plus size={20} />
-            </button>
-         </div>
-         <p className="text-sm text-gray-500 mt-1">Còn lại: {max} sản phẩm</p>
+  quantity,
+  setQuantity,
+  max,
+  disabled = false,
+}: QuantitySelectorProps) {
+  const handleDecrease = () => {
+    if (quantity > 1) {
+      setQuantity(quantity - 1);
+    }
+  };
+
+  const handleIncrease = () => {
+    if (quantity < max) {
+      setQuantity(quantity + 1);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value >= 1 && value <= max) {
+      setQuantity(value);
+    }
+  };
+
+  const isMaxReached = quantity >= max;
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-700">Số lượng:</label>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={handleDecrease}
+          disabled={disabled || quantity <= 1}
+          className="w-10 h-10 flex items-center justify-center border-2 border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <Minus size={20} />
+        </button>
+
+        <input
+          type="number"
+          value={quantity}
+          onChange={handleInputChange}
+          disabled={disabled}
+          min={1}
+          max={max}
+          className="w-20 text-center border-2 border-gray-300 rounded-lg py-2 font-semibold disabled:bg-gray-100 disabled:cursor-not-allowed"
+        />
+
+        <button
+          onClick={handleIncrease}
+          disabled={disabled || isMaxReached}
+          className="w-10 h-10 flex items-center justify-center border-2 border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          title={isMaxReached ? "Đã đạt số lượng tối đa" : "Tăng số lượng"}
+        >
+          <Plus size={20} />
+        </button>
       </div>
-   );
+
+      {max > 0 && (
+        <p className="text-sm text-gray-600">
+          Tối đa: <span className="font-semibold text-orange-500">{max}</span> sản phẩm
+        </p>
+      )}
+
+      {isMaxReached && max > 0 && (
+        <p className="text-sm text-red-500 font-semibold">⚠️ Đã đạt số lượng tối đa có thể thêm</p>
+      )}
+    </div>
+  );
 }

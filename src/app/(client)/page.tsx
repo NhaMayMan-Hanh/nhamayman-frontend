@@ -58,7 +58,7 @@ export default async function HomePage() {
   let data: HomeData | null = null;
   let error: string | null = null;
 
-  console.log("HOME RUN ON SERVER");
+  // console.log("HOME RUN ON SERVER");
 
   try {
     const result = await apiRequest.get<ApiResponse<HomeData>>("/client/home", {

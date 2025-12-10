@@ -18,6 +18,7 @@ interface CartItem {
   price: number;
   image: string;
   quantity: number;
+  stock?: number; // Thêm stock để validate
 }
 
 interface CartContextType {
@@ -43,7 +44,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Toast batching refs
   const addToCartCountRef = useRef(0);
-  const addToCartQuantityRef = useRef(0); // Track total quantity added
+  const addToCartQuantityRef = useRef(0);
   const addToCartTimerRef = useRef<NodeJS.Timeout | null>(null);
   const activeToastRef = useRef<string | null>(null);
   const clearCartInProgressRef = useRef(false);
@@ -56,6 +57,39 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Debounce/throttle for add to cart
   const pendingAddToCartRef = useRef<Map<string, number>>(new Map());
   const addToCartDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // ===== STOCK VALIDATION HELPER =====
+  const validateStock = async (productId: string, requestedQuantity: number): Promise<boolean> => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/products/${productId}`, {
+        credentials: "include",
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        toast.error("Không thể kiểm tra tồn kho");
+        return false;
+      }
+
+      const product = data.data.product;
+      const currentCartItem = cart.find((item) => item._id === productId);
+      const currentQuantityInCart = currentCartItem?.quantity || 0;
+      const totalQuantity = currentQuantityInCart + requestedQuantity;
+
+      if (product.stock < totalQuantity) {
+        toast.error(
+          `"${product.name}" chỉ còn ${product.stock} sản phẩm (giỏ hàng đã có ${currentQuantityInCart})`
+        );
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Validate stock error:", error);
+      toast.error("Không thể kiểm tra tồn kho");
+      return false;
+    }
+  };
 
   const refreshCart = useCallback(async () => {
     if (!user) return;
@@ -81,7 +115,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  // FIX: Toast hiển thị tổng số lượng thêm vào
   const showAddToCartToast = useCallback((quantityAdded: number) => {
     if (addToCartTimerRef.current) {
       clearTimeout(addToCartTimerRef.current);
@@ -266,7 +299,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return data;
   };
 
-  //  NEW: Process batched add to cart requests
   const processPendingAddToCart = useCallback(async () => {
     if (pendingAddToCartRef.current.size === 0) return;
 
@@ -286,7 +318,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       const results = await Promise.all(promises);
 
-      // Update cart from last response
       const lastResult = results[results.length - 1];
       if (lastResult.success && lastResult.data?.items) {
         setCart(lastResult.data.items);
@@ -299,9 +330,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [cart]);
 
-  // FIX: Debounced add to cart
+  // ===== UPDATED: Add to cart với stock validation =====
   const addToCart = async (product: any) => {
     const quantityToAdd = product.quantity || 1;
+
+    // Validate stock trước khi thêm
+    if (user) {
+      const isValid = await validateStock(product._id, quantityToAdd);
+      if (!isValid) return;
+    } else {
+      // Guest cart: validate với stock từ product
+      const currentItem = cart.find((item) => item._id === product._id);
+      const currentQuantity = currentItem?.quantity || 0;
+      const totalQuantity = currentQuantity + quantityToAdd;
+
+      if (product.stock && product.stock < totalQuantity) {
+        toast.error(
+          `"${product.name}" chỉ còn ${product.stock} sản phẩm (giỏ hàng đã có ${currentQuantity})`
+        );
+        return;
+      }
+    }
 
     if (user) {
       const optimisticCart = [...cart];
@@ -320,7 +369,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       showAddToCartToast(quantityToAdd);
 
-      // Batch API calls within 300ms window
+      // Batch API calls
       const currentPending = pendingAddToCartRef.current.get(product._id) || 0;
       pendingAddToCartRef.current.set(product._id, currentPending + quantityToAdd);
 
@@ -411,10 +460,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // ===== UPDATED: Update quantity với stock validation =====
   const updateQuantity = async (id: string, quantity: number) => {
     if (quantity < 1) {
       await removeFromCart(id);
       return;
+    }
+
+    const currentItem = cart.find((item) => item._id === id);
+    if (!currentItem) return;
+
+    const quantityDiff = quantity - currentItem.quantity;
+
+    // Validate stock nếu tăng số lượng
+    if (quantityDiff > 0) {
+      if (user) {
+        const isValid = await validateStock(id, quantityDiff);
+        if (!isValid) return;
+      } else {
+        // Guest cart
+        if (currentItem.stock && currentItem.stock < quantity) {
+          toast.error(`"${currentItem.name}" chỉ còn ${currentItem.stock} sản phẩm`);
+          return;
+        }
+      }
     }
 
     if (user) {

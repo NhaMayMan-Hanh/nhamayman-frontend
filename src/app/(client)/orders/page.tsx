@@ -286,25 +286,30 @@ export default function OrdersPage() {
 
                         <div className="space-y-3 mb-4">
                           {order.items.map((item, index) => (
-                            <div key={index} className="flex items-center space-x-3 py-2">
-                              <Image
-                                src={item.productId.image}
-                                alt={item.productId.name}
-                                width={60}
-                                height={60}
-                                className="object-cover rounded border"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-gray-900 truncate">
-                                  {item.productId.name}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  Số lượng: {item.quantity} × {item.price.toLocaleString()} VNĐ
-                                </p>
-                              </div>
-                              <span className="font-semibold text-gray-900 whitespace-nowrap">
-                                {(item.quantity * item.price).toLocaleString()} VNĐ
-                              </span>
+                            <div key={index}>
+                              <Link
+                                href={`/products/${item.productId._id}`}
+                                className="flex items-center space-x-3 py-2"
+                              >
+                                <Image
+                                  src={item.productId.image}
+                                  alt={item.productId.name}
+                                  width={60}
+                                  height={60}
+                                  className="object-cover rounded border"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-gray-900 truncate">
+                                    {item.productId.name}
+                                  </p>
+                                  <p className="text-sm text-gray-500">
+                                    Số lượng: {item.quantity} × {item.price.toLocaleString()} VNĐ
+                                  </p>
+                                </div>
+                                <span className="font-semibold text-gray-900 whitespace-nowrap">
+                                  {(item.quantity * item.price).toLocaleString()} VNĐ
+                                </span>
+                              </Link>
                             </div>
                           ))}
                         </div>

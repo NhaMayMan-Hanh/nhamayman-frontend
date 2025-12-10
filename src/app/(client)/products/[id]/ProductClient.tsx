@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react"; // useEffect không dùng nữa nên bỏ
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@contexts/CartContext";
-import { useAuth } from "@contexts/AuthContext";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import Image from "next/image";
-import Script from "next/script"; // Thêm để inject JSON-LD
+import Script from "next/script";
 import ProductInfo from "@components/client/product/ProductInfo";
 import QuantitySelector from "@components/client/product/QuantitySelector";
 import AddToCartButton from "@components/client/product/AddToCartButton";
@@ -41,25 +40,36 @@ interface ProductClientProps {
 
 export default function ProductClient({ initialData }: ProductClientProps) {
   const router = useRouter();
-  const { user } = useAuth();
-  const { addToCart, loading: cartLoading } = useCart();
+  const { addToCart, loading: cartLoading, cart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const product = initialData.product;
   const isOutOfStock = product.stock < 1;
 
-  const handleAddToCart = async () => {
-    if (isOutOfStock) {
-      toast.error("Sản phẩm đã hết hàng");
+  // Kiểm tra số lượng trong giỏ
+  const currentCartItem = cart.find((item) => item._id === product._id);
+  const quantityInCart = currentCartItem?.quantity || 0;
+  const maxAvailable = product.stock - quantityInCart;
+
+  // Validate quantity khi user thay đổi
+  const handleQuantityChange = (newQuantity: number) => {
+    if (newQuantity > maxAvailable) {
+      toast.error(
+        `Chỉ có thể thêm tối đa ${maxAvailable} sản phẩm (giỏ hàng đã có ${quantityInCart})`
+      );
+      setQuantity(maxAvailable > 0 ? maxAvailable : 1);
       return;
     }
-    if (quantity > product.stock) {
-      toast.error(`Chỉ còn ${product.stock} sản phẩm trong kho`);
+    setQuantity(newQuantity);
+  };
+
+  const handleAddToCart = async () => {
+    if (quantity > maxAvailable) {
+      toast.error("Số lượng vượt quá tồn kho!");
       return;
     }
 
     try {
-      await addToCart({ ...product, quantity });
-      toast.success("Đã thêm vào giỏ hàng!");
+      await addToCart({ ...product, quantity, stock: product.stock });
       setQuantity(1);
     } catch (err) {
       toast.error("Không thể thêm vào giỏ hàng");
@@ -67,11 +77,15 @@ export default function ProductClient({ initialData }: ProductClientProps) {
   };
 
   const handleBuyNow = async () => {
+    if (quantity > maxAvailable) {
+      toast.error("Số lượng vượt quá tồn kho!");
+      return;
+    }
+
     await handleAddToCart();
     router.push("/cart");
   };
 
-  // Đảm bảo URL hình ảnh absolute cho JSON-LD
   const absoluteImage =
     typeof window !== "undefined" && product.image.startsWith("http")
       ? product.image
@@ -81,7 +95,7 @@ export default function ProductClient({ initialData }: ProductClientProps) {
 
   return (
     <>
-      {/* Structured Data - Product Schema */}
+      {/* Structured Data */}
       <Script
         id="product-jsonld"
         type="application/ld+json"
@@ -102,7 +116,7 @@ export default function ProductClient({ initialData }: ProductClientProps) {
               url: pageUrl,
               priceCurrency: "VND",
               price: product.price,
-              priceValidUntil: "2026-12-31", // Có thể dynamic nếu có
+              priceValidUntil: "2026-12-31",
               itemCondition: "https://schema.org/NewCondition",
               availability:
                 product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
@@ -121,7 +135,7 @@ export default function ProductClient({ initialData }: ProductClientProps) {
         </nav>
 
         <div className="grid md:grid-cols-2 gap-8 mb-12">
-          {/* Hình ảnh */}
+          {/* Image */}
           <div className="relative w-full h-[300px] md:h-[500px] rounded-xl shadow-lg overflow-hidden">
             <Image
               src={product.image}
@@ -139,41 +153,68 @@ export default function ProductClient({ initialData }: ProductClientProps) {
             )}
           </div>
 
-          {/* Thông tin */}
+          {/* Info */}
           <div className="space-y-2">
             <ProductInfo product={product} />
 
+            {/* Stock warning */}
+            {!isOutOfStock && quantityInCart > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                {/* <p className="text-sm text-blue-800">
+                  <span className="font-semibold">Còn lại:</span> {product.stock} sản phẩm
+                </p> */}
+                {quantityInCart > 0 && (
+                  <p className="text-sm text-orange-600 mt-1">
+                    <span className="font-semibold">Trong giỏ:</span> {quantityInCart} sản phẩm
+                  </p>
+                )}
+                {maxAvailable <= 5 && maxAvailable > 0 && (
+                  <p className="text-sm text-red-600 mt-1 font-semibold">
+                    ⚠️ Chỉ có thể thêm tối đa {maxAvailable} sản phẩm nữa
+                  </p>
+                )}
+              </div>
+            )}
+
             <QuantitySelector
               quantity={quantity}
-              setQuantity={setQuantity}
-              max={product.stock}
-              disabled={isOutOfStock || cartLoading}
+              setQuantity={handleQuantityChange}
+              max={maxAvailable > 0 ? maxAvailable : 0}
+              disabled={isOutOfStock || cartLoading || maxAvailable <= 0}
             />
 
             <div className="flex flex-col gap-3">
               <AddToCartButton
                 onClick={handleAddToCart}
                 loading={cartLoading}
-                disabled={isOutOfStock}
+                disabled={isOutOfStock || maxAvailable <= 0}
               />
-              {!isOutOfStock && <BuyNowButton onClick={handleBuyNow} disabled={cartLoading} />}
+              {!isOutOfStock && maxAvailable > 0 && (
+                <BuyNowButton onClick={handleBuyNow} disabled={cartLoading} />
+              )}
             </div>
+
+            {maxAvailable <= 0 && !isOutOfStock && (
+              <p className="text-red-500 text-sm text-center font-semibold">
+                Bạn đã thêm đủ số lượng tồn kho vào giỏ hàng
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Mô tả chi tiết */}
+        {/* Detailed Description */}
         {product.detailedDescription && (
           <div
-            className="bg-white rounded-xl shadow-md p-8 prose max-w-none mb-12"
+            className="bg-white rounded-xl shadow-md p-8 prose max-w-none mb-12 leading-7"
             dangerouslySetInnerHTML={{ __html: product.detailedDescription }}
           />
         )}
 
-        {/* Đánh giá & Bình luận */}
+        {/* Reviews & Comments */}
         <ReviewSection productId={product._id} />
         <CommentSection productId={product._id} />
 
-        {/* Sản phẩm liên quan */}
+        {/* Related Products */}
         {initialData.relatedProducts.length > 0 && (
           <RelatedProducts products={initialData.relatedProducts} />
         )}

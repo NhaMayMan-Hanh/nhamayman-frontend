@@ -16,7 +16,6 @@ export default function DeleteConfirmModal({
   open,
   mode,
   itemCount,
-  itemId,
   onClose,
   onConfirm,
 }: DeleteConfirmModalProps) {
@@ -35,7 +34,7 @@ export default function DeleteConfirmModal({
 
   const title =
     mode === "single"
-      ? "Xóa sản phẩm này?"
+      ? "Bạn chắc muốn xóa sản phẩm này không?"
       : mode === "selected"
       ? `Xóa ${itemCount} sản phẩm đã chọn?`
       : "Xóa toàn bộ giỏ hàng?";
