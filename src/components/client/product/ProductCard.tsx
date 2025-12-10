@@ -51,7 +51,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <p className="text-amber-500 font-bold mb-2">{formatPrice(product.price)} VNĐ</p>{" "}
           <AddToCartButton
             onClick={handleAddToCart}
-            loading={cartLoading}
+            // loading={cartLoading}
             disabled={isOutOfStock}
           />
         </div>

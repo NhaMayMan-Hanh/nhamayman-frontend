@@ -41,11 +41,11 @@ export default function CartItemCard({
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="flex items-center border rounded-lg">
+        <div className="flex items-center border border-gray-300 rounded-lg">
           <button
             onClick={() => updateQuantity(item._id, item.quantity - 1)}
             disabled={loading}
-            className="px-3 py-1 hover:bg-gray-100"
+            className="px-3 py-1 hover:bg-gray-100 hover:rounded-lg cursor-pointer"
           >
             −
           </button>
@@ -53,7 +53,7 @@ export default function CartItemCard({
           <button
             onClick={() => updateQuantity(item._id, item.quantity + 1)}
             disabled={loading}
-            className="px-3 py-1 hover:bg-gray-100"
+            className="px-3 py-1 hover:bg-gray-100  hover:rounded-lg cursor-pointer"
           >
             +
           </button>

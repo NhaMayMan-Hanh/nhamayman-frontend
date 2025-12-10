@@ -41,7 +41,7 @@ export default function DeleteConfirmModal({
       : "Xóa toàn bộ giỏ hàng?";
 
   return (
-    <div className="fixed inset-0  bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/20  bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8">
         <div className="w-14 h-14 mx-auto mb-5 bg-red-100 rounded-full flex items-center justify-center">
           <svg
