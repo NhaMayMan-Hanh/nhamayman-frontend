@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+// export const dynamic = "force-dynamic";
 
 import BlogBox from "@components/client/blog/BlogBox";
 import apiRequest from "@lib/api/index";

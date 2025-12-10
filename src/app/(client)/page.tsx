@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+// export const dynamic = "force-dynamic";
 
 import { Loading } from "@components/common/Loading";
 import HeroSlider from "@components/client/home/HeroSlider";

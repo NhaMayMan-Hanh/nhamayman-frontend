@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { Eye, EyeOff, CheckCircle } from "lucide-react";
 
-export default function ResetPasswordPage() {
+function ResetPasswordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -33,7 +33,6 @@ export default function ResetPasswordPage() {
     setLoading(true);
     setErrors({});
 
-    // Validate confirm password
     if (formData.password !== formData.confirmPassword) {
       setErrors({ confirmPassword: "Mật khẩu xác nhận không khớp" });
       toast.error("Mật khẩu xác nhận không khớp");
@@ -61,20 +60,20 @@ export default function ResetPasswordPage() {
           });
           setErrors(fieldErrors);
           toast.error(data.message || "Đặt lại mật khẩu thất bại");
-          return;
+        } else {
+          throw new Error(data.message || "Đặt lại mật khẩu thất bại");
         }
-        throw new Error(data.message || "Đặt lại mật khẩu thất bại");
+        return;
       }
 
       toast.success("Đặt lại mật khẩu thành công! 🎉");
       setSuccess(true);
 
-      // Redirect sau 2s
       setTimeout(() => {
         router.push("/login");
       }, 2000);
     } catch (error) {
-      toast.error((error as Error).message);
+      toast.error((error as Error).message || "Đã xảy ra lỗi không mong muốn");
     } finally {
       setLoading(false);
     }
@@ -85,7 +84,7 @@ export default function ResetPasswordPage() {
       <div className="max-w-md mx-auto py-12 px-4">
         <div className="bg-white rounded-lg shadow-md p-8 text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+            <CheckCircle className="w-10 h-10 text-green-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-3">Đặt lại mật khẩu thành công!</h1>
           <p className="text-gray-600 mb-6">
@@ -102,10 +101,10 @@ export default function ResetPasswordPage() {
       <div className="bg-white rounded-lg shadow-md p-8">
         <h1 className="text-2xl font-bold text-center text-gray-900 mb-6">Đặt lại mật khẩu</h1>
 
-        <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Password */}
           <div>
-            <label className="block mb-1 font-medium text-gray-700">Mật khẩu mới:</label>
+            <label className="block mb-1 font-medium text-gray-700">Mật khẩu mới</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -113,12 +112,6 @@ export default function ResetPasswordPage() {
                 autoComplete="new-password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleSubmit(e);
-                  }
-                }}
                 className={`w-full pr-10 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
                   errors.password ? "border-red-500" : "border-gray-300"
                 }`}
@@ -127,7 +120,7 @@ export default function ResetPasswordPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[38%] text-gray-500 hover:text-gray-700 cursor-pointer"
+                className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -137,7 +130,7 @@ export default function ResetPasswordPage() {
 
           {/* Confirm Password */}
           <div>
-            <label className="block mb-1 font-medium text-gray-700">Xác nhận mật khẩu:</label>
+            <label className="block mb-1 font-medium text-gray-700">Xác nhận mật khẩu</label>
             <div className="relative">
               <input
                 type={showConfirmPassword ? "text" : "password"}
@@ -145,12 +138,6 @@ export default function ResetPasswordPage() {
                 autoComplete="new-password"
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleSubmit(e);
-                  }
-                }}
                 className={`w-full pr-10 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
                   errors.confirmPassword ? "border-red-500" : "border-gray-300"
                 }`}
@@ -159,7 +146,7 @@ export default function ResetPasswordPage() {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-[38%] text-gray-500 hover:text-gray-700 cursor-pointer"
+                className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
               >
                 {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -171,15 +158,13 @@ export default function ResetPasswordPage() {
 
           {/* Submit Button */}
           <button
-            onClick={handleSubmit}
+            type="submit"
             disabled={loading}
-            className={`w-full bg-amber-500 hover:bg-amber-600 text-white font-medium py-3 px-4 rounded-lg transition-colors ${
-              loading ? "opacity-70 cursor-not-allowed" : ""
-            }`}
+            className={`w-full bg-amber-500 hover:bg-amber-600 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-70 disabled:cursor-not-allowed`}
           >
             {loading ? "Đang xử lý..." : "Đặt lại mật khẩu"}
           </button>
-        </div>
+        </form>
 
         <div className="mt-6 text-center">
           <Link href="/login" className="text-amber-500 hover:underline text-sm">
@@ -190,3 +175,14 @@ export default function ResetPasswordPage() {
     </div>
   );
 }
+
+// Wrapper with Suspense for useSearchParams (required in App Router)
+function Page() {
+  return (
+    <Suspense fallback={<div className="text-center py-12">Loading...</div>}>
+      <ResetPasswordPage />
+    </Suspense>
+  );
+}
+
+export default Page;
