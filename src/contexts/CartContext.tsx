@@ -61,9 +61,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // ===== STOCK VALIDATION HELPER =====
   const validateStock = async (productId: string, requestedQuantity: number): Promise<boolean> => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/products/${productId}`, {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/client/products/id/${productId}`,
+        {
+          credentials: "include",
+        }
+      );
       const data = await res.json();
 
       if (!data.success) {
@@ -336,7 +339,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     // Validate stock trước khi thêm
     if (user) {
-      const isValid = await validateStock(product.slug, quantityToAdd);
+      const isValid = await validateStock(product._id, quantityToAdd);
       if (!isValid) return;
     } else {
       // Guest cart: validate với stock từ product

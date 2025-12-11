@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   try {
     const result = await apiRequest.get<{ success: boolean; data: ProductData }>(
-      `/client/products/${slug}`,
+      `/client/products/slug/${slug}`,
       { noAuth: true }
     );
 
@@ -55,7 +55,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const { product } = productData;
-  const url = `https://nhamayman-hanh.io.vn/products/${slug}`;
+  const url = `https://nhamayman-hanh.io.vn/products/slug/${slug}`;
 
   const absoluteImage = product.image.startsWith("http")
     ? product.image
@@ -84,7 +84,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
   try {
     const result = await apiRequest.get<{ success: boolean; data: ProductData }>(
-      `/client/products/${slug}`,
+      `/client/products/slug/${slug}`,
       { noAuth: true }
     );
 
