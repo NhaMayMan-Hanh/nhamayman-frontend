@@ -85,14 +85,15 @@ export default function ProductCard({ product }: ProductCardProps) {
           <p className="text-amber-500 font-bold mb-2">{formatPrice(product.price)} VNĐ</p>
 
           {/* Stock info */}
-          {!isOutOfStock && (
-            <p className="text-sm text-gray-500 mb-2">
-              Còn lại: <span className="font-semibold">{product.stock}</span> sản phẩm
-              {/* {quantityInCart > 0 && (
+          {/* {!isOutOfStock && (
+          
+          )} */}
+          <p className="text-sm text-gray-500 mb-2">
+            Còn lại: <span className="font-semibold">{product.stock}</span> sản phẩm
+            {/* {quantityInCart > 0 && (
                 <span className="text-orange-500 ml-2">(Trong giỏ: {quantityInCart})</span>
               )} */}
-            </p>
-          )}
+          </p>
 
           <AddToCartButton onClick={handleAddToCart} disabled={isOutOfStock || isMaxedOut} />
 
