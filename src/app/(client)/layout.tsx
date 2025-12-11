@@ -5,6 +5,7 @@ import ClientFooter from "@components/client/layout/Footer";
 import { AuthProvider } from "@contexts/AuthContext";
 import { Toaster } from "react-hot-toast";
 import { NotificationProvider } from "@contexts/NotificationContext";
+import LuckyWheel from "@components/client/LuckyWheel";
 
 export default function ClientLayout({ children }: { children: ReactNode }) {
   return (
@@ -45,6 +46,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
                 },
               }}
             />
+            <LuckyWheel />
           </div>
         </CartProvider>
       </NotificationProvider>
