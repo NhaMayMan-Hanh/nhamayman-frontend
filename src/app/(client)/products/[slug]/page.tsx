@@ -10,6 +10,7 @@ interface ProductData {
   product: {
     _id: string;
     name: string;
+    slug: string;
     price: number;
     image: string;
     description: string;
@@ -26,29 +27,26 @@ interface ProductData {
 }
 
 type Props = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 };
 
 // === Dynamic Metadata (rất quan trọng cho SEO) ===
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
+  const { slug } = await params;
 
   let productData: ProductData | null = null;
 
   try {
     const result = await apiRequest.get<{ success: boolean; data: ProductData }>(
-      `/client/products/${id}`,
+      `/client/products/${slug}`,
       { noAuth: true }
     );
 
     if (result.success) {
       productData = result.data;
     }
-  } catch (err) {
-    // Im lặng, fallback về metadata cơ bản
-  }
+  } catch {}
 
-  // Nếu không lấy được data → fallback
   if (!productData) {
     return {
       title: "Sản phẩm không tồn tại | NhaMayMan",
@@ -57,9 +55,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const { product } = productData;
-  const url = `https://nhamayman-hanh.io.vn/products/${id}`; // Thay domain nếu deploy thật
+  const url = `https://nhamayman-hanh.io.vn/products/${slug}`;
 
-  // Đảm bảo image là absolute URL (nếu image từ backend là relative thì thêm domain)
   const absoluteImage = product.image.startsWith("http")
     ? product.image
     : `https://nhamayman-hanh.io.vn${product.image}`;
@@ -67,49 +64,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${product.name} - ${product.price.toLocaleString("vi-VN")}₫ | NhaMayMan`,
     description:
-      product.detailedDescription?.replace(/<[^>]*>/g, "").slice(0, 160) ||
-      product.description ||
-      `Mua ${
-        product.name
-      } handmade chất lượng cao tại NhaMayMan với giá chỉ ${product.price.toLocaleString(
-        "vi-VN"
-      )}₫`,
+      product.detailedDescription?.replace(/<[^>]*>/g, "").slice(0, 160) || product.description,
     openGraph: {
       title: `${product.name} | NhaMayMan`,
       description: product.description,
       url,
-      siteName: "NhaMayMan",
-      images: [
-        {
-          url: absoluteImage,
-          width: 1200,
-          height: 630,
-          alt: product.name,
-        },
-      ],
-      // === SỬA Ở ĐÂY: thay "product" bằng "website" hoặc bỏ hẳn ===
-      type: "website", // <-- Khuyến nghị dùng cái này
-      // hoặc đơn giản là bỏ dòng type đi hoàn toàn
+      images: [{ url: absoluteImage }],
+      type: "website",
     },
-    alternates: {
-      canonical: url,
-    },
-    robots: {
-      index: true,
-      follow: true,
-    },
+    alternates: { canonical: url },
   };
 }
 
 // === Page component ===
 export default async function ProductDetailPage({ params }: Props) {
-  const { id } = await params;
+  const { slug } = await params;
 
   let productData: ProductData | null = null;
 
   try {
     const result = await apiRequest.get<{ success: boolean; data: ProductData }>(
-      `/client/products/${id}`,
+      `/client/products/${slug}`,
       { noAuth: true }
     );
 
@@ -123,9 +98,7 @@ export default async function ProductDetailPage({ params }: Props) {
     notFound();
   }
 
-  if (!productData) {
-    notFound();
-  }
+  if (!productData) notFound();
 
   return <ProductClient initialData={productData} />;
 }
