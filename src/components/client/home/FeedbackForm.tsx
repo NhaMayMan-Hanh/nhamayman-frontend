@@ -50,8 +50,7 @@ export default function FeedbackForm() {
         <div className="max-w-2xl mx-auto mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm text-blue-800">
             Bạn đang đăng nhập với email: <strong>{user.email}</strong>
-            <br />
-            Chúng tôi sẽ thông báo khi admin phản hồi feedback của bạn.
+            <br />{" "}
           </p>
         </div>
       )}

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
 import CheckoutForm from "@components/client/checkout/CheckoutForm";
 import type { CartItem } from "./type";
+import { LoadingPage } from "@components/ui/Loading";
 
 export default function CheckoutClient() {
   const [items, setItems] = useState<CartItem[] | null>(null);
@@ -39,7 +40,7 @@ export default function CheckoutClient() {
           </h1>
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
-            <p className="mt-4 text-gray-600">Đang tải giỏ hàng...</p>
+            <LoadingPage message="Đang tải trang..." />
           </div>
         </div>
       </div>

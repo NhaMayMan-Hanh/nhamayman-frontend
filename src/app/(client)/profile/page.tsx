@@ -8,6 +8,7 @@ import Image from "next/image";
 import toast from "react-hot-toast";
 import ProfileSidebar from "@components/client/profile/ProfileSidebar";
 import type { UserProfile, Province, District, Ward } from "./type";
+import { LoadingPage } from "@components/ui/Loading";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -266,7 +267,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg">Đang tải thông tin...</div>
+        <LoadingPage message="Đang tải trang..." />
       </div>
     );
   }
@@ -474,7 +475,9 @@ export default function ProfilePage() {
                 /* View Mode */
                 <div className="space-y-8">
                   <div>
-                    <h3 className="text-lg font-semibold border-b pb-2 mb-4">Thông tin cá nhân</h3>
+                    <h3 className="text-lg font-semibold border-b border-gray-200 pb-2 mb-4">
+                      Thông tin cá nhân
+                    </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700">
                       <p>
                         <strong>Họ tên:</strong> {profile.name}
@@ -500,7 +503,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-semibold border-b pb-2 mb-4">
+                    <h3 className="text-lg font-semibold border-b border-gray-200 pb-2 mb-4">
                       Địa chỉ nhận hàng mặc định
                     </h3>
                     {profile.address?.tinh_thanh ? (

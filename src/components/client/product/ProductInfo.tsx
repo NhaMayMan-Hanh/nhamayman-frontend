@@ -35,7 +35,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       <p className="text-gray-600 text-lg leading-relaxed mb-8">{product.description}</p>
 
       {/* Giá */}
-      <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-6 mb-8">
+      <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-8">
         <p className="text-sm text-amber-700 font-medium mb-1">Giá sản phẩm</p>
         <p className="text-4xl font-bold text-amber-600">{formatPrice(product.price)} VNĐ</p>
       </div>

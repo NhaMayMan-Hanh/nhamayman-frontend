@@ -7,10 +7,12 @@ import type { ApiResponse } from "@app/(client)/types";
 import apiRequest from "@lib/api/index";
 import getErrorMessage from "@utils/getErrorMessage";
 import ProductCard from "@components/client/product/ProductCard";
+import { LoadingPage } from "@components/ui/Loading";
 
 interface Product {
   _id: string;
   name: string;
+  slug: string;
   description?: string;
   price: number;
   category: string;
@@ -252,11 +254,7 @@ const ProductsAll = () => {
   const totalPages: number = Math.ceil(filteredProducts.length / productsPerPage);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <LoadingPage message="Đang tải trang..." />;
   }
 
   return (

@@ -55,7 +55,7 @@ export default function QuantitySelector({
           disabled={disabled}
           min={1}
           max={max}
-          className="w-20 text-center border-2 border-gray-300 rounded-lg py-2 font-semibold disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="w-15 text-center border-2 border-gray-300 rounded-lg py-2 font-semibold disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
 
         <button

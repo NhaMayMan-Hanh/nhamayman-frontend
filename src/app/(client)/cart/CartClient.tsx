@@ -11,6 +11,7 @@ import CartItemCard from "@components/client/cart/CartItemCard";
 import CartSummary from "@components/client/cart/CartSummary";
 import EmptyCart from "@components/client/cart/EmptyCart";
 import DeleteConfirmModal from "@components/client/cart/DeleteConfirmModal";
+import { LoadingPage } from "@components/ui/Loading";
 
 export default function CartClient() {
   const router = useRouter();
@@ -33,9 +34,8 @@ export default function CartClient() {
 
   if (cartLoading || authLoading) {
     return (
-      <div className="max-w-6xl mx-auto py-20 text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-        <p className="mt-4 text-gray-600">Đang tải giỏ hàng...</p>
+      <div className="max-w-6xl mx-auto  text-center">
+        <LoadingPage message="Đang tải trang..." />
       </div>
     );
   }

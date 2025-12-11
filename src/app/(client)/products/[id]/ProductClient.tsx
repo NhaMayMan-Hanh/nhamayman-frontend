@@ -136,12 +136,12 @@ export default function ProductClient({ initialData }: ProductClientProps) {
 
         <div className="grid md:grid-cols-2 gap-8 mb-12">
           {/* Image */}
-          <div className="relative w-full h-[300px] md:h-[500px] rounded-xl shadow-lg overflow-hidden">
+          <div className="relative bg-white w-full h-[300px] md:h-[500px] rounded-xl shadow-lg overflow-hidden">
             <Image
               src={product.image}
               alt={product.name}
               fill
-              className="object-cover"
+              className="object-contain"
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 50vw"
               priority
             />

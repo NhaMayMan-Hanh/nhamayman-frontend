@@ -8,6 +8,7 @@ import Image from "next/image";
 interface Product {
   _id: string;
   name: string;
+  slug: string;
   description?: string;
   price: number;
   category: string;
@@ -51,7 +52,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const formatPrice = (price: number) => price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
   return (
-    <Link href={`/products/${product._id}`} className="block">
+    <Link href={`/products/${product.slug}`} className="block">
       <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
         <div className="relative aspect-square bg-white">
           <Image
@@ -77,7 +78,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
 
-        <div className="p-4">
+        <div className="p-2 pb-4">
           <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">{product.name}</h3>
           <p className="text-gray-600 mb-2 line-clamp-2">
             {product?.description?.substring(0, 80)}...

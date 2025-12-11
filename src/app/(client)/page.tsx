@@ -1,6 +1,5 @@
 // export const dynamic = "force-dynamic";
 
-import { Loading } from "@components/common/Loading";
 import HeroSlider from "@components/client/home/HeroSlider";
 import FeedbackForm from "@components/client/home/FeedbackForm";
 import CategoryGrid from "@components/client/category/CategoryGrid";
@@ -11,6 +10,7 @@ import BlogSection from "@components/client/blog/BlogSection";
 import apiRequest from "@lib/api/index";
 import getErrorMessage from "@utils/getErrorMessage";
 import type { ApiResponse, Category, Product, Blog } from "./types";
+import { LoadingPage } from "@components/ui/Loading";
 
 export const metadata = {
   title: "Trang chủ | Bánh Handmade – Thú Bông, Tranh & Đồ Thủ Công | NhaMayMan - Hanh",
@@ -81,7 +81,7 @@ export default async function HomePage() {
   if (!data) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loading message="Đang tải dữ liệu..." size="lg" />
+        <LoadingPage message="Đang tải trang..." />
       </div>
     );
   }
@@ -106,7 +106,7 @@ export default async function HomePage() {
                 <div className="my-12">
                   <PhotoGalleryBanner
                     images={galleryBanners[Math.floor(index / 2)]}
-                    title={`Khoảnh khắc ${Math.floor(index / 2) + 1}`}
+                    title={`Dự Án Truyền Thông Gõ Cửa`}
                   />
                 </div>
               )}

@@ -5,7 +5,8 @@ import { useAuth } from "@contexts/AuthContext";
 import ProfileSidebar from "@components/client/profile/ProfileSidebar";
 import Link from "next/link";
 import Image from "next/image";
-import { Eye } from "lucide-react";
+import { Eye, Package, Clock, Truck, CheckCircle, XCircle } from "lucide-react";
+import { LoadingPage } from "@components/ui/Loading";
 
 interface OrderItem {
   productId: {
@@ -33,42 +34,42 @@ interface OrdersData {
 }
 
 const statusTabs = [
-  { key: "all", label: "Tất cả" },
-  { key: "pending", label: "Chờ xác nhận" },
-  { key: "confirmed", label: "Đã xác nhận" },
-  { key: "shipped", label: "Đang giao" },
-  { key: "delivered", label: "Hoàn thành" },
-  { key: "cancelled", label: "Đã hủy" },
+  { key: "all", label: "Tất cả", icon: Package },
+  { key: "pending", label: "Chờ xác nhận", icon: Clock },
+  { key: "confirmed", label: "Đã xác nhận", icon: CheckCircle },
+  { key: "shipped", label: "Đang giao", icon: Truck },
+  { key: "delivered", label: "Hoàn thành", icon: CheckCircle },
+  { key: "cancelled", label: "Đã hủy", icon: XCircle },
 ];
 
 const getStatusDisplay = (status: string) => {
   const statusMap: { [key: string]: { label: string; className: string } } = {
     pending: {
       label: "Chờ xác nhận",
-      className: "bg-yellow-100 text-yellow-800",
+      className: "bg-yellow-100 text-yellow-800 border-yellow-200",
     },
     confirmed: {
       label: "Đã xác nhận",
-      className: "bg-blue-100 text-blue-800",
+      className: "bg-blue-100 text-blue-800 border-blue-200",
     },
     shipped: {
       label: "Đang giao hàng",
-      className: "bg-purple-100 text-purple-800",
+      className: "bg-purple-100 text-purple-800 border-purple-200",
     },
     delivered: {
       label: "Hoàn thành",
-      className: "bg-green-100 text-green-800",
+      className: "bg-green-100 text-green-800 border-green-200",
     },
     cancelled: {
       label: "Đã hủy",
-      className: "bg-red-100 text-red-800",
+      className: "bg-red-100 text-red-800 border-red-200",
     },
   };
 
   return (
     statusMap[status] || {
       label: status,
-      className: "bg-gray-100 text-gray-800",
+      className: "bg-gray-100 text-gray-800 border-gray-200",
     }
   );
 };
@@ -182,8 +183,7 @@ export default function OrdersPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="inline-block w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-          <p className="text-gray-600">Đang tải đơn hàng...</p>
+          <LoadingPage message="Đang tải trang..." />
         </div>
       </div>
     );
@@ -207,49 +207,113 @@ export default function OrdersPage() {
           <ProfileSidebar activePath="/orders" />
 
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-2xl font-bold mb-6">Đơn hàng của bạn</h2>
-              <div className="flex border-b mb-6 overflow-auto">
-                {statusTabs.map((tab) => {
-                  const count =
-                    tab.key === "all"
-                      ? orders.length
-                      : orders.filter((o) => o.status === tab.key).length;
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-2xl font-bold mb-6 text-gray-900">Đơn hàng của bạn</h2>
 
-                  return (
-                    <button
-                      key={tab.key}
-                      onClick={() => setActiveTab(tab.key)}
-                      className={`px-4 py-3 -mb-px font-medium border-b-2 transition-colors whitespace-nowrap text-sm cursor-pointer ${
-                        activeTab === tab.key
-                          ? "border-amber-500 text-amber-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      }`}
-                    >
-                      {tab.label} ({count})
-                    </button>
-                  );
-                })}
+              {/* Tabs - Responsive Grid Layout */}
+              <div className="mb-6">
+                {/* Desktop: Horizontal tabs */}
+                <div className="hidden md:flex flex-wrap gap-2 border-b pb-2">
+                  {statusTabs.map((tab) => {
+                    const count =
+                      tab.key === "all"
+                        ? orders.length
+                        : orders.filter((o) => o.status === tab.key).length;
+                    const Icon = tab.icon;
+
+                    return (
+                      <button
+                        key={tab.key}
+                        onClick={() => setActiveTab(tab.key)}
+                        className={`
+                          flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                          transition-all duration-200 whitespace-nowrap
+                          ${
+                            activeTab === tab.key
+                              ? "bg-amber-50 text-amber-600 font-semibold shadow-sm ring-2 ring-amber-200"
+                              : "text-gray-700 hover:text-amber-500 hover:bg-gray-50"
+                          }
+                        `}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span>{tab.label}</span>
+                        <span
+                          className={`
+                          px-2 py-0.5 rounded-full text-xs font-semibold
+                          ${
+                            activeTab === tab.key
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-gray-100 text-gray-600"
+                          }
+                        `}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Mobile: Grid Layout */}
+                <div className="grid grid-cols-2 gap-2 md:hidden">
+                  {statusTabs.map((tab) => {
+                    const count =
+                      tab.key === "all"
+                        ? orders.length
+                        : orders.filter((o) => o.status === tab.key).length;
+                    const Icon = tab.icon;
+
+                    return (
+                      <button
+                        key={tab.key}
+                        onClick={() => setActiveTab(tab.key)}
+                        className={`
+                          flex flex-col items-center gap-1 px-3 py-3 rounded-lg text-xs font-medium
+                          transition-all duration-200 relative
+                          ${
+                            activeTab === tab.key
+                              ? "bg-amber-50 text-amber-600 font-semibold shadow-sm ring-2 ring-amber-200"
+                              : "text-gray-700 hover:text-amber-500 hover:bg-gray-50 border border-gray-200"
+                          }
+                        `}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="text-center leading-tight">{tab.label}</span>
+                        <span
+                          className={`
+                          absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full text-xs font-bold
+                          ${
+                            activeTab === tab.key
+                              ? "bg-amber-500 text-white"
+                              : "bg-gray-200 text-gray-700"
+                          }
+                        `}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {filteredOrders.length === 0 ? (
-                <div className="text-center py-12">
-                  <svg
-                    className="mx-auto h-12 w-12 text-gray-400 mb-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                <div className="text-center py-16">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                    <Package className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-gray-600 mb-2 text-lg font-medium">
+                    Không có đơn hàng trong danh mục này
+                  </p>
+                  <p className="text-gray-500 text-sm mb-4">
+                    Hãy khám phá và mua sắm những sản phẩm tuyệt vời
+                  </p>
+                  <Link
+                    href="/productsAll"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                    />
-                  </svg>
-                  <p className="text-gray-600 mb-2">Không có đơn hàng trong danh mục này</p>
-                  <Link href="/productsAll" className="text-amber-500 hover:underline">
-                    Mua sắm ngay →
+                    <Package className="w-4 h-4" />
+                    Mua sắm ngay
                   </Link>
                 </div>
               ) : (
@@ -259,14 +323,14 @@ export default function OrdersPage() {
                     return (
                       <div
                         key={order._id}
-                        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                        className="border-2 border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-amber-200 transition-all duration-200"
                       >
-                        <div className="flex justify-between flex-wrap gap-4 items-start mb-3">
+                        <div className="flex justify-between flex-wrap gap-4 items-start mb-4">
                           <div>
-                            <h3 className="text-base font-semibold text-gray-900">
+                            <h3 className="text-base font-bold text-gray-900 mb-1">
                               Đơn hàng #{order._id.substring(0, 8).toUpperCase()}
                             </h3>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-gray-500">
                               Đặt ngày:{" "}
                               {new Date(order.createdAt).toLocaleDateString("vi-VN", {
                                 year: "numeric",
@@ -278,7 +342,7 @@ export default function OrdersPage() {
                             </p>
                           </div>
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${statusInfo.className}`}
+                            className={`px-4 py-1.5 rounded-full text-xs font-semibold border ${statusInfo.className}`}
                           >
                             {statusInfo.label}
                           </span>
@@ -286,27 +350,33 @@ export default function OrdersPage() {
 
                         <div className="space-y-3 mb-4">
                           {order.items.map((item, index) => (
-                            <div key={index}>
+                            <div
+                              key={index}
+                              className="border-b border-gray-100 last:border-0 pb-3 last:pb-0"
+                            >
                               <Link
                                 href={`/products/${item.productId._id}`}
-                                className="flex items-center space-x-3 py-2"
+                                className="flex items-center space-x-4 py-2 hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors duration-200"
                               >
                                 <Image
                                   src={item.productId.image}
                                   alt={item.productId.name}
-                                  width={60}
-                                  height={60}
-                                  className="object-cover rounded border"
+                                  width={70}
+                                  height={70}
+                                  className="object-cover rounded-lg border-2 border-gray-200"
                                 />
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-gray-900 truncate">
+                                  <p className="font-semibold text-gray-900 truncate mb-1">
                                     {item.productId.name}
                                   </p>
-                                  <p className="text-sm text-gray-500">
-                                    Số lượng: {item.quantity} × {item.price.toLocaleString()} VNĐ
+                                  <p className="text-sm text-gray-600">
+                                    Số lượng: <span className="font-medium">{item.quantity}</span> ×{" "}
+                                    <span className="font-medium">
+                                      {item.price.toLocaleString()} VNĐ
+                                    </span>
                                   </p>
                                 </div>
-                                <span className="font-semibold text-gray-900 whitespace-nowrap">
+                                <span className="font-bold text-gray-900 whitespace-nowrap text-base">
                                   {(item.quantity * item.price).toLocaleString()} VNĐ
                                 </span>
                               </Link>
@@ -314,18 +384,18 @@ export default function OrdersPage() {
                           ))}
                         </div>
 
-                        <div className="border-t pt-3 flex justify-between items-center flex-wrap gap-3">
-                          <div>
-                            <p className="text-sm text-gray-500">Tổng thanh toán</p>
+                        <div className="border-t-2 border-gray-200 pt-4 flex justify-between items-center flex-wrap gap-3">
+                          <div className="bg-amber-50 px-4 py-2 rounded-lg">
+                            <p className="text-xs text-gray-600 mb-0.5">Tổng thanh toán</p>
                             <p className="text-xl font-bold text-amber-600">
                               {order.total.toLocaleString()} VNĐ
                             </p>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 flex-wrap">
                             {/* Nút Xem chi tiết */}
                             <Link
                               href={`/orders/${order._id}`}
-                              className="flex items-center gap-2 px-5 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors"
+                              className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 text-white text-sm font-semibold rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-sm hover:shadow-md"
                             >
                               <Eye className="w-4 h-4" />
                               Xem chi tiết
@@ -336,9 +406,16 @@ export default function OrdersPage() {
                               <button
                                 onClick={() => handleCancelClick(order._id)}
                                 disabled={cancellingOrderId === order._id}
-                                className="px-5 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                className="px-5 py-2.5 bg-red-500 text-white text-sm font-semibold rounded-lg hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md"
                               >
-                                {cancellingOrderId === order._id ? "Đang hủy..." : "Hủy đơn hàng"}
+                                {cancellingOrderId === order._id ? (
+                                  <span className="flex items-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    Đang hủy...
+                                  </span>
+                                ) : (
+                                  "Hủy đơn hàng"
+                                )}
                               </button>
                             )}
                           </div>
@@ -355,28 +432,40 @@ export default function OrdersPage() {
 
       {/* Cancel Confirmation Modal */}
       {showCancelModal && (
-        <div className="fixed inset-0 bg-black/30 bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
-            <h3 className="text-xl font-bold mb-4 text-gray-900">Xác nhận hủy đơn hàng</h3>
-            <p className="text-gray-600 mb-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full">
+                <XCircle className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Xác nhận hủy đơn hàng</h3>
+            </div>
+            <p className="text-gray-600 mb-6 leading-relaxed">
               Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này không thể hoàn tác.
             </p>
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-end gap-3">
               <button
                 onClick={() => {
                   setShowCancelModal(false);
                   setOrderToCancel(null);
                 }}
-                className="px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                className="px-6 py-2.5 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-all duration-200 font-semibold"
               >
                 Không
               </button>
               <button
                 onClick={handleCancelOrder}
                 disabled={cancellingOrderId !== null}
-                className="px-5 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-400 transition-colors font-medium"
+                className="px-6 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-400 transition-all duration-200 font-semibold shadow-sm hover:shadow-md"
               >
-                {cancellingOrderId ? "Đang hủy..." : "Có, hủy đơn"}
+                {cancellingOrderId ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Đang hủy...
+                  </span>
+                ) : (
+                  "Có, hủy đơn"
+                )}
               </button>
             </div>
           </div>

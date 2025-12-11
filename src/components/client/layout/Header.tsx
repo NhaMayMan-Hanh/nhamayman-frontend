@@ -3,21 +3,24 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, Search, ShoppingCart, User, LogOut, ChevronDown } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Menu, X, ShoppingCart, User, LogOut, ChevronDown } from "lucide-react";
 import { useAuth } from "@contexts/AuthContext";
 import { useCart } from "@contexts/CartContext";
 import { useNotifications } from "@contexts/NotificationContext";
 import SearchBarWithSuggestions from "@components/client/search/SearchBarWithSuggestions";
+import NavLink from "@components/client/nav/NavLink";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const { user, logout } = useAuth();
   const { cart } = useCart();
   const { hasUnreadNotification } = useNotifications();
   const profileRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
+  // Click outside để đóng profile dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -27,22 +30,28 @@ export default function Header() {
 
     if (isProfileOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
     }
+  }, [isProfileOpen]);
+
+  // Đóng mobile menu khi route thay đổi
+  useEffect(() => {
+    const handleRouteChange = () => {
+      setIsMenuOpen(false);
+      setIsProfileOpen(false);
+    };
+
+    handleRouteChange();
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      handleRouteChange();
     };
-  }, [isProfileOpen]);
+  }, [pathname]);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleProfile = () => setIsProfileOpen(!isProfileOpen);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      window.location.href = `/products?search=${encodeURIComponent(searchQuery)}`;
-    }
-  };
 
   const handleLogout = () => {
     logout();
@@ -55,12 +64,19 @@ export default function Header() {
   const truncatedName =
     user?.name && user.name.length > 12 ? user.name.slice(0, 12) + "..." : user?.name;
 
+  // Helper function để check active link
+  const isActiveLink = (path: string) => {
+    if (path === "/") {
+      return pathname === "/";
+    }
+    return pathname.startsWith(path);
+  };
+
   return (
     <header className="w-full border-b border-gray-200 header-client shadow-sm sticky top-0 z-50 bg-white">
       <div className="max-w-6xl mx-auto px-4 md:px-2 py-4">
         {/* Desktop Navigation - từ md (768px) trở lên */}
         <div className="hidden md:block">
-          {/* Wrapper cho toàn bộ nav - cho phép wrap xuống 2 hàng */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
             {/* Logo */}
             <Link
@@ -72,7 +88,7 @@ export default function Header() {
                 alt="Logo"
                 width={70}
                 height={70}
-                className="w-[70px] h-[70px] object-cover"
+                className="w-[70px] h-[70px] object-cover rounded-lg"
                 priority
               />
             </Link>
@@ -82,37 +98,30 @@ export default function Header() {
               <SearchBarWithSuggestions />
             </div>
 
-            {/* Navigation Links + Cart + User - wrap thành 1 nhóm */}
+            {/* Navigation Links + Cart + User */}
             <div className="flex items-center gap-2 ml-auto flex-wrap">
               {/* Navigation Links */}
-              <Link
-                href="/productsAll"
-                className="text-gray-700 hover:text-amber-500 transition-colors px-3 py-2 whitespace-nowrap rounded-lg hover:bg-gray-50 text-sm font-medium"
-              >
-                Sản phẩm
-              </Link>
-              <Link
-                href="/blog"
-                className="text-gray-700 hover:text-amber-500 transition-colors px-3 py-2 whitespace-nowrap rounded-lg hover:bg-gray-50 text-sm font-medium"
-              >
-                Tin tức
-              </Link>
-              <Link
-                href="/about"
-                className="text-gray-700 hover:text-amber-500 transition-colors px-3 py-2 whitespace-nowrap rounded-lg hover:bg-gray-50 text-sm font-medium"
-              >
-                Giới thiệu
-              </Link>
+              <NavLink href="/productsAll">Sản phẩm</NavLink>
+              <NavLink href="/blog">Tin tức</NavLink>
+              <NavLink href="/about">Giới thiệu</NavLink>
 
               {/* Cart with Badge */}
               <Link
                 href="/cart"
-                className="relative text-gray-700 hover:text-amber-500 transition-colors flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 whitespace-nowrap text-sm font-medium"
+                className={`
+                  relative text-gray-700 hover:text-amber-500 transition-all duration-200
+                  flex items-center gap-2 px-3 py-2 rounded-lg whitespace-nowrap text-sm font-medium
+                  ${
+                    isActiveLink("/cart")
+                      ? "bg-amber-50 text-amber-600 font-semibold shadow-sm"
+                      : "hover:bg-gray-50"
+                  }
+                `}
               >
                 <ShoppingCart size={20} />
                 <span>Giỏ hàng</span>
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                  <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold shadow-md">
                     {cartCount > 99 ? "99+" : cartCount}
                   </span>
                 )}
@@ -123,7 +132,14 @@ export default function Header() {
                 <div className="relative" ref={profileRef}>
                   <button
                     onClick={toggleProfile}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    className={`
+                      flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200
+                      ${
+                        isProfileOpen || isActiveLink("/profile")
+                          ? "bg-amber-50 ring-2 ring-amber-200"
+                          : "hover:bg-gray-100"
+                      }
+                    `}
                   >
                     <div className="relative">
                       <Image
@@ -135,10 +151,10 @@ export default function Header() {
                         priority
                       />
                       {hasUnreadNotification && (
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full">
                           <span className="relative flex h-3 w-3">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-400"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
                           </span>
                         </div>
                       )}
@@ -148,33 +164,35 @@ export default function Header() {
                     </span>
                     <ChevronDown
                       size={16}
-                      className={`transition-transform shrink-0 ${
+                      className={`transition-transform duration-200 shrink-0 ${
                         isProfileOpen ? "rotate-180" : ""
                       }`}
                     />
                   </button>
 
                   {isProfileOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50">
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg pb-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                       <Link
                         href="/profile"
                         onClick={() => setIsProfileOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                        className={`
+                          flex items-center gap-3 px-4 py-2.5 transition-colors relative
+                          ${
+                            isActiveLink("/profile")
+                              ? "bg-amber-50 text-amber-600 font-semibold"
+                              : "text-gray-700 hover:bg-amber-50 hover:text-amber-600"
+                          }
+                        `}
                       >
                         <User size={18} />
                         <span>Trang cá nhân</span>
                         {hasUnreadNotification && (
-                          <div className="absolute top-5 right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-                            <span className="relative flex h-3 w-3">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-400"></span>
-                            </span>
-                          </div>
+                          <div className="absolute top-3 right-3 w-2 h-2 bg-red-500 rounded-full"></div>
                         )}
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors w-full text-left"
+                        className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors w-full text-left"
                       >
                         <LogOut size={18} />
                         <span>Đăng xuất</span>
@@ -185,7 +203,15 @@ export default function Header() {
               ) : (
                 <Link
                   href="/login"
-                  className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors whitespace-nowrap text-sm font-medium"
+                  className={`
+                    flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
+                    whitespace-nowrap text-sm font-medium shadow-sm
+                    ${
+                      isActiveLink("/login")
+                        ? "bg-amber-600 text-white ring-2 ring-amber-300"
+                        : "bg-amber-500 text-white hover:bg-amber-600 hover:shadow-md"
+                    }
+                  `}
                 >
                   <User size={18} />
                   <span>Đăng nhập</span>
@@ -195,7 +221,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobile/Tablet Header - hiển thị từ 0-767px */}
+        {/* Mobile/Tablet Header */}
         <div className="md:hidden flex items-center justify-between">
           <Link
             href="/"
@@ -206,14 +232,15 @@ export default function Header() {
               alt="Logo"
               width={50}
               height={50}
-              className="w-[50px] h-[50px] object-cover"
+              className="w-[50px] h-[50px] object-cover rounded-lg"
               priority
             />
           </Link>
 
           <button
             onClick={toggleMenu}
-            className="text-gray-700 hover:text-amber-500 transition-colors p-2"
+            className="text-gray-700 hover:text-amber-500 transition-colors p-2 rounded-lg hover:bg-gray-50"
+            aria-label={isMenuOpen ? "Đóng menu" : "Mở menu"}
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -221,45 +248,40 @@ export default function Header() {
 
         {/* Mobile Navigation Menu */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 pb-4 border-t pt-4">
+          <div className="md:hidden mt-4 pb-4 border-t pt-4 animate-in fade-in slide-in-from-top-2 duration-200">
             <nav className="flex flex-col gap-2 text-sm font-medium">
               <div className="mb-4">
                 <SearchBarWithSuggestions />
               </div>
 
-              <Link
-                href="/productsAll"
-                className="text-gray-700 hover:text-amber-500 transition-colors py-2 px-3 rounded-lg hover:bg-gray-50"
-                onClick={toggleMenu}
-              >
+              <NavLink href="/productsAll" onClick={toggleMenu} className="w-full text-left">
                 Sản phẩm
-              </Link>
+              </NavLink>
 
-              <Link
-                href="/blog"
-                className="text-gray-700 hover:text-amber-500 transition-colors py-2 px-3 rounded-lg hover:bg-gray-50"
-                onClick={toggleMenu}
-              >
+              <NavLink href="/blog" onClick={toggleMenu} className="w-full text-left">
                 Tin tức
-              </Link>
+              </NavLink>
 
-              <Link
-                href="/about"
-                className="text-gray-700 hover:text-amber-500 transition-colors py-2 px-3 rounded-lg hover:bg-gray-50"
-                onClick={toggleMenu}
-              >
+              <NavLink href="/about" onClick={toggleMenu} className="w-full text-left">
                 Giới thiệu
-              </Link>
+              </NavLink>
 
               <Link
                 href="/cart"
-                className="text-gray-700 hover:text-amber-500 transition-colors flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-gray-50 relative"
                 onClick={toggleMenu}
+                className={`
+                  flex items-center gap-2 py-2 px-3 rounded-lg transition-all duration-200 relative
+                  ${
+                    isActiveLink("/cart")
+                      ? "bg-amber-50 text-amber-600 font-semibold shadow-sm"
+                      : "text-gray-700 hover:text-amber-500 hover:bg-gray-50"
+                  }
+                `}
               >
                 <ShoppingCart size={20} />
                 <span>Giỏ hàng</span>
                 {cartCount > 0 && (
-                  <span className="ml-auto bg-amber-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-semibold">
+                  <span className="ml-auto bg-amber-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-semibold shadow-md">
                     {cartCount > 99 ? "99+" : cartCount}
                   </span>
                 )}
@@ -267,7 +289,7 @@ export default function Header() {
 
               {user ? (
                 <div className="border-t pt-4 mt-2">
-                  <div className="flex items-center gap-3 mb-3 px-3">
+                  <div className="flex items-center gap-3 mb-3 px-3 py-2 rounded-lg bg-gray-50">
                     <div className="relative">
                       <Image
                         src={user.avatar || "/img/default-avatar.jpg"}
@@ -277,10 +299,10 @@ export default function Header() {
                         className="rounded-full ring-2 ring-amber-500"
                       />
                       {hasUnreadNotification && (
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full">
                           <span className="relative flex h-3 w-3">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-400"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
                           </span>
                         </div>
                       )}
@@ -292,15 +314,22 @@ export default function Header() {
                   </div>
                   <Link
                     href="/profile"
-                    className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-50 text-gray-700 hover:text-amber-500 transition-colors"
                     onClick={toggleMenu}
+                    className={`
+                      flex items-center gap-3 py-2 px-3 rounded-lg transition-all duration-200
+                      ${
+                        isActiveLink("/profile")
+                          ? "bg-amber-50 text-amber-600 font-semibold shadow-sm"
+                          : "text-gray-700 hover:text-amber-500 hover:bg-gray-50"
+                      }
+                    `}
                   >
                     <User size={18} />
                     <span>Trang cá nhân</span>
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 w-full py-2 px-3 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
+                    className="flex items-center gap-3 w-full py-2 px-3 rounded-lg hover:bg-red-50 text-red-600 transition-colors mt-1"
                   >
                     <LogOut size={18} />
                     <span>Đăng xuất</span>
@@ -309,8 +338,16 @@ export default function Header() {
               ) : (
                 <Link
                   href="/login"
-                  className="flex items-center gap-2 py-2 px-4 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors justify-center mt-2"
                   onClick={toggleMenu}
+                  className={`
+                    flex items-center gap-2 py-2 px-4 rounded-lg transition-all duration-200
+                    justify-center mt-2 shadow-sm
+                    ${
+                      isActiveLink("/login")
+                        ? "bg-amber-600 text-white ring-2 ring-amber-300"
+                        : "bg-amber-500 text-white hover:bg-amber-600"
+                    }
+                  `}
                 >
                   <User size={18} />
                   <span>Đăng nhập</span>

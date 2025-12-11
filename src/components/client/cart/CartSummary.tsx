@@ -39,11 +39,12 @@ export default function CartSummary({
       <button
         onClick={onCheckout}
         disabled={disabled}
-        className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-md cursor-pointer ${
-          disabled
-            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-            : "bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 hover:shadow-xl"
-        }`}
+        className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-md
+    ${
+      disabled
+        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+        : "bg-button-g text-white cursor-pointer hover:bg-amber-600 hover:shadow-xl"
+    }`}
       >
         Tiến hành thanh toán
       </button>

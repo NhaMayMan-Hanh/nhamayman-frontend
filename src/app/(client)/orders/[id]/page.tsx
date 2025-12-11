@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Package, User, MapPin, Phone, CreditCard, Calendar, TrendingUp } from "lucide-react";
 import apiRequest from "@lib/api";
+import { LoadingPage } from "@components/ui/Loading";
 
 interface ShippingAddress {
   fullName: string;
@@ -133,7 +134,7 @@ const DetailOrder = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Đang tải thông tin đơn hàng...</p>
+          <LoadingPage message="Đang tải trang..." />
         </div>
       </div>
     );

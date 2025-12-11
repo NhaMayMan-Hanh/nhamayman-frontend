@@ -11,6 +11,7 @@ import type { ExtendedBlog } from "../type";
 import type { ApiResponse } from "@app/(client)/types";
 import { useAuth } from "@contexts/AuthContext";
 import { CommentItem } from "./CommentItem";
+import { LoadingPage } from "@components/ui/Loading";
 
 export default function BlogDetailPage() {
   const params = useParams();
@@ -194,7 +195,7 @@ export default function BlogDetailPage() {
   if (loading) {
     return (
       <div className="py-12 text-center">
-        <Loading message="Chờ chút xíu..." size="md" />
+        <LoadingPage message="Đang tải trang..." />
       </div>
     );
   }

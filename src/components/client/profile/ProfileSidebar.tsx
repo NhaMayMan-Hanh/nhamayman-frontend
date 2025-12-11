@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { User, ShoppingCart, Settings, LogOut, Bell } from "lucide-react";
 import { useAuth } from "@contexts/AuthContext";
 import { useNotifications } from "@contexts/NotificationContext";
@@ -12,10 +11,9 @@ interface ProfileSidebarProps {
 
 export default function ProfileSidebar({ activePath = "" }: ProfileSidebarProps) {
   const { logout } = useAuth();
-  const router = useRouter();
   const { hasUnreadNotification } = useNotifications();
-  const handleLogout = async () => {
-    await logout();
+  const handleLogout = () => {
+    logout();
   };
 
   return (

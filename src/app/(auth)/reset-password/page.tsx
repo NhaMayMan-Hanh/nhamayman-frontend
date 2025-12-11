@@ -179,7 +179,7 @@ function ResetPasswordPage() {
 // Wrapper with Suspense for useSearchParams (required in App Router)
 function Page() {
   return (
-    <Suspense fallback={<div className="text-center py-12">Loading...</div>}>
+    <Suspense>
       <ResetPasswordPage />
     </Suspense>
   );

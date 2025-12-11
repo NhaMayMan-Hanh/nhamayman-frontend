@@ -6,6 +6,7 @@ import ProfileSidebar from "@components/client/profile/ProfileSidebar";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Lock, Bell, Shield, Trash2 } from "lucide-react";
+import { LoadingPage } from "@components/ui/Loading";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -84,7 +85,7 @@ export default function SettingsPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-center text-red-500">Đang kiểm tra.</p>
+        <LoadingPage message="Đang tải trang..." />
       </div>
     );
   }
@@ -100,7 +101,7 @@ export default function SettingsPage() {
           <div className="lg:col-span-3">
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
               {/* Header */}
-              <div className="border-b bg-gradient-to-r from-amber-50 to-orange-50 px-6 py-5">
+              <div className="border-b border-gray-200 bg-linear-to-r from-amber-50 to-orange-50 px-6 py-5">
                 <h2 className="text-2xl font-bold text-gray-900">Cài đặt tài khoản</h2>
                 <p className="text-sm text-gray-600 mt-1">
                   Quản lý thông tin bảo mật và tùy chọn của bạn
@@ -108,11 +109,11 @@ export default function SettingsPage() {
               </div>
 
               {/* Tabs */}
-              <div className="border-b">
+              <div className="border-b border-gray-200">
                 <div className="flex space-x-1 px-6">
                   <button
                     onClick={() => setActiveTab("security")}
-                    className={`flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
+                    className={`flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 border-gray-200 transition-colors ${
                       activeTab === "security"
                         ? "border-amber-500 text-amber-600"
                         : "border-transparent text-gray-500 hover:text-gray-700"
@@ -123,7 +124,7 @@ export default function SettingsPage() {
                   </button>
                   <button
                     onClick={() => setActiveTab("notifications")}
-                    className={`flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
+                    className={`flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 border-gray-200 transition-colors ${
                       activeTab === "notifications"
                         ? "border-amber-500 text-amber-600"
                         : "border-transparent text-gray-500 hover:text-gray-700"
@@ -134,7 +135,7 @@ export default function SettingsPage() {
                   </button>
                   <button
                     onClick={() => setActiveTab("privacy")}
-                    className={`flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
+                    className={`flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 border-gray-200 transition-colors ${
                       activeTab === "privacy"
                         ? "border-amber-500 text-amber-600"
                         : "border-transparent text-gray-500 hover:text-gray-700"
@@ -314,7 +315,7 @@ export default function SettingsPage() {
 
                     <div className="space-y-4">
                       {/* Email Notifications */}
-                      <div className="border rounded-lg p-4">
+                      <div className="border border-gray-200 rounded-lg p-4">
                         <h4 className="font-semibold mb-3">Email</h4>
                         <div className="space-y-3">
                           <label className="flex items-center justify-between cursor-pointer group">
@@ -353,7 +354,7 @@ export default function SettingsPage() {
                       </div>
 
                       {/* Push Notifications */}
-                      <div className="border rounded-lg p-4">
+                      <div className="border border-gray-200 rounded-lg p-4">
                         <h4 className="font-semibold mb-3">Push Notifications</h4>
                         <label className="flex items-center justify-between cursor-pointer group">
                           <div>
@@ -391,14 +392,14 @@ export default function SettingsPage() {
 
                     <div className="space-y-4">
                       {/* Account Info */}
-                      <div className="border rounded-lg p-4">
+                      <div className="border border-gray-200 rounded-lg p-4">
                         <h4 className="font-semibold mb-3">Thông tin tài khoản</h4>
                         <div className="space-y-2 text-sm">
-                          <div className="flex justify-between py-2 border-b">
+                          <div className="flex justify-between py-2 border-b border-gray-300">
                             <span className="text-gray-600">Email:</span>
                             <span className="font-medium">{user.email}</span>
                           </div>
-                          <div className="flex justify-between py-2 border-b">
+                          <div className="flex justify-between py-2 border-b border-gray-300">
                             <span className="text-gray-600">Tên đăng nhập:</span>
                             <span className="font-medium">{user.username}</span>
                           </div>

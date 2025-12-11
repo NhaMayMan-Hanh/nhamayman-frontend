@@ -336,7 +336,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     // Validate stock trước khi thêm
     if (user) {
-      const isValid = await validateStock(product._id, quantityToAdd);
+      const isValid = await validateStock(product.slug, quantityToAdd);
       if (!isValid) return;
     } else {
       // Guest cart: validate với stock từ product
