@@ -12,6 +12,7 @@ interface OrderItem {
   productId: {
     _id: string;
     name: string;
+    slug: string;
     price: number;
     image: string;
   };
@@ -355,7 +356,7 @@ export default function OrdersPage() {
                               className="border-b border-gray-100 last:border-0 pb-3 last:pb-0"
                             >
                               <Link
-                                href={`/products/${item.productId._id}`}
+                                href={`/products/${item.productId.slug}`}
                                 className="flex items-center space-x-4 py-2 hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors duration-200"
                               >
                                 <Image
