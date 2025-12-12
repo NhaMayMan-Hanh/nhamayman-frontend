@@ -189,9 +189,7 @@ export default function ProductClient({ initialData }: ProductClientProps) {
                 loading={cartLoading}
                 disabled={isOutOfStock || maxAvailable <= 0}
               />
-              {!isOutOfStock && maxAvailable > 0 && (
-                <BuyNowButton onClick={handleBuyNow} disabled={cartLoading} />
-              )}
+              {!isOutOfStock && maxAvailable > 0 && <BuyNowButton onClick={handleBuyNow} />}
             </div>
 
             {maxAvailable <= 0 && !isOutOfStock && (
